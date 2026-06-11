@@ -1,0 +1,24 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+*.tsbuildinfo
+next-env.d.ts
+
+# env files
+.env*
+
+# claude code local settings
+.claude/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
