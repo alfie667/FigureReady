@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
-import type { StyleName, AxisStyleOverrides } from '@/lib/chartStyles'
+import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks } from '@/lib/niceTicks'
 
@@ -37,20 +37,21 @@ interface Props {
   yAxisLabel: string
   chartType: ChartType
   styleName: StyleName
-  axisOverrides: AxisStyleOverrides
+  styleOverrides: StyleOverrides
 }
 
-export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, axisOverrides }: Props) {
+export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const s = chartStyles[styleName]
-  const axisColor = axisOverrides.axisColor ?? s.axisColor
-  const axisWidth = axisOverrides.axisWidth ?? s.axisWidth
-  const showGrid = axisOverrides.showGrid ?? s.showGrid
-  const xTitleSize = axisOverrides.xTitleSize ?? s.fontSize
-  const yTitleSize = axisOverrides.yTitleSize ?? s.fontSize
-  const xTickSize = axisOverrides.xTickSize ?? s.tickFontSize
-  const yTickSize = axisOverrides.yTickSize ?? s.tickFontSize
+  const axisColor = styleOverrides.axisColor ?? s.axisColor
+  const axisWidth = styleOverrides.axisWidth ?? s.axisWidth
+  const showGrid = styleOverrides.showGrid ?? s.showGrid
+  const xTitleSize = styleOverrides.xTitleSize ?? s.fontSize
+  const yTitleSize = styleOverrides.yTitleSize ?? s.fontSize
+  const xTickSize = styleOverrides.xTickSize ?? s.tickFontSize
+  const yTickSize = styleOverrides.yTickSize ?? s.tickFontSize
   const seriesLabel = (col: string) => seriesNames[col]?.trim() || formatAxisLabel(col)
+  const seriesColor = (col: string, i: number) => styleOverrides.seriesColors?.[col] ?? s.colors[i % s.colors.length]
 
   const isNumericX = data.length > 0 && typeof data[0][xCol] === 'number'
   const zoomEnabled = isNumericX && chartType !== 'bar'
@@ -107,7 +108,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   // Independent {x, y} pairs per series for scatter charts
   const scatterSeries = yCols.map((col, i) => ({
     key: col,
-    color: s.colors[i % s.colors.length],
+    color: seriesColor(col, i),
     data: data
       .map(row => {
         const point: Record<string, unknown> = { x: row[xCol], y: Number(row[col]) }
@@ -206,7 +207,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               key={col}
               dataKey={col}
               name={seriesLabel(col)}
-              fill={s.colors[i % s.colors.length]}
+              fill={seriesColor(col, i)}
               radius={[s.barRadius, s.barRadius, 0, 0]}
             >
               {hasError(col) && (
@@ -243,7 +244,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         <Tooltip />
         {legend}
         {yCols.map((col, i) => {
-          const color = s.colors[i % s.colors.length]
+          const color = seriesColor(col, i)
           const showDots = chartType !== 'lineOnly'
           return (
             <Line

@@ -2,7 +2,7 @@ export type StyleName = 'Nature' | 'ACS' | 'Clean'
 
 // User-adjustable overrides applied on top of a base ChartStyle.
 // Undefined fields fall back to the base style's values.
-export interface AxisStyleOverrides {
+export interface StyleOverrides {
   xTitleSize?: number
   yTitleSize?: number
   xTickSize?: number
@@ -10,6 +10,8 @@ export interface AxisStyleOverrides {
   axisWidth?: number
   axisColor?: string
   showGrid?: boolean
+  // Per-series curve/marker colors, keyed by the Y column name.
+  seriesColors?: Record<string, string>
 }
 
 export interface ChartMargin {

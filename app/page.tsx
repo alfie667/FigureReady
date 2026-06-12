@@ -10,7 +10,7 @@ import Card from '@/components/Card'
 import EmptyState from '@/components/EmptyState'
 import Sidebar, { type NavStep } from '@/components/Sidebar'
 import TopBar from '@/components/TopBar'
-import { chartStyles, type StyleName, type AxisStyleOverrides } from '@/lib/chartStyles'
+import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
@@ -26,7 +26,7 @@ export default function Home() {
   const [errorCols, setErrorCols] = useState<Record<string, string>>({})
   const [xAxisLabel, setXAxisLabel] = useState('')
   const [yAxisLabel, setYAxisLabel] = useState('')
-  const [axisOverrides, setAxisOverrides] = useState<AxisStyleOverrides>({})
+  const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
     setColumns(cols)
@@ -46,7 +46,7 @@ export default function Home() {
     setErrorCols(initialErrorCols)
     setXAxisLabel('')
     setYAxisLabel('')
-    setAxisOverrides({})
+    setStyleOverrides({})
   }
 
   const reset = () => {
@@ -58,7 +58,7 @@ export default function Home() {
     setErrorCols({})
     setXAxisLabel('')
     setYAxisLabel('')
-    setAxisOverrides({})
+    setStyleOverrides({})
   }
 
   const ready = xCol && yCols.length > 0 && data.length > 0
@@ -158,8 +158,10 @@ export default function Home() {
                 >
                   <StyleEditor
                     baseStyle={chartStyles[styleName]}
-                    overrides={axisOverrides}
-                    onChange={setAxisOverrides}
+                    overrides={styleOverrides}
+                    onChange={setStyleOverrides}
+                    yCols={yCols}
+                    seriesNames={seriesNames}
                   />
                 </Card>
               )}
@@ -187,7 +189,7 @@ export default function Home() {
                     yAxisLabel={yAxisLabel}
                     chartType={chartType}
                     styleName={styleName}
-                    axisOverrides={axisOverrides}
+                    styleOverrides={styleOverrides}
                   />
                 ) : (
                   <EmptyState />
