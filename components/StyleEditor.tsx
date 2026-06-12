@@ -17,7 +17,7 @@ function NumberField({
   onChange: (value: number) => void
 }) {
   return (
-    <div className="flex-1 min-w-[140px]">
+    <div className="min-w-0">
       <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
       <div className="flex items-center gap-2">
         <input
@@ -27,9 +27,9 @@ function NumberField({
           step={step}
           value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 accent-blue-600"
+          className="flex-1 min-w-0 accent-blue-600"
         />
-        <span className="w-9 text-xs text-slate-500 text-right tabular-nums">{value}</span>
+        <span className="w-9 text-xs text-slate-500 text-right tabular-nums shrink-0">{value}</span>
       </div>
     </div>
   )
@@ -62,26 +62,26 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <NumberField label="Taille titre axe X" value={xTitleSize} min={8} max={24} onChange={(v) => set('xTitleSize', v)} />
         <NumberField label="Taille titre axe Y" value={yTitleSize} min={8} max={24} onChange={(v) => set('yTitleSize', v)} />
       </div>
 
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <NumberField label="Taille graduations axe X" value={xTickSize} min={6} max={18} onChange={(v) => set('xTickSize', v)} />
         <NumberField label="Taille graduations axe Y" value={yTickSize} min={6} max={18} onChange={(v) => set('yTickSize', v)} />
       </div>
 
-      <div className="flex flex-wrap gap-4 items-end">
+      <div className="grid grid-cols-2 gap-4 items-end">
         <NumberField label="Épaisseur des axes" value={axisWidth} min={0.5} max={4} step={0.5} onChange={(v) => set('axisWidth', v)} />
-        <div className="flex-1 min-w-[140px]">
+        <div className="min-w-0">
           <label className="block text-xs font-medium text-slate-500 mb-1.5">Couleur des axes</label>
           <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-1.5 bg-white">
             <input
               type="color"
               value={axisColor}
               onChange={(e) => set('axisColor', e.target.value)}
-              className="w-7 h-7 rounded cursor-pointer border-none p-0 bg-transparent"
+              className="w-7 h-7 rounded cursor-pointer border-none p-0 bg-transparent shrink-0"
             />
             <span className="text-xs text-slate-500 tabular-nums">{axisColor}</span>
           </div>
