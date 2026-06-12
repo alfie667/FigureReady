@@ -1,5 +1,17 @@
 export type StyleName = 'Nature' | 'ACS' | 'Clean'
 
+// User-adjustable overrides applied on top of a base ChartStyle.
+// Undefined fields fall back to the base style's values.
+export interface AxisStyleOverrides {
+  xTitleSize?: number
+  yTitleSize?: number
+  xTickSize?: number
+  yTickSize?: number
+  axisWidth?: number
+  axisColor?: string
+  showGrid?: boolean
+}
+
 export interface ChartMargin {
   top: number
   right: number

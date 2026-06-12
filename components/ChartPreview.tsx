@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
-import type { StyleName } from '@/lib/chartStyles'
+import type { StyleName, AxisStyleOverrides } from '@/lib/chartStyles'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks } from '@/lib/niceTicks'
 
@@ -37,11 +37,19 @@ interface Props {
   yAxisLabel: string
   chartType: ChartType
   styleName: StyleName
+  axisOverrides: AxisStyleOverrides
 }
 
-export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName }: Props) {
+export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, axisOverrides }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const s = chartStyles[styleName]
+  const axisColor = axisOverrides.axisColor ?? s.axisColor
+  const axisWidth = axisOverrides.axisWidth ?? s.axisWidth
+  const showGrid = axisOverrides.showGrid ?? s.showGrid
+  const xTitleSize = axisOverrides.xTitleSize ?? s.fontSize
+  const yTitleSize = axisOverrides.yTitleSize ?? s.fontSize
+  const xTickSize = axisOverrides.xTickSize ?? s.tickFontSize
+  const yTickSize = axisOverrides.yTickSize ?? s.tickFontSize
   const seriesLabel = (col: string) => seriesNames[col]?.trim() || formatAxisLabel(col)
 
   const isNumericX = data.length > 0 && typeof data[0][xCol] === 'number'
@@ -120,18 +128,20 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const xTicks = xValues.length > 0 ? getNiceTicks(Math.min(...xValues), Math.max(...xValues)) : undefined
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
 
-  const tickStyle = { fontSize: s.tickFontSize, fontFamily: s.fontFamily, fill: s.axisColor }
-  const axisLine = { stroke: s.axisColor, strokeWidth: s.axisWidth }
+  const xTickStyle = { fontSize: xTickSize, fontFamily: s.fontFamily, fill: axisColor }
+  const yTickStyle = { fontSize: yTickSize, fontFamily: s.fontFamily, fill: axisColor }
+  const axisLine = { stroke: axisColor, strokeWidth: axisWidth }
   const margin = s.margin
-  const labelStyle = { fontFamily: s.fontFamily, fontSize: s.fontSize, fontWeight: s.labelFontWeight, fill: s.axisColor }
-  const legendStyle = { fontFamily: s.fontFamily, fontSize: s.tickFontSize, color: s.axisColor }
+  const xLabelStyle = { fontFamily: s.fontFamily, fontSize: xTitleSize, fontWeight: s.labelFontWeight, fill: axisColor }
+  const yLabelStyle = { fontFamily: s.fontFamily, fontSize: yTitleSize, fontWeight: s.labelFontWeight, fill: axisColor }
+  const legendStyle = { fontFamily: s.fontFamily, fontSize: s.tickFontSize, color: axisColor }
 
-  const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, style: labelStyle }
+  const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, style: xLabelStyle }
   const yLabelText = yAxisLabel.trim() || (yCols.length === 1 ? formatAxisLabel(yCols[0]) : '')
   const yLabel = yLabelText
-    ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, style: labelStyle }
+    ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, style: yLabelStyle }
     : undefined
-  const grid = s.showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
+  const grid = showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
   const legend = yCols.length > 1
     ? <Legend verticalAlign="top" align="center" height={36} wrapperStyle={legendStyle} />
     : null
@@ -155,7 +165,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
             type={isNumericX ? 'number' : 'category'}
             domain={xDomain}
             ticks={xTicks}
-            tick={tickStyle}
+            tick={xTickStyle}
             axisLine={axisLine}
             tickLine={axisLine}
             label={xLabel}
@@ -164,7 +174,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           <YAxis
             dataKey="y"
             type="number"
-            tick={tickStyle}
+            tick={yTickStyle}
             axisLine={axisLine}
             tickLine={axisLine}
             label={yLabel}
@@ -174,7 +184,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           {scatterSeries.map(series => (
             <Scatter key={series.key} data={series.data} name={seriesLabel(series.key)} fill={series.color}>
               {hasError(series.key) && (
-                <ErrorBar dataKey="error" width={4} strokeWidth={s.axisWidth} stroke={s.axisColor} direction="y" />
+                <ErrorBar dataKey="error" width={4} strokeWidth={axisWidth} stroke={axisColor} direction="y" />
               )}
             </Scatter>
           ))}
@@ -187,8 +197,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
       return (
         <BarChart data={processedData} margin={margin}>
           {grid}
-          <XAxis dataKey="x" tick={tickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} />
-          <YAxis tick={tickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+          <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} />
+          <YAxis tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
           <Tooltip />
           {legend}
           {yCols.map((col, i) => (
@@ -200,7 +210,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               radius={[s.barRadius, s.barRadius, 0, 0]}
             >
               {hasError(col) && (
-                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={s.axisWidth} stroke={s.axisColor} direction="y" />
+                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={axisWidth} stroke={axisColor} direction="y" />
               )}
             </Bar>
           ))}
@@ -223,13 +233,13 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           type={isNumericX ? 'number' : 'category'}
           domain={xDomain}
           ticks={xTicks}
-          tick={tickStyle}
+          tick={xTickStyle}
           axisLine={axisLine}
           tickLine={axisLine}
           label={xLabel}
           allowDataOverflow
         />
-        <YAxis tick={tickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+        <YAxis tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
         <Tooltip />
         {legend}
         {yCols.map((col, i) => {
@@ -248,7 +258,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               connectNulls
             >
               {hasError(col) && (
-                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={s.axisWidth} stroke={s.axisColor} direction="y" />
+                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={axisWidth} stroke={axisColor} direction="y" />
               )}
             </Line>
           )

@@ -4,12 +4,13 @@ import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
 import StyleSelector from '@/components/StyleSelector'
+import StyleEditor from '@/components/StyleEditor'
 import ChartPreview from '@/components/ChartPreview'
 import Card from '@/components/Card'
 import EmptyState from '@/components/EmptyState'
 import Sidebar, { type NavStep } from '@/components/Sidebar'
 import TopBar from '@/components/TopBar'
-import type { StyleName } from '@/lib/chartStyles'
+import { chartStyles, type StyleName, type AxisStyleOverrides } from '@/lib/chartStyles'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
@@ -25,6 +26,7 @@ export default function Home() {
   const [errorCols, setErrorCols] = useState<Record<string, string>>({})
   const [xAxisLabel, setXAxisLabel] = useState('')
   const [yAxisLabel, setYAxisLabel] = useState('')
+  const [axisOverrides, setAxisOverrides] = useState<AxisStyleOverrides>({})
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
     setColumns(cols)
@@ -44,6 +46,7 @@ export default function Home() {
     setErrorCols(initialErrorCols)
     setXAxisLabel('')
     setYAxisLabel('')
+    setAxisOverrides({})
   }
 
   const reset = () => {
@@ -55,6 +58,7 @@ export default function Home() {
     setErrorCols({})
     setXAxisLabel('')
     setYAxisLabel('')
+    setAxisOverrides({})
   }
 
   const ready = xCol && yCols.length > 0 && data.length > 0
@@ -140,6 +144,25 @@ export default function Home() {
                   </div>
                 </Card>
               )}
+
+              {ready && (
+                <Card
+                  id="style"
+                  title="Style Editor"
+                  icon={
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+                    </svg>
+                  }
+                >
+                  <StyleEditor
+                    baseStyle={chartStyles[styleName]}
+                    overrides={axisOverrides}
+                    onChange={setAxisOverrides}
+                  />
+                </Card>
+              )}
             </div>
 
             <div className="lg:sticky lg:top-6">
@@ -164,6 +187,7 @@ export default function Home() {
                     yAxisLabel={yAxisLabel}
                     chartType={chartType}
                     styleName={styleName}
+                    axisOverrides={axisOverrides}
                   />
                 ) : (
                   <EmptyState />
