@@ -9,14 +9,17 @@ interface Props {
   errorCols: Record<string, string>
   xAxisLabel: string
   yAxisLabel: string
+  seriesColors: Record<string, string>
+  defaultColors: string[]
   onChange: (x: string, yCols: string[]) => void
   onSeriesNamesChange: (names: Record<string, string>) => void
   onErrorColsChange: (cols: Record<string, string>) => void
   onXAxisLabelChange: (label: string) => void
   onYAxisLabelChange: (label: string) => void
+  onSeriesColorsChange: (colors: Record<string, string>) => void
 }
 
-export default function ColumnSelector({ columns, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, onChange, onSeriesNamesChange, onErrorColsChange, onXAxisLabelChange, onYAxisLabelChange }: Props) {
+export default function ColumnSelector({ columns, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, seriesColors, defaultColors, onChange, onSeriesNamesChange, onErrorColsChange, onXAxisLabelChange, onYAxisLabelChange, onSeriesColorsChange }: Props) {
   // Columns are partitioned by name so the Y axis list and the error column
   // list never overlap: error-like columns ("Error", "SD"...) only show up
   // as error candidates, everything else is a Y candidate.
@@ -103,8 +106,15 @@ export default function ColumnSelector({ columns, xCol, yCols, seriesNames, erro
         <div className="pt-1 border-t border-slate-100">
           <p className="text-xs font-semibold text-slate-600 mt-3 mb-2">Séries</p>
           <div className="space-y-2">
-            {yCols.map(col => (
+            {yCols.map((col, i) => (
               <div key={col} className="flex flex-wrap items-center gap-2">
+                <input
+                  type="color"
+                  value={seriesColors[col] ?? defaultColors[i % defaultColors.length]}
+                  onChange={(e) => onSeriesColorsChange({ ...seriesColors, [col]: e.target.value })}
+                  title={`Couleur — ${col}`}
+                  className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 p-0 bg-transparent shrink-0"
+                />
                 {yCols.length > 1 && (
                   <input
                     type="text"

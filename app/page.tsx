@@ -131,11 +131,14 @@ export default function Home() {
                       errorCols={errorCols}
                       xAxisLabel={xAxisLabel}
                       yAxisLabel={yAxisLabel}
+                      seriesColors={styleOverrides.seriesColors ?? {}}
+                      defaultColors={chartStyles[styleName].colors}
                       onChange={(x, y) => { setXCol(x); setYCols(y) }}
                       onSeriesNamesChange={setSeriesNames}
                       onErrorColsChange={setErrorCols}
                       onXAxisLabelChange={setXAxisLabel}
                       onYAxisLabelChange={setYAxisLabel}
+                      onSeriesColorsChange={(colors) => setStyleOverrides({ ...styleOverrides, seriesColors: colors })}
                     />
                     <div className="flex flex-wrap gap-6">
                       <ChartTypeSelector value={chartType} onChange={setChartType} />
@@ -160,8 +163,6 @@ export default function Home() {
                     baseStyle={chartStyles[styleName]}
                     overrides={styleOverrides}
                     onChange={setStyleOverrides}
-                    yCols={yCols}
-                    seriesNames={seriesNames}
                   />
                 </Card>
               )}
