@@ -1,6 +1,6 @@
 export default function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-24 px-6">
+    <div className="w-full max-w-2xl mx-auto aspect-[4/3] flex flex-col items-center justify-center text-center rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10">
       <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center mb-4">
         <svg className="w-7 h-7 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -8,7 +8,7 @@ export default function EmptyState() {
         </svg>
       </div>
       <p className="text-sm font-medium text-slate-600">Aucune figure à afficher</p>
-      <p className="text-xs text-slate-400 mt-1 max-w-[240px]">
+      <p className="text-xs text-slate-400 mt-1 max-w-[260px]">
         Importez un fichier .xlsx et configurez vos colonnes pour générer votre figure
       </p>
     </div>
