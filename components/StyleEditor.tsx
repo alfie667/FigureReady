@@ -66,6 +66,7 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
   const axisWidth = overrides.axisWidth ?? baseStyle.axisWidth
   const axisColor = overrides.axisColor ?? baseStyle.axisColor
   const showGrid = overrides.showGrid ?? baseStyle.showGrid
+  const boldLabels = overrides.boldLabels ?? false
 
   return (
     <div className="space-y-4">
@@ -102,6 +103,16 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
           className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
         />
         Afficher la grille
+      </label>
+
+      <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={boldLabels}
+          onChange={(e) => set('boldLabels', e.target.checked)}
+          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+        />
+        Texte en gras (titres et graduations)
       </label>
     </div>
   )

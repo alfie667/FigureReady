@@ -10,6 +10,8 @@ export interface StyleOverrides {
   axisWidth?: number
   axisColor?: string
   showGrid?: boolean
+  // Bold axis titles and tick labels.
+  boldLabels?: boolean
   // Per-series curve/marker colors, keyed by the Y column name.
   seriesColors?: Record<string, string>
 }

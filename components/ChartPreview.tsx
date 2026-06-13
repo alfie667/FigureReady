@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
+import type { ChartAnnotation } from '@/lib/annotations'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks } from '@/lib/niceTicks'
 
@@ -17,6 +18,15 @@ function DownloadIcon() {
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
         d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5M12 16.5V3" />
+    </svg>
+  )
+}
+
+function TextIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M4.5 6.75h15M5.25 12h13.5M6 17.25h12" />
     </svg>
   )
 }
@@ -38,10 +48,14 @@ interface Props {
   chartType: ChartType
   styleName: StyleName
   styleOverrides: StyleOverrides
+  annotations: ChartAnnotation[]
+  onAnnotationsChange: (annotations: ChartAnnotation[]) => void
 }
 
-export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides }: Props) {
+export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides, annotations, onAnnotationsChange }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const draggingRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
   const s = chartStyles[styleName]
   const axisColor = styleOverrides.axisColor ?? s.axisColor
   const axisWidth = styleOverrides.axisWidth ?? s.axisWidth
@@ -129,12 +143,15 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const xTicks = xValues.length > 0 ? getNiceTicks(Math.min(...xValues), Math.max(...xValues)) : undefined
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
 
-  const xTickStyle = { fontSize: xTickSize, fontFamily: s.fontFamily, fill: axisColor }
-  const yTickStyle = { fontSize: yTickSize, fontFamily: s.fontFamily, fill: axisColor }
+  const boldLabels = styleOverrides.boldLabels ?? false
+  const tickFontWeight = boldLabels ? 'bold' : 'normal'
+  const titleFontWeight = boldLabels ? 'bold' : s.labelFontWeight
+  const xTickStyle = { fontSize: xTickSize, fontFamily: s.fontFamily, fill: axisColor, fontWeight: tickFontWeight }
+  const yTickStyle = { fontSize: yTickSize, fontFamily: s.fontFamily, fill: axisColor, fontWeight: tickFontWeight }
   const axisLine = { stroke: axisColor, strokeWidth: axisWidth }
   const margin = s.margin
-  const xLabelStyle = { fontFamily: s.fontFamily, fontSize: xTitleSize, fontWeight: s.labelFontWeight, fill: axisColor }
-  const yLabelStyle = { fontFamily: s.fontFamily, fontSize: yTitleSize, fontWeight: s.labelFontWeight, fill: axisColor }
+  const xLabelStyle = { fontFamily: s.fontFamily, fontSize: xTitleSize, fontWeight: titleFontWeight, fill: axisColor }
+  const yLabelStyle = { fontFamily: s.fontFamily, fontSize: yTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const legendStyle = { fontFamily: s.fontFamily, fontSize: s.tickFontSize, color: axisColor }
 
   const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, style: xLabelStyle }
@@ -269,6 +286,53 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     )
   }
 
+  const addAnnotation = () => {
+    const annotation: ChartAnnotation = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ann-${Date.now()}`,
+      text: 'Texte',
+      xPct: 50,
+      yPct: 50,
+    }
+    onAnnotationsChange([...annotations, annotation])
+    setEditingId(annotation.id)
+  }
+
+  const updateAnnotation = (id: string, changes: Partial<ChartAnnotation>) => {
+    onAnnotationsChange(annotations.map(a => (a.id === id ? { ...a, ...changes } : a)))
+  }
+
+  const removeAnnotation = (id: string) => {
+    onAnnotationsChange(annotations.filter(a => a.id !== id))
+  }
+
+  const handleAnnotationPointerDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
+    if (editingId === id) return
+    const container = chartRef.current
+    const annotation = annotations.find(a => a.id === id)
+    if (!container || !annotation) return
+    const rect = container.getBoundingClientRect()
+    draggingRef.current = {
+      id,
+      offsetX: e.clientX - (rect.left + (annotation.xPct / 100) * rect.width),
+      offsetY: e.clientY - (rect.top + (annotation.yPct / 100) * rect.height),
+    }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+
+  const handleAnnotationPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = draggingRef.current
+    const container = chartRef.current
+    if (!drag || !container) return
+    const rect = container.getBoundingClientRect()
+    const xPct = Math.min(100, Math.max(0, ((e.clientX - drag.offsetX - rect.left) / rect.width) * 100))
+    const yPct = Math.min(100, Math.max(0, ((e.clientY - drag.offsetY - rect.top) / rect.height) * 100))
+    updateAnnotation(drag.id, { xPct, yPct })
+  }
+
+  const handleAnnotationPointerUp = () => {
+    draggingRef.current = null
+  }
+
   const exportPNG = async () => {
     if (!chartRef.current) return
     const { toPng } = await import('html-to-image')
@@ -287,6 +351,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     if (!chartRef.current) return
     const svg = chartRef.current.querySelector('svg')
     if (!svg) return
+    const containerRect = chartRef.current.getBoundingClientRect()
+    const svgRect = svg.getBoundingClientRect()
     const clone = svg.cloneNode(true) as SVGSVGElement
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
@@ -294,6 +360,23 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     bg.setAttribute('height', '100%')
     bg.setAttribute('fill', 'white')
     clone.insertBefore(bg, clone.firstChild)
+
+    annotations.forEach(ann => {
+      const xPx = (ann.xPct / 100) * containerRect.width - (svgRect.left - containerRect.left)
+      const yPx = (ann.yPct / 100) * containerRect.height - (svgRect.top - containerRect.top)
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+      text.setAttribute('x', String(xPx))
+      text.setAttribute('y', String(yPx))
+      text.setAttribute('text-anchor', 'middle')
+      text.setAttribute('dominant-baseline', 'middle')
+      text.setAttribute('font-family', s.fontFamily)
+      text.setAttribute('font-size', String(xTickSize))
+      text.setAttribute('fill', axisColor)
+      if (boldLabels) text.setAttribute('font-weight', 'bold')
+      text.textContent = ann.text
+      clone.appendChild(text)
+    })
+
     const svgStr = new XMLSerializer().serializeToString(clone)
     const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
     const url = URL.createObjectURL(blob)
@@ -308,12 +391,55 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     <div className="space-y-4">
       <div
         ref={chartRef}
-        className="bg-white p-6 rounded-lg"
+        className="relative bg-white p-6 rounded-lg"
         style={{ fontFamily: s.fontFamily, cursor: zoomEnabled ? 'crosshair' : 'default' }}
       >
         <ResponsiveContainer width="100%" height={s.chartHeight}>
           {renderChart() as React.ReactElement}
         </ResponsiveContainer>
+        {annotations.map(ann => (
+          <div
+            key={ann.id}
+            className="absolute group select-none"
+            style={{
+              left: `${ann.xPct}%`,
+              top: `${ann.yPct}%`,
+              transform: 'translate(-50%, -50%)',
+              cursor: editingId === ann.id ? 'text' : 'move',
+              touchAction: 'none',
+            }}
+            onPointerDown={(e) => handleAnnotationPointerDown(e, ann.id)}
+            onPointerMove={handleAnnotationPointerMove}
+            onPointerUp={handleAnnotationPointerUp}
+            onDoubleClick={() => setEditingId(ann.id)}
+          >
+            <div
+              contentEditable={editingId === ann.id}
+              suppressContentEditableWarning
+              onBlur={(e) => {
+                const text = e.currentTarget.textContent?.trim() || 'Texte'
+                updateAnnotation(ann.id, { text })
+                setEditingId(null)
+              }}
+              className={`px-1 whitespace-nowrap outline-none ${editingId === ann.id ? 'ring-1 ring-blue-400 rounded' : ''}`}
+              style={{
+                fontFamily: s.fontFamily,
+                fontSize: xTickSize,
+                color: axisColor,
+                fontWeight: boldLabels ? 'bold' : 'normal',
+              }}
+            >
+              {ann.text}
+            </div>
+            <button
+              onClick={() => removeAnnotation(ann.id)}
+              className="absolute -top-2 -right-2 hidden group-hover:flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none"
+              title="Supprimer"
+            >
+              ×
+            </button>
+          </div>
+        ))}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -324,6 +450,13 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            onClick={addAnnotation}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <TextIcon />
+            Ajouter un texte
+          </button>
           {zoomDomain && (
             <button
               onClick={resetZoom}
