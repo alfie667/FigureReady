@@ -11,7 +11,7 @@ import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { formatAxisLabel } from '@/lib/formatLabel'
-import { getNiceTicks } from '@/lib/niceTicks'
+import { getNiceTicks, buildStepTicks } from '@/lib/niceTicks'
 
 function DownloadIcon() {
   return (
@@ -142,16 +142,30 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     : []
   const xRangeMin = styleOverrides.xMin ?? (xValues.length > 0 ? Math.min(...xValues) : undefined)
   const xRangeMax = styleOverrides.xMax ?? (xValues.length > 0 ? Math.max(...xValues) : undefined)
-  const xTicks = xRangeMin !== undefined && xRangeMax !== undefined ? getNiceTicks(xRangeMin, xRangeMax) : undefined
+  const xStep = styleOverrides.xStep
+  const xTicks = xRangeMin !== undefined && xRangeMax !== undefined
+    ? (xStep ? buildStepTicks(xRangeMin, xRangeMax, xStep) : getNiceTicks(xRangeMin, xRangeMax))
+    : undefined
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
 
   // Manual Y axis range; only override Recharts' default domain/overflow
-  // behavior when the user actually sets a bound, otherwise leave it alone
-  // (passing allowDataOverflow unconditionally turns the default [0, 'auto']
-  // domain into a hard floor at 0, clipping negative values).
-  const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean } =
-    styleOverrides.yMin !== undefined || styleOverrides.yMax !== undefined
-      ? { domain: [styleOverrides.yMin ?? 'auto', styleOverrides.yMax ?? 'auto'], allowDataOverflow: true }
+  // behavior when the user actually sets a bound or a fixed step, otherwise
+  // leave it alone (passing allowDataOverflow unconditionally turns the
+  // default [0, 'auto'] domain into a hard floor at 0, clipping negative values).
+  const yMin = styleOverrides.yMin
+  const yMax = styleOverrides.yMax
+  const yStep = styleOverrides.yStep
+  const allYValues = yCols.flatMap(col => data.map(row => Number(row[col]))).filter(v => !isNaN(v))
+  const autoYMin = allYValues.length > 0 ? Math.min(...allYValues) : 0
+  const autoYMax = allYValues.length > 0 ? Math.max(...allYValues) : 1
+  const yTicks = yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined
+  const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean; ticks?: number[] } =
+    yMin !== undefined || yMax !== undefined || yTicks
+      ? {
+          domain: [yTicks ? yTicks[0] : (yMin ?? 'auto'), yTicks ? yTicks[yTicks.length - 1] : (yMax ?? 'auto')],
+          allowDataOverflow: true,
+          ...(yTicks ? { ticks: yTicks } : {}),
+        }
       : {}
 
   const boldLabels = styleOverrides.boldLabels ?? false

@@ -19,6 +19,10 @@ export interface StyleOverrides {
   xMax?: number
   yMin?: number
   yMax?: number
+  // Fixed tick interval ("pas"). When set, the spacing between
+  // graduations stays constant regardless of the chosen range.
+  xStep?: number
+  yStep?: number
 }
 
 export interface ChartMargin {

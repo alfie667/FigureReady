@@ -36,18 +36,20 @@ function NumberField({
 }
 
 function AxisRangeField({
-  label, min, max, onMinChange, onMaxChange,
+  label, min, max, step, onMinChange, onMaxChange, onStepChange,
 }: {
   label: string
   min?: number
   max?: number
+  step?: number
   onMinChange: (value?: number) => void
   onMaxChange: (value?: number) => void
+  onStepChange: (value?: number) => void
 }) {
   const parse = (raw: string) => (raw === '' ? undefined : Number(raw))
   return (
-    <div className="min-w-0">
-      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
+    <div className="min-w-0 space-y-1.5">
+      <label className="block text-xs font-medium text-slate-500">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type="number"
@@ -62,6 +64,17 @@ function AxisRangeField({
           value={max ?? ''}
           placeholder="Auto"
           onChange={(e) => onMaxChange(parse(e.target.value))}
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-slate-400 shrink-0">Pas</span>
+        <input
+          type="number"
+          value={step ?? ''}
+          placeholder="Auto"
+          min={0}
+          onChange={(e) => onStepChange(parse(e.target.value))}
           className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -134,15 +147,19 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
           label="Plage de l'axe X (début → fin)"
           min={overrides.xMin}
           max={overrides.xMax}
+          step={overrides.xStep}
           onMinChange={(v) => set('xMin', v)}
           onMaxChange={(v) => set('xMax', v)}
+          onStepChange={(v) => set('xStep', v)}
         />
         <AxisRangeField
           label="Plage de l'axe Y (début → fin)"
           min={overrides.yMin}
           max={overrides.yMax}
+          step={overrides.yStep}
           onMinChange={(v) => set('yMin', v)}
           onMaxChange={(v) => set('yMax', v)}
+          onStepChange={(v) => set('yStep', v)}
         />
       </div>
 

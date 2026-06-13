@@ -38,3 +38,20 @@ export function getNiceTicks(min: number, max: number, tickCount = 6): number[] 
   }
   return ticks
 }
+
+/**
+ * Returns tick values spaced by a fixed user-defined step, covering
+ * [min, max]. Used so the tick interval stays constant across different
+ * axis ranges, instead of being recomputed by getNiceTicks each time.
+ */
+export function buildStepTicks(min: number, max: number, step: number): number[] {
+  if (!(step > 0)) return getNiceTicks(min, max)
+  if (min > max) [min, max] = [max, min]
+
+  const decimals = Math.max(0, -Math.floor(Math.log10(step)))
+  const ticks: number[] = []
+  for (let v = min; v <= max + step / 2; v += step) {
+    ticks.push(Number(v.toFixed(decimals)))
+  }
+  return ticks
+}
