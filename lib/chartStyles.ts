@@ -14,6 +14,11 @@ export interface StyleOverrides {
   boldLabels?: boolean
   // Per-series curve/marker colors, keyed by the Y column name.
   seriesColors?: Record<string, string>
+  // Manual axis range bounds. Undefined means "auto" (computed from data).
+  xMin?: number
+  xMax?: number
+  yMin?: number
+  yMax?: number
 }
 
 export interface ChartMargin {

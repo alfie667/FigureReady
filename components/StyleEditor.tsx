@@ -35,6 +35,40 @@ function NumberField({
   )
 }
 
+function AxisRangeField({
+  label, min, max, onMinChange, onMaxChange,
+}: {
+  label: string
+  min?: number
+  max?: number
+  onMinChange: (value?: number) => void
+  onMaxChange: (value?: number) => void
+}) {
+  const parse = (raw: string) => (raw === '' ? undefined : Number(raw))
+  return (
+    <div className="min-w-0">
+      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          value={min ?? ''}
+          placeholder="Auto"
+          onChange={(e) => onMinChange(parse(e.target.value))}
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <span className="text-xs text-slate-400 shrink-0">→</span>
+        <input
+          type="number"
+          value={max ?? ''}
+          placeholder="Auto"
+          onChange={(e) => onMaxChange(parse(e.target.value))}
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  )
+}
+
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <div className="min-w-0">
@@ -93,6 +127,23 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
       <div className="grid grid-cols-2 gap-4 items-end">
         <NumberField label="Épaisseur des axes" value={axisWidth} min={0.5} max={4} step={0.5} onChange={(v) => set('axisWidth', v)} />
         <ColorField label="Couleur des axes" value={axisColor} onChange={(v) => set('axisColor', v)} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <AxisRangeField
+          label="Plage de l'axe X (début → fin)"
+          min={overrides.xMin}
+          max={overrides.xMax}
+          onMinChange={(v) => set('xMin', v)}
+          onMaxChange={(v) => set('xMax', v)}
+        />
+        <AxisRangeField
+          label="Plage de l'axe Y (début → fin)"
+          min={overrides.yMin}
+          max={overrides.yMax}
+          onMinChange={(v) => set('yMin', v)}
+          onMaxChange={(v) => set('yMax', v)}
+        />
       </div>
 
       <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">

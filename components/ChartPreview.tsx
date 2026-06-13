@@ -140,8 +140,19 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const xValues = isNumericX
     ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v))
     : []
-  const xTicks = xValues.length > 0 ? getNiceTicks(Math.min(...xValues), Math.max(...xValues)) : undefined
+  const xRangeMin = styleOverrides.xMin ?? (xValues.length > 0 ? Math.min(...xValues) : undefined)
+  const xRangeMax = styleOverrides.xMax ?? (xValues.length > 0 ? Math.max(...xValues) : undefined)
+  const xTicks = xRangeMin !== undefined && xRangeMax !== undefined ? getNiceTicks(xRangeMin, xRangeMax) : undefined
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
+
+  // Manual Y axis range; only override Recharts' default domain/overflow
+  // behavior when the user actually sets a bound, otherwise leave it alone
+  // (passing allowDataOverflow unconditionally turns the default [0, 'auto']
+  // domain into a hard floor at 0, clipping negative values).
+  const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean } =
+    styleOverrides.yMin !== undefined || styleOverrides.yMax !== undefined
+      ? { domain: [styleOverrides.yMin ?? 'auto', styleOverrides.yMax ?? 'auto'], allowDataOverflow: true }
+      : {}
 
   const boldLabels = styleOverrides.boldLabels ?? false
   const tickFontWeight = boldLabels ? 'bold' : 'normal'
@@ -192,6 +203,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           <YAxis
             dataKey="y"
             type="number"
+            {...yDomainProps}
             tick={yTickStyle}
             axisLine={axisLine}
             tickLine={axisLine}
@@ -216,7 +228,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         <BarChart data={processedData} margin={margin}>
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} />
-          <YAxis tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+          <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
           <Tooltip />
           {legend}
           {yCols.map((col, i) => (
@@ -257,7 +269,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           label={xLabel}
           allowDataOverflow
         />
-        <YAxis tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+        <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
         <Tooltip />
         {legend}
         {yCols.map((col, i) => {
