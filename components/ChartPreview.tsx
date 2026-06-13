@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type Key } from 'react'
 import {
   LineChart, Line,
   ScatterChart, Scatter,
@@ -12,6 +12,7 @@ import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks, buildStepTicks } from '@/lib/niceTicks'
+import { renderMarker, type MarkerShape } from '@/lib/markerShapes'
 
 function DownloadIcon() {
   return (
@@ -66,6 +67,17 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const yTickSize = styleOverrides.yTickSize ?? s.tickFontSize
   const seriesLabel = (col: string) => seriesNames[col]?.trim() || formatAxisLabel(col)
   const seriesColor = (col: string, i: number) => styleOverrides.seriesColors?.[col] ?? s.colors[i % s.colors.length]
+  const seriesStrokeWidth = (col: string) => styleOverrides.seriesStrokeWidths?.[col] ?? s.strokeWidth
+  const seriesMarkerSize = (col: string) => styleOverrides.seriesMarkerSizes?.[col] ?? s.dotRadius
+  const seriesMarkerShape = (col: string) => styleOverrides.seriesMarkerShapes?.[col] ?? 'circle'
+
+  // Builds a Recharts dot/shape render-prop for a given marker shape/size/color.
+  // Recharts types this prop as (props: unknown) => Element, so we narrow inside.
+  const markerRenderer = (shape: MarkerShape, size: number, color: string) => (props: unknown) => {
+    const { cx, cy, key } = props as { cx?: number; cy?: number; key?: Key }
+    if (cx === undefined || cy === undefined) return <g key={key} />
+    return renderMarker(cx, cy, shape, size, color, key) ?? <g key={key} />
+  }
 
   const isNumericX = data.length > 0 && typeof data[0][xCol] === 'number'
   const zoomEnabled = isNumericX && chartType !== 'bar'
@@ -177,7 +189,18 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const margin = s.margin
   const xLabelStyle = { fontFamily: s.fontFamily, fontSize: xTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const yLabelStyle = { fontFamily: s.fontFamily, fontSize: yTitleSize, fontWeight: titleFontWeight, fill: axisColor }
-  const legendStyle = { fontFamily: s.fontFamily, fontSize: s.tickFontSize, color: axisColor }
+  const legendFontSize = styleOverrides.legendFontSize ?? s.tickFontSize
+  const legendPosition = styleOverrides.legendPosition ?? 'top'
+  const legendEnabled = (styleOverrides.showLegend ?? yCols.length > 1) && yCols.length > 1
+  const legendStyle = { fontFamily: s.fontFamily, fontSize: legendFontSize, color: axisColor }
+  const legendLayoutProps = legendPosition === 'left' || legendPosition === 'right'
+    ? { layout: 'vertical' as const, verticalAlign: 'middle' as const, align: legendPosition }
+    : { layout: 'horizontal' as const, verticalAlign: legendPosition, align: 'center' as const, height: 36 }
+
+  // Figure size: width drives the container/export width (undefined = fill available
+  // width), height drives both the ResponsiveContainer and the exported image height.
+  const figureWidth = styleOverrides.figureWidth
+  const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
 
   const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, style: xLabelStyle }
   const yLabelText = yAxisLabel.trim() || (yCols.length === 1 ? formatAxisLabel(yCols[0]) : '')
@@ -185,8 +208,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, style: yLabelStyle }
     : undefined
   const grid = showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
-  const legend = yCols.length > 1
-    ? <Legend verticalAlign="top" align="center" height={36} wrapperStyle={legendStyle} />
+  const legend = legendEnabled
+    ? <Legend {...legendLayoutProps} wrapperStyle={legendStyle} />
     : null
   const zoomArea = refLeft !== null && refRight !== null
     ? <ReferenceArea x1={refLeft} x2={refRight} strokeOpacity={0.3} fill={s.colors[0]} fillOpacity={0.12} />
@@ -225,13 +248,23 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           />
           <Tooltip cursor={{ strokeDasharray: '3 3' }} />
           {legend}
-          {scatterSeries.map(series => (
-            <Scatter key={series.key} data={series.data} name={seriesLabel(series.key)} fill={series.color}>
-              {hasError(series.key) && (
-                <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />
-              )}
-            </Scatter>
-          ))}
+          {scatterSeries.map(series => {
+            const markerSize = seriesMarkerSize(series.key)
+            const markerShape = seriesMarkerShape(series.key)
+            return (
+              <Scatter
+                key={series.key}
+                data={series.data}
+                name={seriesLabel(series.key)}
+                fill={series.color}
+                shape={markerRenderer(markerShape, markerSize, series.color)}
+              >
+                {hasError(series.key) && (
+                  <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />
+                )}
+              </Scatter>
+            )
+          })}
           {zoomArea}
         </ScatterChart>
       )
@@ -289,6 +322,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         {yCols.map((col, i) => {
           const color = seriesColor(col, i)
           const showDots = chartType !== 'lineOnly'
+          const markerSize = seriesMarkerSize(col)
+          const markerShape = seriesMarkerShape(col)
           return (
             <Line
               key={col}
@@ -296,9 +331,9 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               dataKey={col}
               name={seriesLabel(col)}
               stroke={color}
-              strokeWidth={s.strokeWidth}
-              dot={showDots ? { r: s.dotRadius, fill: color, stroke: 'none' } : false}
-              activeDot={{ r: s.dotRadius + 2 }}
+              strokeWidth={seriesStrokeWidth(col)}
+              dot={showDots ? markerRenderer(markerShape, markerSize, color) : false}
+              activeDot={markerRenderer(markerShape, markerSize + 2, color)}
               connectNulls
             >
               {hasError(col) && (
@@ -415,12 +450,17 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
 
   return (
     <div className="space-y-4">
+      <div className="overflow-x-auto">
       <div
         ref={chartRef}
         className="relative bg-white p-6 rounded-lg"
-        style={{ fontFamily: s.fontFamily, cursor: zoomEnabled ? 'crosshair' : 'default' }}
+        style={{
+          fontFamily: s.fontFamily,
+          cursor: zoomEnabled ? 'crosshair' : 'default',
+          width: figureWidth ? `${figureWidth}px` : '100%',
+        }}
       >
-        <ResponsiveContainer width="100%" height={s.chartHeight}>
+        <ResponsiveContainer width="100%" height={figureHeight}>
           {renderChart() as React.ReactElement}
         </ResponsiveContainer>
         {annotations.map(ann => (
@@ -466,6 +506,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
             </button>
           </div>
         ))}
+      </div>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

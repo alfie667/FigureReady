@@ -135,14 +135,23 @@ export default function Home() {
                       errorCols={errorCols}
                       xAxisLabel={xAxisLabel}
                       yAxisLabel={yAxisLabel}
+                      chartType={chartType}
                       seriesColors={styleOverrides.seriesColors ?? {}}
+                      seriesStrokeWidths={styleOverrides.seriesStrokeWidths ?? {}}
+                      seriesMarkerSizes={styleOverrides.seriesMarkerSizes ?? {}}
+                      seriesMarkerShapes={styleOverrides.seriesMarkerShapes ?? {}}
                       defaultColors={chartStyles[styleName].colors}
+                      defaultStrokeWidth={chartStyles[styleName].strokeWidth}
+                      defaultMarkerSize={chartStyles[styleName].dotRadius}
                       onChange={(x, y) => { setXCol(x); setYCols(y) }}
                       onSeriesNamesChange={setSeriesNames}
                       onErrorColsChange={setErrorCols}
                       onXAxisLabelChange={setXAxisLabel}
                       onYAxisLabelChange={setYAxisLabel}
                       onSeriesColorsChange={(colors) => setStyleOverrides({ ...styleOverrides, seriesColors: colors })}
+                      onSeriesStrokeWidthsChange={(widths) => setStyleOverrides({ ...styleOverrides, seriesStrokeWidths: widths })}
+                      onSeriesMarkerSizesChange={(sizes) => setStyleOverrides({ ...styleOverrides, seriesMarkerSizes: sizes })}
+                      onSeriesMarkerShapesChange={(shapes) => setStyleOverrides({ ...styleOverrides, seriesMarkerShapes: shapes })}
                     />
                     <div className="flex flex-wrap gap-6">
                       <ChartTypeSelector value={chartType} onChange={setChartType} />
@@ -166,6 +175,7 @@ export default function Home() {
                   <StyleEditor
                     baseStyle={chartStyles[styleName]}
                     overrides={styleOverrides}
+                    hasMultipleSeries={yCols.length > 1}
                     onChange={setStyleOverrides}
                   />
                 </Card>

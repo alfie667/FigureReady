@@ -1,10 +1,24 @@
-import type { ChartStyle, StyleOverrides } from '@/lib/chartStyles'
+import type { ChartStyle, LegendPosition, StyleOverrides } from '@/lib/chartStyles'
 
 interface Props {
   baseStyle: ChartStyle
   overrides: StyleOverrides
+  hasMultipleSeries: boolean
   onChange: (overrides: StyleOverrides) => void
 }
+
+const legendPositionOptions: { value: LegendPosition; label: string }[] = [
+  { value: 'top', label: 'Haut' },
+  { value: 'bottom', label: 'Bas' },
+  { value: 'left', label: 'Gauche' },
+  { value: 'right', label: 'Droite' },
+]
+
+const figurePresets: { label: string; width: number; height: number }[] = [
+  { label: 'Small', width: 450, height: 320 },
+  { label: 'Medium', width: 650, height: 450 },
+  { label: 'Large', width: 900, height: 600 },
+]
 
 function NumberField({
   label, value, min, max, step = 1, onChange,
@@ -82,6 +96,56 @@ function AxisRangeField({
   )
 }
 
+function SelectField<T extends string>({
+  label, value, options, onChange,
+}: {
+  label: string
+  value: T
+  options: { value: T; label: string }[]
+  onChange: (value: T) => void
+}) {
+  return (
+    <div className="min-w-0">
+      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function DimensionField({
+  label, value, placeholder, onChange,
+}: {
+  label: string
+  value?: number
+  placeholder: number
+  onChange: (value?: number) => void
+}) {
+  return (
+    <div className="min-w-0">
+      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          value={value ?? ''}
+          placeholder={String(placeholder)}
+          min={1}
+          onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <span className="text-xs text-slate-400 shrink-0">px</span>
+      </div>
+    </div>
+  )
+}
+
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <div className="min-w-0">
@@ -99,12 +163,17 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
   )
 }
 
-export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
+export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
   const set = <K extends keyof StyleOverrides>(key: K, value: StyleOverrides[K]) => {
     onChange({ ...overrides, [key]: value })
   }
 
-  const reset = () => onChange({ seriesColors: overrides.seriesColors })
+  const reset = () => onChange({
+    seriesColors: overrides.seriesColors,
+    seriesStrokeWidths: overrides.seriesStrokeWidths,
+    seriesMarkerSizes: overrides.seriesMarkerSizes,
+    seriesMarkerShapes: overrides.seriesMarkerShapes,
+  })
 
   const xTitleSize = overrides.xTitleSize ?? baseStyle.fontSize
   const yTitleSize = overrides.yTitleSize ?? baseStyle.fontSize
@@ -114,6 +183,9 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
   const axisColor = overrides.axisColor ?? baseStyle.axisColor
   const showGrid = overrides.showGrid ?? baseStyle.showGrid
   const boldLabels = overrides.boldLabels ?? false
+  const legendFontSize = overrides.legendFontSize ?? baseStyle.tickFontSize
+  const legendPosition = overrides.legendPosition ?? 'top'
+  const showLegend = overrides.showLegend ?? hasMultipleSeries
 
   return (
     <div className="space-y-4">
@@ -182,6 +254,46 @@ export default function StyleEditor({ baseStyle, overrides, onChange }: Props) {
         />
         Texte en gras (titres et graduations)
       </label>
+
+      <div className="pt-2 border-t border-slate-100 space-y-4">
+        <p className="text-xs font-semibold text-slate-600">Légende</p>
+
+        <div className="grid grid-cols-2 gap-4 items-end">
+          <NumberField label="Taille police légende" value={legendFontSize} min={8} max={18} onChange={(v) => set('legendFontSize', v)} />
+          <SelectField label="Position" value={legendPosition} options={legendPositionOptions} onChange={(v) => set('legendPosition', v)} />
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showLegend}
+            onChange={(e) => set('showLegend', e.target.checked)}
+            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
+          Afficher la légende
+        </label>
+      </div>
+
+      <div className="pt-2 border-t border-slate-100 space-y-3">
+        <p className="text-xs font-semibold text-slate-600">Figure</p>
+
+        <div className="flex flex-wrap gap-2">
+          {figurePresets.map(preset => (
+            <button
+              key={preset.label}
+              onClick={() => onChange({ ...overrides, figureWidth: preset.width, figureHeight: preset.height })}
+              className="px-3 py-1.5 border border-slate-200 rounded-full text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              {preset.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <DimensionField label="Largeur" value={overrides.figureWidth} placeholder={700} onChange={(v) => set('figureWidth', v)} />
+          <DimensionField label="Hauteur" value={overrides.figureHeight} placeholder={baseStyle.chartHeight} onChange={(v) => set('figureHeight', v)} />
+        </div>
+      </div>
     </div>
   )
 }

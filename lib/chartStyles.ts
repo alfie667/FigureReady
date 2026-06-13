@@ -1,4 +1,7 @@
+import type { MarkerShape } from './markerShapes'
+
 export type StyleName = 'Nature' | 'ACS' | 'Clean'
+export type LegendPosition = 'top' | 'bottom' | 'left' | 'right'
 
 // User-adjustable overrides applied on top of a base ChartStyle.
 // Undefined fields fall back to the base style's values.
@@ -23,6 +26,17 @@ export interface StyleOverrides {
   // graduations stays constant regardless of the chosen range.
   xStep?: number
   yStep?: number
+  // Per-series line width, marker size and marker shape, keyed by the Y column name.
+  seriesStrokeWidths?: Record<string, number>
+  seriesMarkerSizes?: Record<string, number>
+  seriesMarkerShapes?: Record<string, MarkerShape>
+  // Legend.
+  legendFontSize?: number
+  legendPosition?: LegendPosition
+  showLegend?: boolean
+  // Figure size. Undefined means "auto" (fills the available width, default height).
+  figureWidth?: number
+  figureHeight?: number
 }
 
 export interface ChartMargin {
