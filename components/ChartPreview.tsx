@@ -202,7 +202,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           {scatterSeries.map(series => (
             <Scatter key={series.key} data={series.data} name={seriesLabel(series.key)} fill={series.color}>
               {hasError(series.key) && (
-                <ErrorBar dataKey="error" width={4} strokeWidth={axisWidth} stroke={axisColor} direction="y" />
+                <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />
               )}
             </Scatter>
           ))}
@@ -228,7 +228,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               radius={[s.barRadius, s.barRadius, 0, 0]}
             >
               {hasError(col) && (
-                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={axisWidth} stroke={axisColor} direction="y" />
+                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />
               )}
             </Bar>
           ))}
@@ -276,7 +276,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               connectNulls
             >
               {hasError(col) && (
-                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={axisWidth} stroke={axisColor} direction="y" />
+                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />
               )}
             </Line>
           )
