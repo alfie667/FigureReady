@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { fontOptions, type ChartStyle, type LegendPosition, type StyleOverrides } from '@/lib/chartStyles'
+import { saveDefaultStyle } from '@/lib/styleStorage'
 
 interface Props {
   baseStyle: ChartStyle
@@ -164,8 +166,16 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
 }
 
 export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
+  const [saved, setSaved] = useState(false)
+
   const set = <K extends keyof StyleOverrides>(key: K, value: StyleOverrides[K]) => {
     onChange({ ...overrides, [key]: value })
+  }
+
+  const saveAsDefault = () => {
+    saveDefaultStyle(overrides)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
   }
 
   const reset = () => onChange({
@@ -192,12 +202,20 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-slate-600">Axes</p>
-        <button
-          onClick={reset}
-          className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          Réinitialiser
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={saveAsDefault}
+            className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            {saved ? 'Enregistré !' : 'Enregistrer par défaut'}
+          </button>
+          <button
+            onClick={reset}
+            className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            Réinitialiser
+          </button>
+        </div>
       </div>
 
       <SelectField label="Police" value={fontFamily} options={fontOptions} onChange={(v) => set('fontFamily', v)} />

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
+import { loadDefaultStyle } from '@/lib/styleStorage'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -27,6 +28,11 @@ export default function Home() {
   const [yAxisLabel, setYAxisLabel] = useState('')
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
+
+  useEffect(() => {
+    const saved = loadDefaultStyle()
+    if (saved) setStyleOverrides(saved)
+  }, [])
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
     setColumns(cols)
