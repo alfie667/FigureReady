@@ -1,4 +1,4 @@
-import type { ChartStyle, LegendPosition, StyleOverrides } from '@/lib/chartStyles'
+import { fontOptions, type ChartStyle, type LegendPosition, type StyleOverrides } from '@/lib/chartStyles'
 
 interface Props {
   baseStyle: ChartStyle
@@ -183,6 +183,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
   const axisColor = overrides.axisColor ?? baseStyle.axisColor
   const showGrid = overrides.showGrid ?? baseStyle.showGrid
   const boldLabels = overrides.boldLabels ?? false
+  const fontFamily = overrides.fontFamily ?? baseStyle.fontFamily
   const legendFontSize = overrides.legendFontSize ?? baseStyle.tickFontSize
   const legendPosition = overrides.legendPosition ?? 'top'
   const showLegend = overrides.showLegend ?? hasMultipleSeries
@@ -198,6 +199,8 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
           Réinitialiser
         </button>
       </div>
+
+      <SelectField label="Police" value={fontFamily} options={fontOptions} onChange={(v) => set('fontFamily', v)} />
 
       <div className="grid grid-cols-2 gap-4">
         <NumberField label="Taille titre axe X" value={xTitleSize} min={8} max={24} onChange={(v) => set('xTitleSize', v)} />

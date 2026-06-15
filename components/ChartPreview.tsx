@@ -180,19 +180,20 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         }
       : {}
 
+  const fontFamily = styleOverrides.fontFamily ?? s.fontFamily
   const boldLabels = styleOverrides.boldLabels ?? false
   const tickFontWeight = boldLabels ? 'bold' : 'normal'
   const titleFontWeight = boldLabels ? 'bold' : s.labelFontWeight
-  const xTickStyle = { fontSize: xTickSize, fontFamily: s.fontFamily, fill: axisColor, fontWeight: tickFontWeight }
-  const yTickStyle = { fontSize: yTickSize, fontFamily: s.fontFamily, fill: axisColor, fontWeight: tickFontWeight }
+  const xTickStyle = { fontSize: xTickSize, fontFamily, fill: axisColor, fontWeight: tickFontWeight }
+  const yTickStyle = { fontSize: yTickSize, fontFamily, fill: axisColor, fontWeight: tickFontWeight }
   const axisLine = { stroke: axisColor, strokeWidth: axisWidth }
   const margin = s.margin
-  const xLabelStyle = { fontFamily: s.fontFamily, fontSize: xTitleSize, fontWeight: titleFontWeight, fill: axisColor }
-  const yLabelStyle = { fontFamily: s.fontFamily, fontSize: yTitleSize, fontWeight: titleFontWeight, fill: axisColor }
+  const xLabelStyle = { fontFamily, fontSize: xTitleSize, fontWeight: titleFontWeight, fill: axisColor }
+  const yLabelStyle = { fontFamily, fontSize: yTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const legendFontSize = styleOverrides.legendFontSize ?? s.tickFontSize
   const legendPosition = styleOverrides.legendPosition ?? 'top'
   const legendEnabled = (styleOverrides.showLegend ?? yCols.length > 1) && yCols.length > 1
-  const legendStyle = { fontFamily: s.fontFamily, fontSize: legendFontSize, color: axisColor }
+  const legendStyle = { fontFamily, fontSize: legendFontSize, color: axisColor }
   const legendLayoutProps = legendPosition === 'left' || legendPosition === 'right'
     ? { layout: 'vertical' as const, verticalAlign: 'middle' as const, align: legendPosition }
     : { layout: 'horizontal' as const, verticalAlign: legendPosition, align: 'center' as const, height: 36 }
@@ -430,7 +431,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
       text.setAttribute('y', String(yPx))
       text.setAttribute('text-anchor', 'middle')
       text.setAttribute('dominant-baseline', 'middle')
-      text.setAttribute('font-family', s.fontFamily)
+      text.setAttribute('font-family', fontFamily)
       text.setAttribute('font-size', String(xTickSize))
       text.setAttribute('fill', axisColor)
       if (boldLabels) text.setAttribute('font-weight', 'bold')
@@ -455,7 +456,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         ref={chartRef}
         className="relative bg-white p-6 rounded-lg"
         style={{
-          fontFamily: s.fontFamily,
+          fontFamily,
           cursor: zoomEnabled ? 'crosshair' : 'default',
           width: figureWidth ? `${figureWidth}px` : '100%',
         }}
@@ -489,7 +490,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               }}
               className={`px-1 whitespace-nowrap outline-none ${editingId === ann.id ? 'ring-1 ring-blue-400 rounded' : ''}`}
               style={{
-                fontFamily: s.fontFamily,
+                fontFamily,
                 fontSize: xTickSize,
                 color: axisColor,
                 fontWeight: boldLabels ? 'bold' : 'normal',

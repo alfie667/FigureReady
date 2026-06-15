@@ -37,7 +37,20 @@ export interface StyleOverrides {
   // Figure size. Undefined means "auto" (fills the available width, default height).
   figureWidth?: number
   figureHeight?: number
+  // Font used for all chart text (titles, ticks, legend, annotations).
+  // Undefined falls back to the base style's font.
+  fontFamily?: string
 }
+
+// Curated set of widely-available fonts suitable for publication figures.
+export const fontOptions: { value: string; label: string }[] = [
+  { value: 'Times New Roman, Times, serif', label: 'Times New Roman' },
+  { value: 'Arial, Helvetica, sans-serif', label: 'Arial' },
+  { value: '"Helvetica Neue", Helvetica, Arial, sans-serif', label: 'Helvetica' },
+  { value: 'Georgia, serif', label: 'Georgia' },
+  { value: 'Calibri, sans-serif', label: 'Calibri' },
+  { value: 'Verdana, sans-serif', label: 'Verdana' },
+]
 
 export interface ChartMargin {
   top: number
