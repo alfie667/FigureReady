@@ -3,7 +3,6 @@ import { useState } from 'react'
 import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
-import StyleSelector from '@/components/StyleSelector'
 import StyleEditor from '@/components/StyleEditor'
 import ChartPreview from '@/components/ChartPreview'
 import Panel from '@/components/Panel'
@@ -21,7 +20,7 @@ export default function Home() {
   const [xCol, setXCol] = useState('')
   const [yCols, setYCols] = useState<string[]>([])
   const [chartType, setChartType] = useState<ChartType>('line')
-  const [styleName, setStyleName] = useState<StyleName>('Clean')
+  const styleName: StyleName = 'ACS'
   const [seriesNames, setSeriesNames] = useState<Record<string, string>>({})
   const [errorCols, setErrorCols] = useState<Record<string, string>>({})
   const [xAxisLabel, setXAxisLabel] = useState('')
@@ -125,7 +124,6 @@ export default function Home() {
                 />
                 <div className="flex flex-wrap gap-6">
                   <ChartTypeSelector value={chartType} onChange={setChartType} />
-                  <StyleSelector value={styleName} onChange={setStyleName} />
                 </div>
               </div>
             </Panel>

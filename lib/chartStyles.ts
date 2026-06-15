@@ -1,6 +1,6 @@
 import type { MarkerShape } from './markerShapes'
 
-export type StyleName = 'Nature' | 'ACS' | 'Clean'
+export type StyleName = 'ACS'
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right'
 
 // User-adjustable overrides applied on top of a base ChartStyle.
@@ -78,23 +78,6 @@ export interface ChartStyle {
 }
 
 export const chartStyles: Record<StyleName, ChartStyle> = {
-  Nature: {
-    colors: ['#E64C4C', '#4C72B0', '#55A868', '#C44E52', '#8172B2'],
-    fontFamily: 'Georgia, "Times New Roman", serif',
-    fontSize: 12,
-    tickFontSize: 10,
-    gridColor: '#e8e8e8',
-    showGrid: true,
-    axisColor: '#333333',
-    axisWidth: 1,
-    strokeWidth: 1.5,
-    dotRadius: 3,
-    barRadius: 0,
-    labelFontWeight: 'normal',
-    labelOffset: 8,
-    margin: { top: 16, right: 20, bottom: 40, left: 68 },
-    chartHeight: 400,
-  },
   // Derived from analysis of a reference ACS Applied Materials & Interfaces figure:
   // bold Helvetica axis titles, compact tick labels, no gridlines, a crisp
   // black axis frame, small solid markers, classic black/red/blue series
@@ -115,22 +98,5 @@ export const chartStyles: Record<StyleName, ChartStyle> = {
     labelOffset: 10,
     margin: { top: 10, right: 16, bottom: 42, left: 76 },
     chartHeight: 440,
-  },
-  Clean: {
-    colors: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#14b8a6'],
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    fontSize: 13,
-    tickFontSize: 11,
-    gridColor: '#f1f5f9',
-    showGrid: false,
-    axisColor: '#64748b',
-    axisWidth: 1,
-    strokeWidth: 2,
-    dotRadius: 4,
-    barRadius: 4,
-    labelFontWeight: 'normal',
-    labelOffset: 8,
-    margin: { top: 16, right: 20, bottom: 40, left: 68 },
-    chartHeight: 420,
   },
 }
