@@ -1,6 +1,21 @@
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { formatAxisLabel } from '@/lib/formatLabel'
-import { markerShapeOptions, type MarkerShape } from '@/lib/markerShapes'
+import type { MarkerShape } from '@/lib/markerShapes'
+import { ColorSwatchPicker, LineThicknessPicker, MarkerShapePicker, MarkerSizePicker, type NumericPreset } from './StyleControls'
+
+const strokeWidthPresets: NumericPreset[] = [
+  { label: 'Fin', value: 1 },
+  { label: 'Moyen', value: 2 },
+  { label: 'Épais', value: 3 },
+  { label: 'Très épais', value: 4 },
+]
+
+const markerSizePresets: NumericPreset[] = [
+  { label: 'Aucun', value: 0 },
+  { label: 'Petit', value: 2 },
+  { label: 'Moyen', value: 4 },
+  { label: 'Grand', value: 6 },
+]
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -129,16 +144,9 @@ export default function ColumnSelector({
               const markerSize = seriesMarkerSizes[col] ?? defaultMarkerSize
               const markerShape = seriesMarkerShapes[col] ?? 'circle'
               return (
-                <div key={col} className="space-y-1.5">
+                <div key={col} className="rounded-xl border border-slate-200 p-3 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="color"
-                      value={seriesColors[col] ?? defaultColors[i % defaultColors.length]}
-                      onChange={(e) => onSeriesColorsChange({ ...seriesColors, [col]: e.target.value })}
-                      title={`Couleur — ${col}`}
-                      className="w-8 h-8 rounded-lg cursor-pointer border border-slate-200 p-0 bg-transparent shrink-0"
-                    />
-                    {yCols.length > 1 && (
+                    {yCols.length > 1 ? (
                       <input
                         type="text"
                         placeholder={col}
@@ -146,6 +154,8 @@ export default function ColumnSelector({
                         onChange={(e) => onSeriesNamesChange({ ...seriesNames, [col]: e.target.value })}
                         className="flex-1 min-w-[120px] border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
+                    ) : (
+                      <p className="flex-1 min-w-[120px] text-sm font-medium text-slate-700">{col}</p>
                     )}
                     {errorCandidates.length > 0 && (
                       <div className="flex items-center gap-1.5">
@@ -173,44 +183,38 @@ export default function ColumnSelector({
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap items-center gap-3 pl-10">
+
+                  <ColorSwatchPicker
+                    label="Couleur"
+                    value={seriesColors[col] ?? defaultColors[i % defaultColors.length]}
+                    onChange={(v) => onSeriesColorsChange({ ...seriesColors, [col]: v })}
+                  />
+
+                  <div className="flex flex-wrap gap-4">
                     {chartType !== 'scatter' && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-slate-400 shrink-0">Épaisseur</span>
-                        <input
-                          type="range"
-                          min={0.5}
-                          max={4}
-                          step={0.5}
-                          value={strokeWidth}
-                          onChange={(e) => onSeriesStrokeWidthsChange({ ...seriesStrokeWidths, [col]: Number(e.target.value) })}
-                          className="w-20 accent-blue-600"
-                        />
-                      </div>
+                      <LineThicknessPicker
+                        label="Épaisseur du trait"
+                        value={strokeWidth}
+                        presets={strokeWidthPresets}
+                        onChange={(v) => onSeriesStrokeWidthsChange({ ...seriesStrokeWidths, [col]: v })}
+                        compact
+                      />
                     )}
                     {chartType !== 'bar' && (
                       <>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs text-slate-400 shrink-0">Marqueurs</span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={8}
-                            step={0.5}
-                            value={markerSize}
-                            onChange={(e) => onSeriesMarkerSizesChange({ ...seriesMarkerSizes, [col]: Number(e.target.value) })}
-                            className="w-20 accent-blue-600"
-                          />
-                        </div>
-                        <select
+                        <MarkerSizePicker
+                          label="Taille des marqueurs"
+                          value={markerSize}
+                          presets={markerSizePresets}
+                          onChange={(v) => onSeriesMarkerSizesChange({ ...seriesMarkerSizes, [col]: v })}
+                          compact
+                        />
+                        <MarkerShapePicker
+                          label="Forme des marqueurs"
                           value={markerShape}
-                          onChange={(e) => onSeriesMarkerShapesChange({ ...seriesMarkerShapes, [col]: e.target.value as MarkerShape })}
-                          className="border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        >
-                          {markerShapeOptions.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                          ))}
-                        </select>
+                          onChange={(shape: MarkerShape) => onSeriesMarkerShapesChange({ ...seriesMarkerShapes, [col]: shape })}
+                          compact
+                        />
                       </>
                     )}
                   </div>

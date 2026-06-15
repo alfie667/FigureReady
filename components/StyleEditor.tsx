@@ -1,6 +1,10 @@
 import { useState } from 'react'
-import { fontOptions, type ChartStyle, type LegendPosition, type StyleOverrides } from '@/lib/chartStyles'
+import { fontOptions, type ChartStyle, type StyleOverrides } from '@/lib/chartStyles'
 import { saveDefaultStyle } from '@/lib/styleStorage'
+import {
+  ColorSwatchPicker, LegendPositionPicker, LineThicknessPicker, TextSizePicker, ToggleSwitch,
+  type NumericPreset,
+} from './StyleControls'
 
 interface Props {
   baseStyle: ChartStyle
@@ -9,44 +13,56 @@ interface Props {
   onChange: (overrides: StyleOverrides) => void
 }
 
-const legendPositionOptions: { value: LegendPosition; label: string }[] = [
-  { value: 'top', label: 'Haut' },
-  { value: 'bottom', label: 'Bas' },
-  { value: 'left', label: 'Gauche' },
-  { value: 'right', label: 'Droite' },
-]
-
 const figurePresets: { label: string; width: number; height: number }[] = [
   { label: 'Small', width: 450, height: 320 },
   { label: 'Medium', width: 650, height: 450 },
   { label: 'Large', width: 900, height: 600 },
 ]
 
-function NumberField({
-  label, value, min, max, step = 1, onChange,
+const titleSizePresets: NumericPreset[] = [
+  { label: 'Petit', value: 10 },
+  { label: 'Moyen', value: 13 },
+  { label: 'Grand', value: 16 },
+]
+
+const tickSizePresets: NumericPreset[] = [
+  { label: 'Petit', value: 9 },
+  { label: 'Moyen', value: 11 },
+  { label: 'Grand', value: 13 },
+]
+
+const legendSizePresets: NumericPreset[] = [
+  { label: 'Petit', value: 9 },
+  { label: 'Moyen', value: 12 },
+  { label: 'Grand', value: 15 },
+]
+
+const axisWidthPresets: NumericPreset[] = [
+  { label: 'Fin', value: 1 },
+  { label: 'Moyen', value: 2 },
+  { label: 'Épais', value: 3 },
+]
+
+function SelectField<T extends string>({
+  label, value, options, onChange,
 }: {
   label: string
-  value: number
-  min: number
-  max: number
-  step?: number
-  onChange: (value: number) => void
+  value: T
+  options: { value: T; label: string }[]
+  onChange: (value: T) => void
 }) {
   return (
     <div className="min-w-0">
       <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
-      <div className="flex items-center gap-2">
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={value}
-          onChange={(e) => onChange(Number(e.target.value))}
-          className="flex-1 min-w-0 accent-blue-600"
-        />
-        <span className="w-9 text-xs text-slate-500 text-right tabular-nums shrink-0">{value}</span>
-      </div>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+      >
+        {options.map(opt => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
     </div>
   )
 }
@@ -98,30 +114,6 @@ function AxisRangeField({
   )
 }
 
-function SelectField<T extends string>({
-  label, value, options, onChange,
-}: {
-  label: string
-  value: T
-  options: { value: T; label: string }[]
-  onChange: (value: T) => void
-}) {
-  return (
-    <div className="min-w-0">
-      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as T)}
-        className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-      >
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
-        ))}
-      </select>
-    </div>
-  )
-}
-
 function DimensionField({
   label, value, placeholder, onChange,
 }: {
@@ -148,23 +140,6 @@ function DimensionField({
   )
 }
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return (
-    <div className="min-w-0">
-      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
-      <div className="flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-1.5 bg-white">
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-7 h-7 rounded cursor-pointer border-none p-0 bg-transparent shrink-0"
-        />
-        <span className="text-xs text-slate-500 tabular-nums">{value}</span>
-      </div>
-    </div>
-  )
-}
-
 export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
   const [saved, setSaved] = useState(false)
 
@@ -185,10 +160,8 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
     seriesMarkerShapes: overrides.seriesMarkerShapes,
   })
 
-  const xTitleSize = overrides.xTitleSize ?? baseStyle.fontSize
-  const yTitleSize = overrides.yTitleSize ?? baseStyle.fontSize
-  const xTickSize = overrides.xTickSize ?? baseStyle.tickFontSize
-  const yTickSize = overrides.yTickSize ?? baseStyle.tickFontSize
+  const titleSize = overrides.xTitleSize ?? baseStyle.fontSize
+  const tickSize = overrides.xTickSize ?? baseStyle.tickFontSize
   const axisWidth = overrides.axisWidth ?? baseStyle.axisWidth
   const axisColor = overrides.axisColor ?? baseStyle.axisColor
   const showGrid = overrides.showGrid ?? baseStyle.showGrid
@@ -198,10 +171,13 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
   const legendPosition = overrides.legendPosition ?? 'top'
   const showLegend = overrides.showLegend ?? hasMultipleSeries
 
+  const setTitleSize = (v: number) => onChange({ ...overrides, xTitleSize: v, yTitleSize: v })
+  const setTickSize = (v: number) => onChange({ ...overrides, xTickSize: v, yTickSize: v })
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-slate-600">Axes</p>
+        <p className="text-xs font-semibold text-slate-600">Style</p>
         <div className="flex items-center gap-3">
           <button
             onClick={saveAsDefault}
@@ -220,84 +196,31 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
 
       <SelectField label="Police" value={fontFamily} options={fontOptions} onChange={(v) => set('fontFamily', v)} />
 
-      <div className="grid grid-cols-2 gap-4">
-        <NumberField label="Taille titre axe X" value={xTitleSize} min={8} max={24} onChange={(v) => set('xTitleSize', v)} />
-        <NumberField label="Taille titre axe Y" value={yTitleSize} min={8} max={24} onChange={(v) => set('yTitleSize', v)} />
+      <TextSizePicker label="Taille des titres d'axes" value={titleSize} presets={titleSizePresets} onChange={setTitleSize} />
+      <TextSizePicker label="Taille des graduations" value={tickSize} presets={tickSizePresets} onChange={setTickSize} />
+
+      <ToggleSwitch label="Texte en gras (titres et graduations)" checked={boldLabels} onChange={(v) => set('boldLabels', v)} />
+
+      <div className="pt-2 border-t border-slate-100 space-y-4">
+        <p className="text-xs font-semibold text-slate-600">Axes</p>
+        <LineThicknessPicker label="Épaisseur des axes" value={axisWidth} presets={axisWidthPresets} onChange={(v) => set('axisWidth', v)} />
+        <ColorSwatchPicker label="Couleur des axes" value={axisColor} onChange={(v) => set('axisColor', v)} />
+        <ToggleSwitch label="Afficher la grille" checked={showGrid} onChange={(v) => set('showGrid', v)} />
       </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <NumberField label="Taille graduations axe X" value={xTickSize} min={6} max={18} onChange={(v) => set('xTickSize', v)} />
-        <NumberField label="Taille graduations axe Y" value={yTickSize} min={6} max={18} onChange={(v) => set('yTickSize', v)} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 items-end">
-        <NumberField label="Épaisseur des axes" value={axisWidth} min={0.5} max={4} step={0.5} onChange={(v) => set('axisWidth', v)} />
-        <ColorField label="Couleur des axes" value={axisColor} onChange={(v) => set('axisColor', v)} />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <AxisRangeField
-          label="Plage de l'axe X (début → fin)"
-          min={overrides.xMin}
-          max={overrides.xMax}
-          step={overrides.xStep}
-          onMinChange={(v) => set('xMin', v)}
-          onMaxChange={(v) => set('xMax', v)}
-          onStepChange={(v) => set('xStep', v)}
-        />
-        <AxisRangeField
-          label="Plage de l'axe Y (début → fin)"
-          min={overrides.yMin}
-          max={overrides.yMax}
-          step={overrides.yStep}
-          onMinChange={(v) => set('yMin', v)}
-          onMaxChange={(v) => set('yMax', v)}
-          onStepChange={(v) => set('yStep', v)}
-        />
-      </div>
-
-      <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={showGrid}
-          onChange={(e) => set('showGrid', e.target.checked)}
-          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-        />
-        Afficher la grille
-      </label>
-
-      <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={boldLabels}
-          onChange={(e) => set('boldLabels', e.target.checked)}
-          className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-        />
-        Texte en gras (titres et graduations)
-      </label>
 
       <div className="pt-2 border-t border-slate-100 space-y-4">
         <p className="text-xs font-semibold text-slate-600">Légende</p>
-
-        <div className="grid grid-cols-2 gap-4 items-end">
-          <NumberField label="Taille police légende" value={legendFontSize} min={8} max={18} onChange={(v) => set('legendFontSize', v)} />
-          <SelectField label="Position" value={legendPosition} options={legendPositionOptions} onChange={(v) => set('legendPosition', v)} />
-        </div>
-
-        <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showLegend}
-            onChange={(e) => set('showLegend', e.target.checked)}
-            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-          />
-          Afficher la légende
-        </label>
+        <ToggleSwitch label="Afficher la légende" checked={showLegend} onChange={(v) => set('showLegend', v)} />
+        {showLegend && (
+          <>
+            <LegendPositionPicker label="Position" value={legendPosition} onChange={(v) => set('legendPosition', v)} />
+            <TextSizePicker label="Taille du texte" value={legendFontSize} presets={legendSizePresets} onChange={(v) => set('legendFontSize', v)} />
+          </>
+        )}
       </div>
 
       <div className="pt-2 border-t border-slate-100 space-y-3">
-        <p className="text-xs font-semibold text-slate-600">Figure</p>
-
+        <p className="text-xs font-semibold text-slate-600">Taille de la figure</p>
         <div className="flex flex-wrap gap-2">
           {figurePresets.map(preset => (
             <button
@@ -309,12 +232,44 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
             </button>
           ))}
         </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <DimensionField label="Largeur" value={overrides.figureWidth} placeholder={700} onChange={(v) => set('figureWidth', v)} />
-          <DimensionField label="Hauteur" value={overrides.figureHeight} placeholder={baseStyle.chartHeight} onChange={(v) => set('figureHeight', v)} />
-        </div>
       </div>
+
+      <details className="pt-2 border-t border-slate-100 group">
+        <summary className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
+          Options avancées
+          <svg className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </summary>
+
+        <div className="mt-4 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <AxisRangeField
+              label="Plage de l'axe X (début → fin)"
+              min={overrides.xMin}
+              max={overrides.xMax}
+              step={overrides.xStep}
+              onMinChange={(v) => set('xMin', v)}
+              onMaxChange={(v) => set('xMax', v)}
+              onStepChange={(v) => set('xStep', v)}
+            />
+            <AxisRangeField
+              label="Plage de l'axe Y (début → fin)"
+              min={overrides.yMin}
+              max={overrides.yMax}
+              step={overrides.yStep}
+              onMinChange={(v) => set('yMin', v)}
+              onMaxChange={(v) => set('yMax', v)}
+              onStepChange={(v) => set('yStep', v)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <DimensionField label="Largeur personnalisée" value={overrides.figureWidth} placeholder={700} onChange={(v) => set('figureWidth', v)} />
+            <DimensionField label="Hauteur personnalisée" value={overrides.figureHeight} placeholder={baseStyle.chartHeight} onChange={(v) => set('figureHeight', v)} />
+          </div>
+        </div>
+      </details>
     </div>
   )
 }
