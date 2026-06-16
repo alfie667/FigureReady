@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 interface Props {
   hasData: boolean
   onReset: () => void
@@ -6,17 +8,22 @@ interface Props {
 export default function Header({ hasData, onReset }: Props) {
   return (
     <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b border-slate-100 bg-white shrink-0">
-      <div className="flex items-center gap-2.5">
-        <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-          <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M3 3v18h18M7 16l4-5 3 3 5-7" />
-          </svg>
-        </div>
-        <div className="leading-tight">
-          <p className="text-sm font-semibold text-slate-800 tracking-tight">FigureReady</p>
-          <p className="text-[11px] text-slate-400 hidden sm:block">Excel → graphique publication-ready</p>
-        </div>
+      <div className="flex items-center gap-4">
+        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+            <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 3v18h18M7 16l4-5 3 3 5-7" />
+            </svg>
+          </div>
+          <div className="leading-tight">
+            <p className="text-sm font-semibold text-slate-800 tracking-tight">FigureReady</p>
+            <p className="text-[11px] text-slate-400 hidden sm:block">Excel → publication-ready figure</p>
+          </div>
+        </Link>
+        <Link href="/roadmap" className="hidden sm:block text-xs text-slate-400 hover:text-slate-600 transition-colors">
+          Roadmap
+        </Link>
       </div>
 
       {hasData && (

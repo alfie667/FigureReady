@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, type Key } from 'react'
+import { trackExport } from '@/lib/analytics'
 import {
   LineChart, Line,
   ScatterChart, Scatter,
@@ -397,6 +398,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
 
   const exportPNG = async () => {
     if (!chartRef.current) return
+    trackExport()
     const { toPng } = await import('html-to-image')
     try {
       const dataUrl = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 3 })
@@ -411,6 +413,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
 
   const exportSVG = () => {
     if (!chartRef.current) return
+    trackExport()
     const svg = chartRef.current.querySelector('svg')
     if (!svg) return
     const containerRect = chartRef.current.getBoundingClientRect()
