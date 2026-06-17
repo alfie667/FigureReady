@@ -1,6 +1,8 @@
 'use client'
 import { useEffect, useRef, useState, type Key } from 'react'
 import { trackExport } from '@/lib/analytics'
+import { getCapturedEmail } from '@/lib/emailGate'
+import EmailGateModal from '@/components/EmailGateModal'
 import {
   LineChart, Line,
   ScatterChart, Scatter,
@@ -57,6 +59,7 @@ interface Props {
 export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides, annotations, onAnnotationsChange }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
   const draggingRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
   const s = chartStyles[styleName]
   const axisColor = styleOverrides.axisColor ?? s.axisColor
@@ -396,7 +399,22 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     draggingRef.current = null
   }
 
-  const exportPNG = async () => {
+  const triggerExport = (type: 'png' | 'svg') => {
+    if (getCapturedEmail()) {
+      if (type === 'png') doExportPNG()
+      else doExportSVG()
+    } else {
+      setEmailGate(type)
+    }
+  }
+
+  const handleEmailConfirm = () => {
+    setEmailGate(null)
+    if (emailGate === 'png') doExportPNG()
+    else if (emailGate === 'svg') doExportSVG()
+  }
+
+  const doExportPNG = async () => {
     if (!chartRef.current) return
     trackExport()
     const { toPng } = await import('html-to-image')
@@ -411,7 +429,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     }
   }
 
-  const exportSVG = () => {
+  const doExportSVG = () => {
     if (!chartRef.current) return
     trackExport()
     const svg = chartRef.current.querySelector('svg')
@@ -453,6 +471,13 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   }
 
   return (
+    <>
+    {emailGate && (
+      <EmailGateModal
+        onConfirm={handleEmailConfirm}
+        onClose={() => setEmailGate(null)}
+      />
+    )}
     <div className="space-y-4">
       <div className="overflow-x-auto">
       <div
@@ -537,14 +562,14 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
             </button>
           )}
           <button
-            onClick={exportSVG}
+            onClick={() => triggerExport('svg')}
             className="flex items-center gap-2 px-5 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
           >
             <DownloadIcon />
             Export SVG
           </button>
           <button
-            onClick={exportPNG}
+            onClick={() => triggerExport('png')}
             className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
           >
             <DownloadIcon />
@@ -553,5 +578,6 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         </div>
       </div>
     </div>
+    </>
   )
 }

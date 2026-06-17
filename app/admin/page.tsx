@@ -3,15 +3,29 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getAnalytics, type AnalyticsData } from '@/lib/analytics'
 import { getFeedbackEntries, type FeedbackEntry } from '@/lib/feedback'
+import { getEmailEntries, type EmailEntry } from '@/lib/emailGate'
 
 export default function AdminPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [feedback, setFeedback] = useState<FeedbackEntry[]>([])
+  const [emails, setEmails] = useState<EmailEntry[]>([])
 
   useEffect(() => {
     setAnalytics(getAnalytics())
     setFeedback(getFeedbackEntries())
+    setEmails(getEmailEntries())
   }, [])
+
+  const exportEmailsCSV = () => {
+    const rows = ['email,date', ...emails.map(e => `${e.email},${new Date(e.capturedAt).toLocaleString()}`)]
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'figureready-emails.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const stats = analytics
     ? [
@@ -60,6 +74,45 @@ export default function AdminPage() {
           <p className="text-xs text-slate-400 -mt-8 mb-10">
             Last updated: {new Date(analytics.lastUpdated).toLocaleString()}
           </p>
+        )}
+
+        {/* Emails */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-slate-900">Emails collectés ({emails.length})</h2>
+          {emails.length > 0 && (
+            <button
+              onClick={exportEmailsCSV}
+              className="text-xs font-medium text-blue-600 hover:underline"
+            >
+              Export CSV
+            </button>
+          )}
+        </div>
+        {emails.length === 0 ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-400 mb-12">
+            Aucun email collecté pour l&apos;instant.
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-12">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...emails].reverse().map((entry, i) => (
+                  <tr key={i} className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
+                    <td className="px-5 py-3">
+                      <a href={`mailto:${entry.email}`} className="text-blue-600 hover:underline">{entry.email}</a>
+                    </td>
+                    <td className="px-5 py-3 text-slate-400 text-xs">{new Date(entry.capturedAt).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Feedback */}

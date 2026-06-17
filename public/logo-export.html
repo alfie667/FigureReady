@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Export Logo JPEG</title>
+  <style>
+    body { background: #0f172a; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; height: 100vh; margin: 0; gap: 20px; }
+    canvas { border-radius: 22px; }
+    button { padding: 10px 24px; background: #3b82f6; color: white; border: none;
+             border-radius: 8px; font-size: 14px; cursor: pointer; font-family: Arial; }
+    button:hover { background: #2563eb; }
+    p { color: #94a3b8; font-family: Arial; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <p>Aperçu du logo (200×200)</p>
+  <canvas id="c" width="200" height="200"></canvas>
+  <button onclick="downloadJPEG()">Télécharger logo.jpeg</button>
+
+  <script>
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1e3a5f"/>
+    </linearGradient>
+    <linearGradient id="chartLine" x1="50" y1="0" x2="163" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" rx="22" fill="url(#bg)"/>
+  <line x1="35" y1="57" x2="170" y2="57" stroke="#1e3a5f" stroke-width="1"/>
+  <line x1="35" y1="87" x2="170" y2="87" stroke="#1e3a5f" stroke-width="1"/>
+  <line x1="35" y1="117" x2="170" y2="117" stroke="#1e3a5f" stroke-width="1"/>
+  <line x1="35" y1="32" x2="35" y2="142" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/>
+  <line x1="35" y1="142" x2="175" y2="142" stroke="#4b5563" stroke-width="2" stroke-linecap="round"/>
+  <line x1="50" y1="132" x2="163" y2="50" stroke="#3b82f6" stroke-width="1" stroke-opacity="0.25" stroke-dasharray="5,4"/>
+  <polyline points="50,128 82,104 107,76 135,90 163,52" fill="none" stroke="url(#chartLine)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <circle cx="50"  cy="128" r="5.5" fill="#3b82f6" filter="url(#glow)"/>
+  <circle cx="82"  cy="104" r="5.5" fill="#3b82f6" filter="url(#glow)"/>
+  <circle cx="107" cy="76"  r="5.5" fill="#0ea5e9" filter="url(#glow)"/>
+  <circle cx="135" cy="90"  r="5.5" fill="#22d3ee" filter="url(#glow)"/>
+  <circle cx="163" cy="52"  r="5.5" fill="#22d3ee" filter="url(#glow)"/>
+  <text x="105" y="172" text-anchor="middle" fill="#94a3b8" font-family="Arial, Helvetica, sans-serif" font-size="11" letter-spacing="3" font-weight="700">FIGUREREADY</text>
+</svg>`;
+
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = URL.createObjectURL(blob);
+
+    function downloadJPEG() {
+      const link = document.createElement('a');
+      link.download = 'logo.jpeg';
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+    }
+  </script>
+</body>
+</html>
