@@ -31,7 +31,7 @@ export default function GatedAppLink({ children, className }: Props) {
     window.Tally?.openPopup(TALLY_FORM_ID, {
       onSubmit: () => {
         sessionStorage.setItem(SESSION_KEY, '1')
-        router.push('/app')
+        setTimeout(() => router.push('/app'), 1000)
       },
     })
   }
