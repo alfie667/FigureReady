@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import BetaSignupForm from '@/components/BetaSignupForm'
 
 const features = [
   { label: 'Excel upload (.xlsx)', desc: 'Drop your file, columns detected automatically.' },
@@ -41,7 +42,7 @@ export default function LandingPage() {
       <section className="max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-xs font-medium text-blue-700">Early prototype — your feedback shapes this tool</span>
+          <span className="text-xs font-medium text-blue-700">Free beta — no account needed</span>
         </div>
 
         <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-5">
@@ -63,6 +64,13 @@ export default function LandingPage() {
           >
             See roadmap
           </Link>
+        </div>
+
+        {/* Beta email capture */}
+        <div className="mt-12 pt-10 border-t border-slate-100">
+          <p className="text-sm font-semibold text-slate-800 mb-1">Join the beta — get early access</p>
+          <p className="text-xs text-slate-400 mb-5">Be the first to know about new features. No spam, ever.</p>
+          <BetaSignupForm />
         </div>
       </section>
 
@@ -192,7 +200,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — early prototype, 2026</span>
+          <span>FigureReady — free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
             <a href="mailto:zeggai_nouh@hotmail.fr" className="hover:text-slate-600 transition-colors">Contact</a>
