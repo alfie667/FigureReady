@@ -56,9 +56,15 @@ export default function LandingPage() {
         <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-4">
           From Excel to publication-ready<br className="hidden sm:block" /> figure in seconds
         </h1>
-        <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-8 leading-relaxed">
           No Origin. No Prism. Upload your data and get a clean, journal-quality graphic ready to export.
         </p>
+
+        {/* Email capture */}
+        <div className="mb-10">
+          <p className="text-sm text-slate-500 mb-3">Join 50+ researchers in beta</p>
+          <BetaSignupForm />
+        </div>
 
         {/* Excel → Figure transformation */}
         <div className="flex flex-col lg:flex-row items-center justify-center gap-5 mb-10">
@@ -176,12 +182,6 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Beta email capture */}
-        <div className="mt-12 pt-10 border-t border-slate-100">
-          <p className="text-sm font-semibold text-slate-800 mb-1">Join the beta — get early access</p>
-          <p className="text-xs text-slate-400 mb-5">Be the first to know about new features. No spam, ever.</p>
-          <BetaSignupForm />
-        </div>
       </section>
 
       {/* Features */}
