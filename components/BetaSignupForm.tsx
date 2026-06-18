@@ -1,9 +1,7 @@
 'use client'
 import { useState } from 'react'
 
-// TODO: Replace with your Tally form ID — create a free form at tally.so
-// then replace TALLY_FORM_ID below (e.g. "wbDkQM")
-const TALLY_FORM_URL = 'https://tally.so/r/TALLY_FORM_ID'
+const TALLY_FORM_URL = 'https://tally.so/r/9qx9y4'
 
 export default function BetaSignupForm() {
   const [email, setEmail] = useState('')
