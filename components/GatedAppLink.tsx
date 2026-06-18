@@ -1,8 +1,16 @@
 'use client'
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCapturedEmail } from '@/lib/emailGate'
-import EmailGateModal from '@/components/EmailGateModal'
+
+const TALLY_FORM_ID = '9qx9y4'
+const SESSION_KEY = 'figureready-email-captured'
+
+declare global {
+  interface Window {
+    Tally?: {
+      openPopup: (formId: string, options?: Record<string, unknown>) => void
+    }
+  }
+}
 
 interface Props {
   children: React.ReactNode
@@ -10,31 +18,27 @@ interface Props {
 }
 
 export default function GatedAppLink({ children, className }: Props) {
-  const [showModal, setShowModal] = useState(false)
   const router = useRouter()
 
   const handleClick = () => {
-    if (getCapturedEmail()) {
+    if (typeof window === 'undefined') return
+
+    if (sessionStorage.getItem(SESSION_KEY)) {
       router.push('/app')
-    } else {
-      setShowModal(true)
+      return
     }
+
+    window.Tally?.openPopup(TALLY_FORM_ID, {
+      onSubmit: () => {
+        sessionStorage.setItem(SESSION_KEY, '1')
+        router.push('/app')
+      },
+    })
   }
 
   return (
-    <>
-      <button onClick={handleClick} className={className}>
-        {children}
-      </button>
-      {showModal && (
-        <EmailGateModal
-          title="Get free access"
-          description="Enter your email to access FigureReady. No account needed."
-          cta="Start for free →"
-          onConfirm={() => router.push('/app')}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-    </>
+    <button onClick={handleClick} className={className}>
+      {children}
+    </button>
   )
 }
