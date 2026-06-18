@@ -5,9 +5,12 @@ import { saveEmail } from '@/lib/emailGate'
 interface Props {
   onConfirm: () => void
   onClose: () => void
+  title?: string
+  description?: string
+  cta?: string
 }
 
-export default function EmailGateModal({ onConfirm, onClose }: Props) {
+export default function EmailGateModal({ onConfirm, onClose, title, description, cta }: Props) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -43,10 +46,10 @@ export default function EmailGateModal({ onConfirm, onClose }: Props) {
         </div>
 
         <h2 className="text-lg font-bold text-slate-900 text-center mb-1">
-          Télécharger votre figure
+          {title ?? 'Télécharger votre figure'}
         </h2>
         <p className="text-sm text-slate-500 text-center mb-6 leading-relaxed">
-          Entrez votre email pour recevoir les mises à jour de FigureReady.
+          {description ?? 'Entrez votre email pour recevoir les mises à jour de FigureReady.'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,7 +69,7 @@ export default function EmailGateModal({ onConfirm, onClose }: Props) {
             type="submit"
             className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
           >
-            Télécharger
+            {cta ?? 'Télécharger'}
           </button>
         </form>
 

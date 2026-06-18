@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import BetaSignupForm from '@/components/BetaSignupForm'
+import GatedAppLink from '@/components/GatedAppLink'
 
 const features = [
   { label: 'Excel upload (.xlsx)', desc: 'Drop your file, columns detected automatically.' },
@@ -39,9 +40,9 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-6">
             <Link href="/roadmap" className="text-sm text-slate-500 hover:text-slate-800 transition-colors hidden sm:block">Roadmap</Link>
-            <Link href="/app" className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
+            <GatedAppLink className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
               Try it free
-            </Link>
+            </GatedAppLink>
           </div>
         </div>
       </nav>
@@ -168,12 +169,9 @@ export default function LandingPage() {
 
         {/* CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Link
-            href="/app"
-            className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md"
-          >
+          <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
             Start for free →
-          </Link>
+          </GatedAppLink>
           <Link
             href="/roadmap"
             className="px-8 py-3.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-base font-semibold rounded-xl transition-colors"
@@ -226,12 +224,9 @@ export default function LandingPage() {
       <section className="max-w-2xl mx-auto px-6 py-20 text-center">
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Try FigureReady now</h2>
         <p className="text-slate-500 text-sm mb-8">No account needed. Works in your browser.</p>
-        <Link
-          href="/app"
-          className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md"
-        >
+        <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
           Upload your first figure →
-        </Link>
+        </GatedAppLink>
       </section>
 
       {/* Footer */}
