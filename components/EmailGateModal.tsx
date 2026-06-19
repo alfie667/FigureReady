@@ -29,7 +29,6 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
       return
     }
     setLoading(true)
-    saveEmail(trimmed)
     try {
       await fetch('/api/collect-email', {
         method: 'POST',
@@ -37,6 +36,7 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
         body: JSON.stringify({ email: trimmed, source: source ?? 'gate' }),
       })
     } catch {}
+    saveEmail(trimmed)
     onConfirm()
   }
 
