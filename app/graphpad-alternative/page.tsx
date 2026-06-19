@@ -10,13 +10,17 @@ export const metadata: Metadata = {
   },
 }
 
-const comparison = [
-  { feature: 'Price',               figureready: 'Free forever',         graphpad: '$840 / year' },
-  { feature: 'Installation',        figureready: 'None — runs in browser', graphpad: 'Required (Windows/Mac)' },
-  { feature: 'Excel upload',        figureready: '✓',                    graphpad: '✓' },
-  { feature: 'Error bars',          figureready: '✓',                    graphpad: '✓' },
-  { feature: 'Export format',       figureready: 'PNG (3×), SVG',        graphpad: 'PNG, PDF, TIFF' },
-  { feature: 'Time to first figure',figureready: '< 1 minute',           graphpad: 'Hours of setup' },
+const comparison: { feature: string; graphpad: string; graphpadBad?: boolean; figureready: string; figurereadyGood?: boolean }[] = [
+  { feature: 'Price',                        graphpad: '$840 / year',           graphpadBad: true,  figureready: 'Free beta',              figurereadyGood: true },
+  { feature: 'Installation required',        graphpad: '✗ Yes (Windows/Mac)',   graphpadBad: true,  figureready: '✓ No — browser-based',   figurereadyGood: true },
+  { feature: 'Excel (.xlsx) upload',         graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
+  { feature: 'Publication-ready figures',    graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
+  { feature: 'Error bars',                   graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
+  { feature: 'Multiple Y series',            graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
+  { feature: 'PNG / SVG export',             graphpad: '✓ Yes',                                    figureready: '✓ Yes (300 dpi)',        figurereadyGood: true },
+  { feature: 'Nature / Science / IEEE format',graphpad: '✓ Yes',                                   figureready: '✓ Yes' },
+  { feature: 'Complex statistics (ANOVA…)', graphpad: '✓ Yes',                                     figureready: '✗ Not yet' },
+  { feature: 'Time to first figure',         graphpad: '~30 min',               graphpadBad: true,  figureready: '< 30 seconds',           figurereadyGood: true },
 ]
 
 const whyCards = [
@@ -116,17 +120,24 @@ export default function GraphPadAlternativePage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="px-5 py-3.5 text-left font-semibold text-slate-500 w-1/3">Feature</th>
-                <th className="px-5 py-3.5 text-left font-semibold text-blue-600">FigureReady</th>
-                <th className="px-5 py-3.5 text-left font-semibold text-slate-400">GraphPad Prism</th>
+                <th className="px-5 py-4 text-left font-semibold text-slate-500 w-2/5">Feature</th>
+                <th className="px-5 py-4 text-left font-semibold text-slate-700">GraphPad Prism</th>
+                <th className="px-5 py-4 text-left font-semibold">
+                  <span className="text-blue-600">FigureReady</span>{' '}
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full align-middle">Free</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {comparison.map((row, i) => (
-                <tr key={i} className={`border-b border-slate-100 last:border-0 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                  <td className="px-5 py-3.5 text-slate-600 font-medium">{row.feature}</td>
-                  <td className="px-5 py-3.5 text-slate-900 font-semibold">{row.figureready}</td>
-                  <td className="px-5 py-3.5 text-slate-400">{row.graphpad}</td>
+                <tr key={i} className="border-b border-slate-100 last:border-0 bg-white hover:bg-slate-50/60 transition-colors">
+                  <td className="px-5 py-3.5 text-slate-700 font-medium">{row.feature}</td>
+                  <td className={`px-5 py-3.5 font-medium ${row.graphpadBad ? 'text-red-500' : 'text-slate-500'}`}>
+                    {row.graphpad}
+                  </td>
+                  <td className={`px-5 py-3.5 font-semibold ${row.figurereadyGood ? 'text-green-600' : 'text-slate-500'}`}>
+                    {row.figureready}
+                  </td>
                 </tr>
               ))}
             </tbody>
