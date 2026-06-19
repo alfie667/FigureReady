@@ -240,6 +240,7 @@ export default function LandingPage() {
           <span>FigureReady — free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
+            <Link href="/graphpad-alternative" className="hover:text-slate-600 transition-colors">Free GraphPad Prism Alternative</Link>
             <a href="mailto:zeggai_nouh@hotmail.fr" className="hover:text-slate-600 transition-colors">Contact</a>
             <Link href="/admin" className="hover:text-slate-600 transition-colors">Admin</Link>
           </div>
