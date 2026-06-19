@@ -118,53 +118,84 @@ export default function LandingPage() {
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Publication-ready figure</span>
             </div>
             <div className="p-4 bg-white">
-              <svg viewBox="0 0 480 300" className="w-full" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {[60, 120, 180, 240].map(y => (
-                  <line key={y} x1="60" y1={y} x2="440" y2={y} stroke="#f1f5f9" strokeWidth="1" />
-                ))}
-                <line x1="60" y1="16" x2="60" y2="260" stroke="#000" strokeWidth="1.5" />
-                <line x1="60" y1="260" x2="440" y2="260" stroke="#000" strokeWidth="1.5" />
-                {[0,1,2,3,4].map((i) => {
-                  const x = 60 + i * 95
-                  return (
-                    <g key={i}>
-                      <line x1={x} y1="260" x2={x} y2="266" stroke="#000" strokeWidth="1.5" />
-                      <text x={x} y="278" textAnchor="middle" fontSize="11" fill="#334155" fontFamily="Helvetica Neue, sans-serif">{i}</text>
-                    </g>
-                  )
-                })}
-                {[0,1,2,3,4].map((i) => {
-                  const y = 260 - i * 60
-                  return (
-                    <g key={i}>
-                      <line x1="54" y1={y} x2="60" y2={y} stroke="#000" strokeWidth="1.5" />
-                      <text x="46" y={y+4} textAnchor="end" fontSize="11" fill="#334155" fontFamily="Helvetica Neue, sans-serif">{(i * 0.25).toFixed(2)}</text>
-                    </g>
-                  )
-                })}
-                <text x="250" y="296" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a" fontFamily="Helvetica Neue, sans-serif">Concentration (mM)</text>
-                <text x="18" y="140" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a" fontFamily="Helvetica Neue, sans-serif" transform="rotate(-90 18 140)">Absorbance (a.u.)</text>
-                <polyline points="60,220 155,185 250,145 345,95 440,55" stroke="#000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                {([[60,220],[155,185],[250,145],[345,95],[440,55]] as [number,number][]).map(([x,y],i) => (
-                  <circle key={i} cx={x} cy={y} r="4" fill="#000" />
-                ))}
-                {([[60,220,12],[155,185,10],[250,145,8],[345,95,9],[440,55,7]] as [number,number,number][]).map(([x,y,e],i) => (
+              {/* ACS / OriginLab style — full box, inward ticks, no grid, mixed markers */}
+              <svg viewBox="0 0 480 308" className="w-full" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
+
+                {/* Plot box */}
+                <rect x="65" y="20" width="380" height="240" fill="none" stroke="#111" strokeWidth="1.5" />
+
+                {/* X ticks bottom (inward) + top mirror */}
+                {[0,1,2,3,4].map(i => (
                   <g key={i}>
-                    <line x1={x} y1={y-e} x2={x} y2={y+e} stroke="#000" strokeWidth="1" />
-                    <line x1={x-4} y1={y-e} x2={x+4} y2={y-e} stroke="#000" strokeWidth="1" />
-                    <line x1={x-4} y1={y+e} x2={x+4} y2={y+e} stroke="#000" strokeWidth="1" />
+                    <line x1={65+i*95} y1={260} x2={65+i*95} y2={253} stroke="#111" strokeWidth="1.5" />
+                    <line x1={65+i*95} y1={20}  x2={65+i*95} y2={27}  stroke="#111" strokeWidth="1.5" />
                   </g>
                 ))}
-                <polyline points="60,240 155,225 250,200 345,170 440,148" stroke="#E2211C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                {([[60,240],[155,225],[250,200],[345,170],[440,148]] as [number,number][]).map(([x,y],i) => (
-                  <circle key={i} cx={x} cy={y} r="4" fill="#E2211C" />
+
+                {/* Y ticks left (inward) + right mirror */}
+                {[0,1,2,3,4].map(i => (
+                  <g key={i}>
+                    <line x1={65}  y1={260-i*60} x2={72}  y2={260-i*60} stroke="#111" strokeWidth="1.5" />
+                    <line x1={445} y1={260-i*60} x2={438} y2={260-i*60} stroke="#111" strokeWidth="1.5" />
+                  </g>
                 ))}
-                <line x1="290" y1="30" x2="310" y2="30" stroke="#000" strokeWidth="1.5" />
-                <circle cx="300" cy="30" r="3.5" fill="#000" />
-                <text x="315" y="34" fontSize="11" fill="#334155" fontFamily="Helvetica Neue, sans-serif">Sample A</text>
-                <line x1="378" y1="30" x2="398" y2="30" stroke="#E2211C" strokeWidth="1.5" />
-                <circle cx="388" cy="30" r="3.5" fill="#E2211C" />
-                <text x="403" y="34" fontSize="11" fill="#334155" fontFamily="Helvetica Neue, sans-serif">Sample B</text>
+
+                {/* X tick labels */}
+                {[0,1,2,3,4].map((v,i) => (
+                  <text key={v} x={65+i*95} y={277} textAnchor="middle" fontSize="11" fill="#1a1a1a">{v}</text>
+                ))}
+
+                {/* Y tick labels */}
+                {[0,0.25,0.50,0.75,1.00].map((v,i) => (
+                  <text key={v} x={57} y={260-i*60+4} textAnchor="end" fontSize="11" fill="#1a1a1a">{v.toFixed(2)}</text>
+                ))}
+
+                {/* Axis titles */}
+                <text x={255} y={297} textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a">Concentration (mM)</text>
+                <text x={14} y={140} textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a" transform="rotate(-90 14 140)">Absorbance (a.u.)</text>
+
+                {/* Sample A error bars (black) — data: 0.12, 0.31, 0.48, 0.69, 0.86 */}
+                {([[65,231,7],[160,186,10],[255,145,10],[350,94,12],[445,54,10]] as [number,number,number][]).map(([x,y,e],i) => (
+                  <g key={i} stroke="#111" strokeWidth="1.1">
+                    <line x1={x} y1={y-e} x2={x} y2={y+e} />
+                    <line x1={x-4} y1={y-e} x2={x+4} y2={y-e} />
+                    <line x1={x-4} y1={y+e} x2={x+4} y2={y+e} />
+                  </g>
+                ))}
+
+                {/* Sample B error bars (red) — data: 0.06, 0.14, 0.25, 0.38, 0.47 */}
+                {([[65,246,5],[160,226,7],[255,200,7],[350,169,7],[445,147,10]] as [number,number,number][]).map(([x,y,e],i) => (
+                  <g key={i} stroke="#c0392b" strokeWidth="1.1">
+                    <line x1={x} y1={y-e} x2={x} y2={y+e} />
+                    <line x1={x-4} y1={y-e} x2={x+4} y2={y-e} />
+                    <line x1={x-4} y1={y+e} x2={x+4} y2={y+e} />
+                  </g>
+                ))}
+
+                {/* Sample A line */}
+                <polyline points="65,231 160,186 255,145 350,94 445,54" fill="none" stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Sample B line */}
+                <polyline points="65,246 160,226 255,200 350,169 445,147" fill="none" stroke="#c0392b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Sample A markers: filled circles */}
+                {[[65,231],[160,186],[255,145],[350,94],[445,54]].map(([x,y],i) => (
+                  <circle key={i} cx={x} cy={y} r="5" fill="#111" />
+                ))}
+
+                {/* Sample B markers: filled squares */}
+                {[[65,246],[160,226],[255,200],[350,169],[445,147]].map(([x,y],i) => (
+                  <rect key={i} x={x-4.5} y={y-4.5} width="9" height="9" fill="#c0392b" />
+                ))}
+
+                {/* Legend */}
+                <rect x="73" y="28" width="132" height="52" fill="white" stroke="#d1d5db" strokeWidth="0.8" rx="2" />
+                <line x1="81" y1="46" x2="103" y2="46" stroke="#111" strokeWidth="1.8" />
+                <circle cx="92" cy="46" r="4.5" fill="#111" />
+                <text x="109" y="50" fontSize="11" fill="#1a1a1a">Sample A</text>
+                <line x1="81" y1="68" x2="103" y2="68" stroke="#c0392b" strokeWidth="1.8" />
+                <rect x="87.5" y="63.5" width="9" height="9" fill="#c0392b" />
+                <text x="109" y="72" fontSize="11" fill="#1a1a1a">Sample B</text>
               </svg>
             </div>
           </div>
