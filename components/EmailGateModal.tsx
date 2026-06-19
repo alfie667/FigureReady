@@ -8,25 +8,35 @@ interface Props {
   title?: string
   description?: string
   cta?: string
+  source?: string
 }
 
-export default function EmailGateModal({ onConfirm, onClose, title, description, cta }: Props) {
+export default function EmailGateModal({ onConfirm, onClose, title, description, cta, source }: Props) {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = email.trim()
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError('Veuillez entrer une adresse email valide.')
+      setError('Please enter a valid email address.')
       return
     }
+    setLoading(true)
     saveEmail(trimmed)
+    try {
+      await fetch('/api/collect-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed, source: source ?? 'gate' }),
+      })
+    } catch {}
     onConfirm()
   }
 
@@ -67,9 +77,10 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
 
           <button
             type="submit"
-            className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+            disabled={loading}
+            className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-60"
           >
-            {cta ?? 'Télécharger'}
+            {loading ? 'Loading…' : (cta ?? 'Télécharger')}
           </button>
         </form>
 

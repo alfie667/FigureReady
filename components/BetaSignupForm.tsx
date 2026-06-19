@@ -1,26 +1,32 @@
 'use client'
 import { useState } from 'react'
 
-const TALLY_FORM_URL = 'https://tally.so/r/9qx9y4'
-
 export default function BetaSignupForm() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const url = email
-      ? `${TALLY_FORM_URL}?email=${encodeURIComponent(email)}`
-      : TALLY_FORM_URL
-    window.open(url, '_blank')
+    const trimmed = email.trim()
+    if (!trimmed) return
+    setLoading(true)
+    try {
+      await fetch('/api/collect-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed, source: 'beta-hero' }),
+      })
+    } catch {}
     setSent(true)
     setEmail('')
+    setLoading(false)
   }
 
   if (sent) {
     return (
       <p className="text-sm text-blue-600 font-medium">
-        Thanks! Check the form that just opened to confirm your email.
+        You're on the list! We'll be in touch.
       </p>
     )
   }
@@ -37,9 +43,10 @@ export default function BetaSignupForm() {
       />
       <button
         type="submit"
-        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap shadow-sm"
+        disabled={loading}
+        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap shadow-sm disabled:opacity-60"
       >
-        Get early access
+        {loading ? 'Sending…' : 'Get early access'}
       </button>
     </form>
   )
