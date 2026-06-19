@@ -1,34 +1,9 @@
 'use client'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const TALLY_FORM_ID = '9qx9y4'
 const SESSION_KEY = 'figureready-email-captured'
-
-declare global {
-  interface Window {
-    Tally?: {
-      openPopup: (formId: string, options?: Record<string, unknown>) => void
-    }
-  }
-}
-
-function loadTally(): Promise<void> {
-  return new Promise((resolve) => {
-    if (window.Tally) { resolve(); return }
-
-    if (!document.querySelector('script[src*="tally.so"]')) {
-      const script = document.createElement('script')
-      script.src = 'https://tally.so/widgets/embed.js'
-      document.head.appendChild(script)
-    }
-
-    const poll = setInterval(() => {
-      if (window.Tally) { clearInterval(poll); resolve() }
-    }, 50)
-
-    setTimeout(() => { clearInterval(poll); resolve() }, 5000)
-  })
-}
 
 interface Props {
   children: React.ReactNode
@@ -36,29 +11,53 @@ interface Props {
 }
 
 export default function GatedAppLink({ children, className }: Props) {
+  const [showGate, setShowGate] = useState(false)
   const router = useRouter()
 
-  const handleClick = async () => {
-    if (typeof window === 'undefined') return
+  useEffect(() => {
+    if (!showGate) return
 
+    const handler = (e: MessageEvent) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data
+        if (data?.event === 'Tally Form Submitted') {
+          sessionStorage.setItem(SESSION_KEY, '1')
+          setShowGate(false)
+          router.push('/app')
+        }
+      } catch {}
+    }
+
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [showGate, router])
+
+  const handleClick = () => {
     if (sessionStorage.getItem(SESSION_KEY)) {
       router.push('/app')
       return
     }
-
-    await loadTally()
-
-    window.Tally?.openPopup(TALLY_FORM_ID, {
-      onSubmit: () => {
-        sessionStorage.setItem(SESSION_KEY, '1')
-        setTimeout(() => router.push('/app'), 1000)
-      },
-    })
+    setShowGate(true)
   }
 
   return (
-    <button onClick={handleClick} className={className}>
-      {children}
-    </button>
+    <>
+      <button onClick={handleClick} className={className}>
+        {children}
+      </button>
+      {showGate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden w-full max-w-md" style={{ height: 420 }}>
+            <iframe
+              src={`https://tally.so/embed/${TALLY_FORM_ID}?alignLeft=1&hideTitle=0&transparentBackground=0`}
+              width="100%"
+              height="100%"
+              frameBorder={0}
+              title="Get early access to FigureReady"
+            />
+          </div>
+        </div>
+      )}
+    </>
   )
 }
