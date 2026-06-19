@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     },
     body: JSON.stringify({
       from: 'onboarding@resend.dev',
-      to: 'zeggai_nouh@hotmail.fr',
+      to: 'noezig88@gmail.com',
       subject: `New FigureReady signup: ${email}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;">
@@ -36,7 +36,8 @@ export async function POST(req: Request) {
 
   if (!res.ok) {
     const err = await res.text()
-    return NextResponse.json({ error: 'Email failed', detail: err }, { status: 500 })
+    console.error('Resend error:', err)
+    return NextResponse.json({ error: 'Email failed' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
