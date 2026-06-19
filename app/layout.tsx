@@ -5,6 +5,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'FigureReady',
   description: 'Publication-ready figures from Excel',
+  verification: {
+    google: 'rKpiINHe1-o2E0b9YImIqejs2YeCxejo7_SilCYGcQM',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
