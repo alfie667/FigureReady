@@ -36,8 +36,7 @@ export async function POST(req: Request) {
 
   if (!res.ok) {
     const err = await res.text()
-    console.error('Resend error:', err)
-    return NextResponse.json({ error: 'Email failed' }, { status: 500 })
+    return NextResponse.json({ error: 'Email failed', detail: err }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true })
