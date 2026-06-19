@@ -26,7 +26,7 @@ const tableRows = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
+    <div className="min-h-screen bg-[#f9fafb] text-slate-900 font-sans antialiased">
       {/* Nav */}
       <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
@@ -54,7 +54,10 @@ export default function LandingPage() {
           <span className="text-xs font-medium text-blue-700">Free beta — no account needed</span>
         </div>
 
-        <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-4">
+        <h1
+          className="font-extrabold text-slate-900 leading-tight mb-4"
+          style={{ fontSize: '56px', letterSpacing: '-0.03em' }}
+        >
           From Excel to publication-ready<br className="hidden sm:block" /> figure in seconds
         </h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-8 leading-relaxed">
@@ -184,10 +187,11 @@ export default function LandingPage() {
 
       {/* Features */}
       <section className="max-w-4xl mx-auto px-6 pb-20">
-        <h2 className="text-2xl font-bold text-center text-slate-900 mb-10">Everything you need, nothing you don't</h2>
+        <p className="text-center mb-3" style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#2563eb' }}>Features</p>
+        <h2 className="text-2xl font-bold text-center text-slate-900 mb-10">Everything you need, nothing you don&apos;t</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {features.map(f => (
-            <div key={f.label} className="flex items-start gap-3 p-5 rounded-xl border border-slate-100 bg-slate-50">
+            <div key={f.label} className="flex items-start gap-3 bg-white" style={{ border: '1px solid #e4e7ec', borderRadius: '12px', padding: '24px' }}>
               <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shrink-0 mt-0.5">
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -203,8 +207,9 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="bg-slate-50 border-t border-slate-100 py-20">
+      <section className="bg-white border-t border-[#e4e7ec] py-20">
         <div className="max-w-4xl mx-auto px-6">
+          <p className="text-center mb-3" style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#2563eb' }}>How it works</p>
           <h2 className="text-2xl font-bold text-center text-slate-900 mb-12">Three steps to a publication-ready figure</h2>
           <div className="grid sm:grid-cols-3 gap-8">
             {steps.map(s => (
