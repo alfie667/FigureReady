@@ -257,6 +257,84 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section className="bg-white border-t border-[#e4e7ec] py-20" id="pricing">
+        <div className="max-w-4xl mx-auto px-6">
+          <p className="text-center mb-3" style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#2563eb' }}>Pricing</p>
+          <h2 className="text-2xl font-bold text-center text-slate-900 mb-3">Simple, transparent pricing</h2>
+          <p className="text-center text-slate-500 text-sm mb-12">Start free. Upgrade when you need more.</p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {/* Free */}
+            <div className="border border-slate-200 rounded-2xl p-7 flex flex-col">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Free</p>
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-4xl font-extrabold text-slate-900">0€</span>
+                <span className="text-slate-400 text-sm mb-1.5">/month</span>
+              </div>
+              <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
+                {['3 figures per month', 'Excel upload (.xlsx)', 'PNG & SVG export', 'ACS / Nature styles'].map(f => (
+                  <li key={f} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <GatedAppLink className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors w-full">
+                Get started free
+              </GatedAppLink>
+            </div>
+
+            {/* Pro Monthly */}
+            <div className="bg-blue-600 rounded-2xl p-7 flex flex-col relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wide whitespace-nowrap">
+                Most popular
+              </div>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Pro Monthly</p>
+              <div className="flex items-end gap-1 mb-4">
+                <span className="text-4xl font-extrabold text-white">12€</span>
+                <span className="text-blue-200 text-sm mb-1.5">/month</span>
+              </div>
+              <ul className="space-y-2 flex-1 mb-6 text-sm text-white">
+                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (3×)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
+                  <li key={f} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing" className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
+                Subscribe monthly →
+              </Link>
+            </div>
+
+            {/* Pro Yearly */}
+            <div className="border border-slate-200 rounded-2xl p-7 flex flex-col relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wide whitespace-nowrap">
+                Save 31%
+              </div>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Pro Yearly</p>
+              <div className="flex items-end gap-1 mb-1">
+                <span className="text-4xl font-extrabold text-slate-900">99€</span>
+                <span className="text-slate-400 text-sm mb-1.5">/year</span>
+              </div>
+              <p className="text-xs text-slate-400 mb-4">~8.25€/month</p>
+              <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
+                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (3×)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
+                  <li key={f} className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/pricing" className="block text-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
+                Subscribe yearly →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-6 py-20 text-center">
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Try FigureReady now</h2>
