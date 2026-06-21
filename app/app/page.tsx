@@ -10,11 +10,13 @@ import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
 import WelcomeModal from '@/components/WelcomeModal'
 import FeedbackButton from '@/components/FeedbackButton'
+import UpgradeModal from '@/components/UpgradeModal'
 import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
+import { canCreateFigure, incrementUsage } from '@/lib/usageLimit'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -32,6 +34,7 @@ export default function AppPage() {
   const [yAxisLabel, setYAxisLabel] = useState('')
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     const saved = loadDefaultStyle()
@@ -39,6 +42,11 @@ export default function AppPage() {
   }, [])
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
+    if (!canCreateFigure()) {
+      setShowUpgradeModal(true)
+      return
+    }
+    incrementUsage()
     setColumns(cols)
     setData(rows)
     const x = cols[0] ?? ''
@@ -85,6 +93,7 @@ export default function AppPage() {
   return (
     <div className="min-h-screen lg:h-screen bg-white flex flex-col overflow-hidden">
       <WelcomeModal />
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
       <Header hasData={columns.length > 0} onReset={reset} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">

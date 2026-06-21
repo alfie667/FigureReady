@@ -39,6 +39,7 @@ export default function LandingPage() {
             <span className="text-sm font-bold text-slate-900 tracking-tight">FigureReady</span>
           </div>
           <div className="flex items-center gap-6">
+            <Link href="/pricing" className="text-sm text-slate-500 hover:text-slate-800 transition-colors hidden sm:block">Pricing</Link>
             <Link href="/roadmap" className="text-sm text-slate-500 hover:text-slate-800 transition-colors hidden sm:block">Roadmap</Link>
             <GatedAppLink className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm">
               Try it free
@@ -270,6 +271,7 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
           <span>FigureReady — free beta, 2026</span>
           <div className="flex items-center gap-5">
+            <Link href="/pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
             <Link href="/graphpad-alternative" className="hover:text-slate-600 transition-colors">Free GraphPad Prism Alternative</Link>
             <a href="mailto:zeggai_nouh@hotmail.fr" className="hover:text-slate-600 transition-colors">Contact</a>
