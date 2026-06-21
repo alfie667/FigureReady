@@ -94,7 +94,7 @@ export default function AppPage() {
     <div className="min-h-screen lg:h-screen bg-white flex flex-col overflow-hidden">
       <WelcomeModal />
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
-      <Header hasData={columns.length > 0} onReset={reset} />
+      <Header hasData={columns.length > 0} onReset={reset} onUpgrade={() => setShowUpgradeModal(true)} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
         <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-100 lg:overflow-y-auto bg-white">
