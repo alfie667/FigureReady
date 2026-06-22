@@ -15,6 +15,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" style={{ colorScheme: 'light' }}>
       <body className="font-sans antialiased bg-slate-50">
         {children}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-D5DQ01SFSW" strategy="afterInteractive" />
+        <Script id="ga4-init" strategy="afterInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-D5DQ01SFSW');
+        `}</Script>
         <Script src="https://tally.so/widgets/embed.js" strategy="lazyOnload" />
       </body>
     </html>
