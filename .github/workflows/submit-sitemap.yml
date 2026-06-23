@@ -1,0 +1,87 @@
+# Submits sitemap.xml to Google Search Console after every Vercel deployment.
+#
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#
+#   GOOGLE_SERVICE_ACCOUNT_JSON
+#     Full JSON content of a Google Cloud service account key.
+#     The service account must be added as an Owner of the Search Console
+#     property https://figure-ready.vercel.app/ (Search Console → Settings →
+#     Users and permissions → Add user → Owner).
+#     How to create: console.cloud.google.com → IAM → Service accounts →
+#     Create → Keys → Add key → JSON.
+#
+#   VERCEL_TOKEN
+#     A personal Vercel API token (vercel.com/account/tokens).
+#     Used to poll the deployment status before submitting.
+
+name: Submit sitemap to Google Search Console
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  submit-sitemap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Wait for Vercel deployment to be ready
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          COMMIT_SHA:   ${{ github.sha }}
+        run: |
+          echo "Polling Vercel for deployment of commit ${COMMIT_SHA:0:7}..."
+          MAX=300   # 5 minutes
+          WAITED=0
+          INTERVAL=15
+
+          while [ $WAITED -lt $MAX ]; do
+            RESPONSE=$(curl -sf \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              "https://api.vercel.com/v6/deployments?meta-githubCommitSha=$COMMIT_SHA&limit=5" \
+              || echo '{}')
+
+            STATE=$(echo "$RESPONSE" | python3 -c "
+          import sys, json
+          data = json.load(sys.stdin)
+          deployments = data.get('deployments', [])
+          # Pick the first deployment that targets production
+          for d in deployments:
+              if d.get('target') == 'production' or d.get('target') is None:
+                  print(d.get('readyState', 'UNKNOWN'))
+                  sys.exit(0)
+          print('NOT_FOUND')
+          " 2>/dev/null || echo "PARSE_ERROR")
+
+            echo "  Status: $STATE (waited ${WAITED}s)"
+
+            if [ "$STATE" = "READY" ]; then
+              echo "Deployment is live."
+              break
+            fi
+
+            if [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
+              echo "Deployment failed with state: $STATE. Skipping sitemap submission."
+              exit 0
+            fi
+
+            sleep $INTERVAL
+            WAITED=$((WAITED + INTERVAL))
+          done
+
+          if [ $WAITED -ge $MAX ]; then
+            echo "Timed out waiting for deployment. Submitting anyway."
+          fi
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Submit sitemap to Google Search Console
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: node scripts/submit-sitemap.mjs
