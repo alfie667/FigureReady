@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import BetaSignupForm from '@/components/BetaSignupForm'
 import GatedAppLink from '@/components/GatedAppLink'
+import SampleDataButton from '@/components/SampleDataButton'
 
 const features = [
   { label: 'Excel upload (.xlsx)', desc: 'Drop your file, columns detected automatically.' },
@@ -207,13 +208,9 @@ export default function LandingPage() {
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
             Start for free →
           </GatedAppLink>
-          <Link
-            href="/roadmap"
-            className="px-8 py-3.5 border border-slate-200 hover:bg-slate-50 text-slate-700 text-base font-semibold rounded-xl transition-colors"
-          >
-            See roadmap
-          </Link>
+          <SampleDataButton className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-base font-semibold rounded-xl transition-colors cursor-pointer" />
         </div>
+        <p className="text-xs text-slate-400 mt-3">↑ Downloads a ready-to-use .xlsx file — open it in the app to see it become a figure</p>
 
       </section>
 
