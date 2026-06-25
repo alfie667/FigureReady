@@ -300,7 +300,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href="https://buy.polar.sh/polar_cl_aOYqFlFlGipbAJHydBzpgcO8IiLs5AZPajBEF2f2UOD" className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
+              <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
                 Get Pro →
               </a>
             </div>
@@ -324,7 +324,7 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href="https://buy.polar.sh/polar_cl_aOYqFlFlGipbAJHydBzpgcO8IiLs5AZPajBEF2f2UOD" className="block text-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
+              <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
                 Get Pro →
               </a>
             </div>

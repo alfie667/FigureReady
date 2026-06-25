@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Start free. Upgrade to Pro for unlimited figures, PNG + SVG + TIFF 300 dpi export, and no watermark.',
 }
 
-const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_aOYqFlFlGipbAJHydBzpgcO8IiLs5AZPajBEF2f2UOD'
+const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
 
 const freeFeatures = [
   '3 figures per month',

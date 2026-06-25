@@ -1,7 +1,7 @@
 'use client'
 import { FREE_LIMIT_VALUE } from '@/lib/usageLimit'
 
-const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_aOYqFlFlGipbAJHydBzpgcO8IiLs5AZPajBEF2f2UOD'
+const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
 
 interface Props {
   onClose: () => void
