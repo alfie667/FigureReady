@@ -1,6 +1,8 @@
 import { Polar } from '@polar-sh/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 const polar = new Polar({ accessToken: process.env.POLAR_API_KEY! })
 
 export async function GET(req: NextRequest) {
