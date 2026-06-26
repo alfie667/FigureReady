@@ -5,8 +5,18 @@ import GatedAppLink from '@/components/GatedAppLink'
 export const metadata: Metadata = {
   title: 'Free Publication Figure Templates for Researchers',
   description: 'Download free publication-ready figure templates for Nature, Science, IEEE. Or upload your Excel and get a custom figure in seconds with FigureReady.',
-  alternates: {
-    canonical: 'https://figure-ready.vercel.app/publication-figure-templates',
+  alternates: { canonical: 'https://figure-ready.vercel.app/publication-figure-templates' },
+  openGraph: {
+    title: 'Free Publication Figure Templates for Researchers',
+    description: 'Free publication-ready figure templates for Nature, Science, IEEE. Upload your Excel and get a custom figure in seconds.',
+    url: 'https://figure-ready.vercel.app/publication-figure-templates',
+    type: 'website',
+    siteName: 'FigureReady',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Free Publication Figure Templates for Researchers',
+    description: 'Free publication-ready figure templates for Nature, Science, IEEE. Upload your Excel, export in seconds.',
   },
 }
 

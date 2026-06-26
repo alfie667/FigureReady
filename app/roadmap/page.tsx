@@ -1,4 +1,17 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+  title: 'Roadmap — FigureReady',
+  description: 'See what has shipped and what is coming next in FigureReady — the free scientific figure maker for researchers.',
+  alternates: { canonical: 'https://figure-ready.vercel.app/roadmap' },
+  openGraph: {
+    title: 'Roadmap — FigureReady',
+    description: 'See what has shipped and what is coming next in FigureReady.',
+    url: 'https://figure-ready.vercel.app/roadmap',
+    type: 'website',
+  },
+}
 
 const released = [
   'Excel (.xlsx) upload',

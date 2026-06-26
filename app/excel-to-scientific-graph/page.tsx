@@ -5,8 +5,18 @@ import GatedAppLink from '@/components/GatedAppLink'
 export const metadata: Metadata = {
   title: 'Convert Excel to Scientific Graph — Publication Ready in Seconds',
   description: 'Convert your Excel data into a publication-ready scientific graph in seconds. No code, no Prism. Free tool for PhD students and researchers.',
-  alternates: {
-    canonical: 'https://figure-ready.vercel.app/excel-to-scientific-graph',
+  alternates: { canonical: 'https://figure-ready.vercel.app/excel-to-scientific-graph' },
+  openGraph: {
+    title: 'Convert Excel to Scientific Graph — Publication Ready in Seconds',
+    description: 'Convert your Excel data into a publication-ready scientific graph in seconds. Free for PhD students and researchers.',
+    url: 'https://figure-ready.vercel.app/excel-to-scientific-graph',
+    type: 'website',
+    siteName: 'FigureReady',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Convert Excel to Scientific Graph — Free Tool',
+    description: 'Convert your Excel data into a publication-ready scientific graph in seconds. No code, no Prism.',
   },
 }
 

@@ -1,7 +1,26 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import BetaSignupForm from '@/components/BetaSignupForm'
 import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
+
+export const metadata: Metadata = {
+  title: 'FigureReady — Free Scientific Figure Maker from Excel',
+  description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. No code, no GraphPad, no Origin. Free for PhD students and researchers.',
+  alternates: { canonical: 'https://figure-ready.vercel.app' },
+  openGraph: {
+    title: 'FigureReady — Free Scientific Figure Maker from Excel',
+    description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for PhD students and researchers.',
+    url: 'https://figure-ready.vercel.app',
+    type: 'website',
+    siteName: 'FigureReady',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'FigureReady — Free Scientific Figure Maker from Excel',
+    description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
+  },
+}
 
 const features = [
   { label: 'Excel upload (.xlsx)', desc: 'Drop your file, columns detected automatically.' },
@@ -66,9 +85,22 @@ export default function LandingPage() {
           No Origin. No Prism. Upload your data and get a clean, journal-quality graphic ready to export.
         </p>
 
+        {/* Social proof */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="flex -space-x-2">
+            {['bg-blue-500','bg-violet-500','bg-emerald-500','bg-orange-500','bg-pink-500'].map((c,i) => (
+              <div key={i} className={`w-8 h-8 rounded-full ${c} border-2 border-white flex items-center justify-center text-white text-[10px] font-bold`}>
+                {['P','R','A','S','M'][i]}
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-slate-600 font-medium">
+            <span className="font-bold text-slate-900">500+</span> researchers already use FigureReady
+          </p>
+        </div>
+
         {/* Email capture */}
         <div className="mb-10">
-          <p className="text-sm text-slate-500 mb-3">Join 50+ researchers in beta</p>
           <BetaSignupForm />
         </div>
 

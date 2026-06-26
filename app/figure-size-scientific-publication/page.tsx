@@ -5,8 +5,18 @@ import GatedAppLink from '@/components/GatedAppLink'
 export const metadata: Metadata = {
   title: 'Figure Size Guide for Scientific Publications — Nature, Science, IEEE',
   description: 'Complete guide to figure sizes for Nature, Science, Cell, IEEE and other major journals. Plus a free tool to generate correctly-sized figures from Excel.',
-  alternates: {
-    canonical: 'https://figure-ready.vercel.app/figure-size-scientific-publication',
+  alternates: { canonical: 'https://figure-ready.vercel.app/figure-size-scientific-publication' },
+  openGraph: {
+    title: 'Figure Size Guide for Scientific Publications — Nature, Science, IEEE',
+    description: 'Complete guide to figure sizes for Nature, Science, Cell, IEEE and other major journals.',
+    url: 'https://figure-ready.vercel.app/figure-size-scientific-publication',
+    type: 'website',
+    siteName: 'FigureReady',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Figure Size for Scientific Publications — Nature, Science, IEEE',
+    description: 'Complete guide to figure sizes for major journals. Plus a free tool to generate correctly-sized figures.',
   },
 }
 

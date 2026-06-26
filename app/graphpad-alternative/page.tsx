@@ -5,8 +5,18 @@ import GatedAppLink from '@/components/GatedAppLink'
 export const metadata: Metadata = {
   title: 'Free GraphPad Prism Alternative — FigureReady',
   description: 'FigureReady is a free GraphPad Prism alternative. Upload your Excel file and get a publication-ready figure in seconds. No installation, no subscription, no code.',
-  alternates: {
-    canonical: 'https://figure-ready.vercel.app/graphpad-alternative',
+  alternates: { canonical: 'https://figure-ready.vercel.app/graphpad-alternative' },
+  openGraph: {
+    title: 'Free GraphPad Prism Alternative — FigureReady',
+    description: 'Get publication-ready figures from Excel in seconds. Free alternative to GraphPad Prism.',
+    url: 'https://figure-ready.vercel.app/graphpad-alternative',
+    type: 'website',
+    siteName: 'FigureReady',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Free GraphPad Prism Alternative — FigureReady',
+    description: 'Get publication-ready figures from Excel in seconds. Free alternative to GraphPad Prism.',
   },
 }
 

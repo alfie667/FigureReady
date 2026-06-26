@@ -5,8 +5,18 @@ import GatedAppLink from '@/components/GatedAppLink'
 export const metadata: Metadata = {
   title: 'Free Scientific Figure Maker — FigureReady',
   description: 'FigureReady is a free scientific figure maker. Upload your Excel file and get a publication-ready figure in seconds. No code, no installation.',
-  alternates: {
-    canonical: 'https://figure-ready.vercel.app/scientific-figure-maker',
+  alternates: { canonical: 'https://figure-ready.vercel.app/scientific-figure-maker' },
+  openGraph: {
+    title: 'Free Scientific Figure Maker — FigureReady',
+    description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
+    url: 'https://figure-ready.vercel.app/scientific-figure-maker',
+    type: 'website',
+    siteName: 'FigureReady',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Free Scientific Figure Maker — FigureReady',
+    description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
   },
 }
 
