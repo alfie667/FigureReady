@@ -43,6 +43,10 @@ export interface StyleOverrides {
   // Font size for text annotations added to the figure.
   // Kept separate from tick label size so both can be set independently.
   annotationFontSize?: number
+  // Vertical offset (px) for the X and Y axis labels.
+  // Positive = move down, negative = move up.
+  xLabelDy?: number
+  yLabelDy?: number
 }
 
 // Curated set of widely-available fonts suitable for publication figures.

@@ -276,10 +276,10 @@ export default function ChartPreview({
     : { layout: 'horizontal' as const, verticalAlign: legendPosition, align: 'center' as const, height: 36 }
   const figureWidth = styleOverrides.figureWidth
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
-  const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, style: xLabelStyle }
+  const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, dy: styleOverrides.xLabelDy ?? 0, style: xLabelStyle }
   const yLabelText = yAxisLabel.trim() || (yCols.length === 1 ? formatAxisLabel(yCols[0]) : '')
   const yLabel = yLabelText
-    ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, style: yLabelStyle }
+    ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, dy: styleOverrides.yLabelDy ?? 0, style: yLabelStyle }
     : undefined
   const grid = showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
   const legend = legendEnabled ? <Legend {...legendLayoutProps} wrapperStyle={legendStyle} /> : null

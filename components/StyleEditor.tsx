@@ -177,6 +177,40 @@ function DimensionField({
   )
 }
 
+function LabelOffsetSlider({
+  label, value, min, max, onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-medium text-slate-500">{label}</label>
+        <span className="text-xs font-mono text-slate-400 w-10 text-right">{value > 0 ? `+${value}` : value}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onChange(Math.max(min, value - 5))}
+          className="w-6 h-6 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 text-sm shrink-0"
+        >−</button>
+        <input
+          type="range" min={min} max={max} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="flex-1 accent-blue-600"
+        />
+        <button
+          onClick={() => onChange(Math.min(max, value + 5))}
+          className="w-6 h-6 flex items-center justify-center rounded border border-slate-200 text-slate-500 hover:bg-slate-50 text-sm shrink-0"
+        >+</button>
+      </div>
+    </div>
+  )
+}
+
 export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
   const [saved, setSaved] = useState(false)
 
@@ -245,6 +279,18 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
         <LineThicknessPicker label="Axis line width" value={axisWidth} presets={axisWidthPresets} onChange={(v) => set('axisWidth', v)} />
         <ColorSwatchPicker label="Axis color" value={axisColor} onChange={(v) => set('axisColor', v)} />
         <ToggleSwitch label="Show grid" checked={showGrid} onChange={(v) => set('showGrid', v)} />
+        <LabelOffsetSlider
+          label="Y label position"
+          value={overrides.yLabelDy ?? 0}
+          min={-200} max={200}
+          onChange={(v) => set('yLabelDy', v)}
+        />
+        <LabelOffsetSlider
+          label="X label position"
+          value={overrides.xLabelDy ?? 0}
+          min={-60} max={60}
+          onChange={(v) => set('xLabelDy', v)}
+        />
       </div>
 
       <div className="pt-2 border-t border-slate-100 space-y-4">
