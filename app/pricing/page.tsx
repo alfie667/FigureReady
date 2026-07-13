@@ -12,15 +12,16 @@ const freeFeatures = [
   '3 figures per month',
   'Excel upload (.xlsx)',
   'Line, scatter, bar charts',
-  'PNG export',
-  'ACS / Nature styles',
+  'PNG & SVG export (300 DPI)',
+  'Error bars',
+  'Basic style options',
 ]
 
 const proFeatures = [
   'Unlimited figures',
   'Excel upload (.xlsx)',
   'Line, scatter, bar charts',
-  'PNG + SVG + TIFF 300 dpi export',
+  'PNG & SVG export (300 DPI)',
   'No watermark',
   'ACS / Nature / IEEE styles',
   'Error bars',
@@ -148,10 +149,10 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady — 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
-            <a href="mailto:zeggai_nouh@hotmail.fr" className="hover:text-slate-600 transition-colors">Contact</a>
+            <a href="mailto:contact@figure-ready.com" className="hover:text-slate-600 transition-colors">Contact</a>
           </div>
         </div>
       </footer>

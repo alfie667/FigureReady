@@ -29,13 +29,13 @@ const features = [
   { label: 'Multiple curves', desc: 'Plot several Y series on the same figure.' },
   { label: 'Error bars', desc: 'Attach standard deviation or standard error columns.' },
   { label: 'Style customization', desc: 'Font, line width, markers, colors — visually.' },
-  { label: 'PNG & SVG export', desc: 'High-resolution PNG (3×) and scalable SVG.' },
+  { label: 'PNG & SVG export', desc: 'High-resolution PNG (300 DPI) and scalable SVG with editable layers.' },
 ]
 
 const steps = [
   { n: '1', title: 'Upload your Excel file', desc: 'Drag and drop a .xlsx file. Columns are detected automatically.' },
   { n: '2', title: 'Configure your figure', desc: 'Select X and Y axes, chart type, series names, and error bars.' },
-  { n: '3', title: 'Export publication-ready graphics', desc: 'Download PNG at 3× resolution or SVG for vector editing.' },
+  { n: '3', title: 'Export publication-ready graphics', desc: 'Download PNG at 300 DPI or SVG with separate editable layers.' },
 ]
 
 const tableRows = [
@@ -74,7 +74,7 @@ export default function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 pt-16 pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-xs font-medium text-blue-700">Free beta — no account needed</span>
+          <span className="text-xs font-medium text-blue-700">Free — no account needed</span>
         </div>
 
         <h1
@@ -304,7 +304,7 @@ export default function LandingPage() {
                 <span className="text-slate-400 text-sm mb-1.5">/month</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
-                {['3 figures per month', 'Excel upload (.xlsx)', 'PNG & SVG export', 'ACS / Nature styles'].map(f => (
+                {['3 figures per month', 'Excel upload (.xlsx)', 'PNG & SVG export', 'Error bars', 'Basic style options'].map(f => (
                   <li key={f} className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -327,7 +327,7 @@ export default function LandingPage() {
                 <span className="text-blue-200 text-sm mb-1.5">/month</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-white">
-                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (3×)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
+                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-blue-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -351,7 +351,7 @@ export default function LandingPage() {
               </div>
               <p className="text-xs text-slate-400 mb-4">~8.25€/month</p>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
-                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (3×)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
+                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                     {f}
@@ -378,12 +378,12 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady — 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
             <Link href="/graphpad-alternative" className="hover:text-slate-600 transition-colors">Free GraphPad Prism Alternative</Link>
-            <a href="mailto:zeggai_nouh@hotmail.fr" className="hover:text-slate-600 transition-colors">Contact</a>
+            <a href="mailto:contact@figure-ready.com" className="hover:text-slate-600 transition-colors">Contact</a>
             <Link href="/admin" className="hover:text-slate-600 transition-colors">Admin</Link>
           </div>
         </div>
