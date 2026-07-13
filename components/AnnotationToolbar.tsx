@@ -95,7 +95,7 @@ function ToolBtn({
       }`}
     >
       <span className="flex items-center justify-center">{icon}</span>
-      <span className={`text-[9px] font-semibold uppercase tracking-wide leading-none whitespace-nowrap ${
+      <span className={`text-[10px] font-light tracking-wide leading-none whitespace-nowrap ${
         active ? 'text-blue-100' : 'text-slate-400'
       }`}>
         {shortLabel}
@@ -201,7 +201,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
             <span className="text-[18px] leading-none font-serif">Σ</span>
             <ChevronDown />
           </span>
-          <span className={`text-[9px] font-semibold uppercase tracking-wide leading-none ${
+          <span className={`text-[10px] font-light tracking-wide leading-none ${
             showSymbols ? 'text-blue-100' : 'text-slate-400'
           }`}>
             Symb.
