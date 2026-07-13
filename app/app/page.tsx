@@ -16,6 +16,8 @@ import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
+import JournalSelector from '@/components/JournalSelector'
+import type { JournalOverrideKeys } from '@/lib/journalPresets'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -76,6 +78,19 @@ export default function AppPage() {
     setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
+  }
+
+  const handleJournalApply = (overrides: Pick<StyleOverrides, JournalOverrideKeys>) => {
+    setStyleOverrides(prev => ({ ...prev, ...overrides }))
+  }
+
+  const handleJournalClear = () => {
+    setStyleOverrides(prev => {
+      const next = { ...prev }
+      const keys: JournalOverrideKeys[] = ['figureWidth', 'fontFamily', 'xTitleSize', 'yTitleSize', 'xTickSize', 'yTickSize']
+      keys.forEach(k => { delete next[k] })
+      return next
+    })
   }
 
   const focusUpload = () => {
@@ -145,6 +160,9 @@ export default function AppPage() {
                 />
                 <div className="flex flex-wrap gap-6">
                   <ChartTypeSelector value={chartType} onChange={setChartType} />
+                </div>
+                <div className="pt-2 border-t border-slate-100">
+                  <JournalSelector onApply={handleJournalApply} onClear={handleJournalClear} />
                 </div>
               </div>
             </Panel>
