@@ -172,30 +172,27 @@ export default function AppPage() {
           )}
         </aside>
 
-        <main className="flex-1 flex flex-col lg:overflow-y-auto bg-slate-50">
-          <div className="px-6 lg:px-10 py-4 border-b border-slate-100 bg-white">
-            <h2 className="text-sm font-semibold text-slate-700">Aperçu</h2>
-          </div>
-          <div className="flex-1 flex items-center justify-center p-6 lg:p-10">
-            {ready ? (
-              <ChartPreview
-                data={data}
-                xCol={xCol}
-                yCols={yCols}
-                seriesNames={seriesNames}
-                errorCols={errorCols}
-                xAxisLabel={xAxisLabel}
-                yAxisLabel={yAxisLabel}
-                chartType={chartType}
-                styleName={styleName}
-                styleOverrides={styleOverrides}
-                annotations={annotations}
-                onAnnotationsChange={setAnnotations}
-              />
-            ) : (
+        <main className="flex-1 flex flex-col lg:overflow-hidden">
+          {ready ? (
+            <ChartPreview
+              data={data}
+              xCol={xCol}
+              yCols={yCols}
+              seriesNames={seriesNames}
+              errorCols={errorCols}
+              xAxisLabel={xAxisLabel}
+              yAxisLabel={yAxisLabel}
+              chartType={chartType}
+              styleName={styleName}
+              styleOverrides={styleOverrides}
+              annotations={annotations}
+              onAnnotationsChange={setAnnotations}
+            />
+          ) : (
+            <div className="flex-1 flex items-center justify-center bg-[#1a1a1a]">
               <EmptyState onUploadClick={focusUpload} />
-            )}
-          </div>
+            </div>
+          )}
         </main>
       </div>
 

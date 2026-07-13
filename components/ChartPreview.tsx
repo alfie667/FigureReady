@@ -697,24 +697,56 @@ export default function ChartPreview({
   return (
     <>
       {emailGate && <EmailGateModal onConfirm={handleEmailConfirm} onClose={() => setEmailGate(null)} />}
-      <div className="space-y-3">
-        {/* Drawing toolbar */}
-        <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
+      {/* ── Full-height editor layout ──────────────────────────────────────── */}
+      <div className="flex flex-col" style={{ height: '100%' }}>
 
-        <div className="overflow-x-auto">
-          <div
-            ref={chartRef}
-            className="relative bg-white p-6 rounded-xl border border-slate-200 shadow-sm"
-            style={{
-              fontFamily,
-              cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
-              width: figureWidth ? `${figureWidth}px` : '100%',
-              userSelect: isDraggingAnnotation ? 'none' : undefined,
-            }}
-            onPointerMove={handleContainerPointerMove}
-            onPointerUp={handleContainerPointerUp}
-            onClick={handleContainerClick}
-          >
+        {/* Chrome bar: annotation tools + export */}
+        <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20">
+          <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
+          <div className="flex items-center gap-2 shrink-0">
+            {zoomDomain && (
+              <button
+                onClick={resetZoom}
+                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+              >
+                Réinitialiser zoom
+              </button>
+            )}
+            <button
+              onClick={() => triggerExport('svg')}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <DownloadIcon />
+              SVG
+            </button>
+            <button
+              onClick={() => triggerExport('png')}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <DownloadIcon />
+              PNG · 3×
+            </button>
+          </div>
+        </div>
+
+        {/* Dark workspace */}
+        <div className="flex-1 overflow-auto bg-[#1a1a1a]">
+          <div className="min-h-full flex items-center justify-center p-10 lg:p-14">
+            <div className="overflow-x-auto">
+              <div
+                ref={chartRef}
+                className="relative bg-white p-6 rounded-2xl"
+                style={{
+                  boxShadow: '0 32px 80px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.35)',
+                  fontFamily,
+                  cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
+                  width: figureWidth ? `${figureWidth}px` : '700px',
+                  userSelect: isDraggingAnnotation ? 'none' : undefined,
+                }}
+                onPointerMove={handleContainerPointerMove}
+                onPointerUp={handleContainerPointerUp}
+                onClick={handleContainerClick}
+              >
             {/* Chart */}
             <ResponsiveContainer width="100%" height={figureHeight}>
               {renderChart() as React.ReactElement}
@@ -1009,45 +1041,40 @@ export default function ChartPreview({
           </div>
         </div>
 
-        {/* Bottom bar: hints + export */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs text-slate-400 min-h-[18px]">
+          </div>{/* /centering wrapper */}
+        </div>{/* /dark workspace */}
+
+        {/* Status bar */}
+        <div className="flex items-center justify-between px-5 py-2 bg-[#111111] border-t border-white/5 shrink-0">
+          <div className="text-xs text-zinc-500 min-h-[16px]">
             {selectedId ? (
               <span>
                 Sélectionné ·{' '}
-                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 text-[10px]">Delete</kbd>
-                {' '}pour supprimer · clic ailleurs pour désélectionner
+                <kbd className="bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded text-[10px] font-mono">Delete</kbd>
+                {' '}pour supprimer
               </span>
             ) : zoomEnabled ? (
-              <span>Glissez sur le graphique pour zoomer · double-clic pour réinitialiser</span>
-            ) : null}
+              <span>Glissez pour zoomer · double-clic pour réinitialiser</span>
+            ) : (
+              <span>Cliquez sur un outil pour annoter votre figure</span>
+            )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             {zoomDomain && (
               <button
                 onClick={resetZoom}
-                className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
               >
-                Réinitialiser le zoom
+                Réinitialiser zoom
               </button>
             )}
-            <button
-              onClick={() => triggerExport('svg')}
-              className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <DownloadIcon />
-              SVG
-            </button>
-            <button
-              onClick={() => triggerExport('png')}
-              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <DownloadIcon />
-              PNG · 3×
-            </button>
+            <span className="text-[10px] text-zinc-700 select-none font-semibold tracking-widest uppercase">
+              FigureReady
+            </span>
           </div>
         </div>
-      </div>
+
+      </div>{/* /flex-col editor */}
     </>
   )
 }
