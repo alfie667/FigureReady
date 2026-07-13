@@ -97,7 +97,7 @@ export const chartStyles: Record<StyleName, ChartStyle> = {
   // palette, and tight margins so the plot area fills nearly the whole figure.
   ACS: {
     colors: ['#000000', '#E2211C', '#1F4FA8', '#1B9E4B', '#7B2D8E'],
-    fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+    fontFamily: 'Arial, Helvetica, sans-serif',
     fontSize: 14,
     tickFontSize: 14,
     gridColor: '#dddddd',

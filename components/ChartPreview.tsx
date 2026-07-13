@@ -110,6 +110,7 @@ function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, 
       textAnchor="middle"
       dominantBaseline="middle"
       transform={angle ? `rotate(${angle}, ${cx}, ${cy})` : undefined}
+      className="fr-axis-label"
       style={{ ...style, cursor: 'grab', userSelect: 'none' }}
       onMouseDown={handleMouseDown}
     >
@@ -235,16 +236,6 @@ function injectPngDpi(dataUrl: string, dpi: number): string {
   return 'data:image/png;base64,' + btoa(str)
 }
 
-const EXPORT_PRESETS = [
-  { id: 'nature-single', label: 'Nature 1-col · 90mm',  mm: 90 },
-  { id: 'nature-double', label: 'Nature 2-col · 183mm', mm: 183 },
-  { id: 'acs-single',    label: 'ACS 1-col · 89mm',     mm: 88.9 },
-  { id: 'acs-double',    label: 'ACS 2-col · 180mm',    mm: 180.3 },
-  { id: 'cell-single',   label: 'Cell 1-col · 85mm',    mm: 85 },
-  { id: 'cell-double',   label: 'Cell 2-col · 174mm',   mm: 174 },
-] as const
-type ExportPresetId = typeof EXPORT_PRESETS[number]['id']
-
 // ─── Drag state ───────────────────────────────────────────────────────────────
 
 type DragState =
@@ -307,7 +298,6 @@ export default function ChartPreview({
   const setSelectedId = (id: string | null) => { selectedIdRef.current = id; _setSelectedId(id) }
 
   const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
-  const [exportPreset, setExportPreset] = useState<ExportPresetId>('nature-single')
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
@@ -780,11 +770,7 @@ export default function ChartPreview({
     trackExport()
     const { toPng } = await import('html-to-image')
     try {
-      const preset = EXPORT_PRESETS.find(p => p.id === exportPreset) ?? EXPORT_PRESETS[0]
-      const containerWidth = chartRef.current.offsetWidth
-      const targetPx = Math.round(preset.mm / 25.4 * 300)
-      const pixelRatio = targetPx / containerWidth
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio })
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
       const dataUrl = injectPngDpi(raw, 300)
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
@@ -798,85 +784,128 @@ export default function ChartPreview({
     if (!svg) return
     const containerRect = chartRef.current.getBoundingClientRect()
     const svgRect = svg.getBoundingClientRect()
-    const clone = svg.cloneNode(true) as SVGSVGElement
-    clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
-    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', 'white')
-    clone.insertBefore(bg, clone.firstChild)
 
+    const ns = 'http://www.w3.org/2000/svg'
+    const INKNS = 'http://www.inkscape.org/namespaces/inkscape'
+
+    // Clone source SVG for element extraction
+    const source = svg.cloneNode(true) as SVGSVGElement
+
+    // Build new layered output SVG
+    const out = document.createElementNS(ns, 'svg')
+    out.setAttribute('xmlns', ns)
+    out.setAttribute('xmlns:inkscape', INKNS)
+    out.setAttribute('width', source.getAttribute('width') || String(Math.round(svgRect.width)))
+    out.setAttribute('height', source.getAttribute('height') || String(Math.round(svgRect.height)))
+    if (source.getAttribute('viewBox')) out.setAttribute('viewBox', source.getAttribute('viewBox')!)
+
+    // defs (arrowheads for annotations)
+    const defs = document.createElementNS(ns, 'defs')
+    const hasArrows = annotations.some(a => a.type === 'arrow' || (a.type === 'line' && (a.headEnd || a.headStart)))
+    if (hasArrows) {
+      const mkMarker = (id: string, points: string, refX: string) => {
+        const m = document.createElementNS(ns, 'marker')
+        m.setAttribute('id', id); m.setAttribute('markerWidth', '8'); m.setAttribute('markerHeight', '6')
+        m.setAttribute('refX', refX); m.setAttribute('refY', '3'); m.setAttribute('orient', 'auto')
+        const p = document.createElementNS(ns, 'polygon')
+        p.setAttribute('points', points); p.setAttribute('fill', axisColor)
+        m.appendChild(p); return m
+      }
+      defs.appendChild(mkMarker('fr-exp-arrow', '0 0, 8 3, 0 6', '7'))
+      defs.appendChild(mkMarker('fr-exp-arrow-rev', '8 0, 0 3, 8 6', '1'))
+    }
+    out.appendChild(defs)
+
+    // White background
+    const bg = document.createElementNS(ns, 'rect')
+    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', 'white')
+    out.appendChild(bg)
+
+    // Layer helper (Inkscape-compatible)
+    const mkLayer = (id: string, label: string) => {
+      const g = document.createElementNS(ns, 'g')
+      g.setAttribute('id', id)
+      g.setAttributeNS(INKNS, 'inkscape:label', label)
+      g.setAttributeNS(INKNS, 'inkscape:groupmode', 'layer')
+      return g
+    }
+
+    const gridLayer  = mkLayer('layer-grid',        'Grid')
+    const axesLayer  = mkLayer('layer-axes',        'Axes')
+    const dataLayer  = mkLayer('layer-data',        'Data')
+    const textLayer  = mkLayer('layer-text',        'Text')
+    const annotLayer = mkLayer('layer-annotations', 'Annotations')
+
+    // Move axis title labels into text layer (remove from source before cloning axes)
+    source.querySelectorAll('.fr-axis-label').forEach(el => {
+      textLayer.appendChild(el.cloneNode(true))
+      el.remove()
+    })
+
+    // Grid
+    source.querySelectorAll('.recharts-cartesian-grid').forEach(el => gridLayer.appendChild(el.cloneNode(true)))
+
+    // Axes (lines, tick marks, tick labels — minus the title labels extracted above)
+    source.querySelectorAll('.recharts-cartesian-axis').forEach(el => axesLayer.appendChild(el.cloneNode(true)))
+
+    // Data series (lines + dots, scatter, bars)
+    source.querySelectorAll('.recharts-line, .recharts-scatter, .recharts-bar').forEach(el => dataLayer.appendChild(el.cloneNode(true)))
+
+    out.appendChild(gridLayer)
+    out.appendChild(axesLayer)
+    out.appendChild(dataLayer)
+    out.appendChild(textLayer)
+    out.appendChild(annotLayer)
+
+    // Coordinate conversion: annotation % positions → SVG px
     const toSVGX = (pct: number) => (pct / 100) * containerRect.width - (svgRect.left - containerRect.left)
     const toSVGY = (pct: number) => (pct / 100) * containerRect.height - (svgRect.top - containerRect.top)
 
-    // Add arrowhead markers once if needed
-    const hasArrows = annotations.some(a =>
-      a.type === 'arrow' || (a.type === 'line' && (a.headEnd || a.headStart))
-    )
-    if (hasArrows) {
-      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
-      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker')
-      marker.setAttribute('id', 'fr-exp-arrow')
-      marker.setAttribute('markerWidth', '8'); marker.setAttribute('markerHeight', '6')
-      marker.setAttribute('refX', '7'); marker.setAttribute('refY', '3'); marker.setAttribute('orient', 'auto')
-      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
-      poly.setAttribute('points', '0 0, 8 3, 0 6'); poly.setAttribute('fill', axisColor)
-      marker.appendChild(poly); defs.appendChild(marker)
-      const revMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker')
-      revMarker.setAttribute('id', 'fr-exp-arrow-rev')
-      revMarker.setAttribute('markerWidth', '8'); revMarker.setAttribute('markerHeight', '6')
-      revMarker.setAttribute('refX', '1'); revMarker.setAttribute('refY', '3'); revMarker.setAttribute('orient', 'auto')
-      const revPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
-      revPoly.setAttribute('points', '8 0, 0 3, 8 6'); revPoly.setAttribute('fill', axisColor)
-      revMarker.appendChild(revPoly); defs.appendChild(revMarker)
-      clone.insertBefore(defs, clone.firstChild)
-    }
-
     annotations.forEach(ann => {
       if (ann.type === 'text') {
-        const xPx = toSVGX(ann.xPct); const yPx = toSVGY(ann.yPct)
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-        text.setAttribute('x', String(xPx)); text.setAttribute('y', String(yPx))
+        const text = document.createElementNS(ns, 'text')
+        text.setAttribute('x', String(toSVGX(ann.xPct))); text.setAttribute('y', String(toSVGY(ann.yPct)))
         text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle')
         text.setAttribute('font-family', fontFamily); text.setAttribute('font-size', String(annotationFontSize))
         text.setAttribute('fill', axisColor)
         if (boldLabels) text.setAttribute('font-weight', 'bold')
         text.textContent = ann.text
-        clone.appendChild(text)
+        annotLayer.appendChild(text)
       } else if (ann.type === 'arrow') {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+        const line = document.createElementNS(ns, 'line')
         line.setAttribute('x1', String(toSVGX(ann.x1Pct))); line.setAttribute('y1', String(toSVGY(ann.y1Pct)))
         line.setAttribute('x2', String(toSVGX(ann.x2Pct))); line.setAttribute('y2', String(toSVGY(ann.y2Pct)))
         line.setAttribute('stroke', axisColor); line.setAttribute('stroke-width', '1.5')
         line.setAttribute('marker-end', 'url(#fr-exp-arrow)')
-        clone.appendChild(line)
+        annotLayer.appendChild(line)
       } else if (ann.type === 'line') {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+        const line = document.createElementNS(ns, 'line')
         line.setAttribute('x1', String(toSVGX(ann.x1Pct))); line.setAttribute('y1', String(toSVGY(ann.y1Pct)))
         line.setAttribute('x2', String(toSVGX(ann.x2Pct))); line.setAttribute('y2', String(toSVGY(ann.y2Pct)))
         line.setAttribute('stroke', axisColor); line.setAttribute('stroke-width', '1.5')
         if (ann.dash) line.setAttribute('stroke-dasharray', '6 4')
         if (ann.headEnd) line.setAttribute('marker-end', 'url(#fr-exp-arrow)')
         if (ann.headStart) line.setAttribute('marker-start', 'url(#fr-exp-arrow-rev)')
-        clone.appendChild(line)
+        annotLayer.appendChild(line)
       } else if (ann.type === 'rect') {
-        const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        const r = document.createElementNS(ns, 'rect')
         r.setAttribute('x', String(toSVGX(ann.xPct))); r.setAttribute('y', String(toSVGY(ann.yPct)))
         r.setAttribute('width', String((ann.widthPct / 100) * containerRect.width))
         r.setAttribute('height', String((ann.heightPct / 100) * containerRect.height))
         r.setAttribute('fill', 'none'); r.setAttribute('stroke', axisColor); r.setAttribute('stroke-width', '1.5')
-        clone.appendChild(r)
+        annotLayer.appendChild(r)
       } else if (ann.type === 'ellipse') {
-        const el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
+        const el = document.createElementNS(ns, 'ellipse')
         const rx = (ann.widthPct / 100) * containerRect.width / 2
         const ry = (ann.heightPct / 100) * containerRect.height / 2
-        el.setAttribute('cx', String(toSVGX(ann.xPct) + rx))
-        el.setAttribute('cy', String(toSVGY(ann.yPct) + ry))
+        el.setAttribute('cx', String(toSVGX(ann.xPct) + rx)); el.setAttribute('cy', String(toSVGY(ann.yPct) + ry))
         el.setAttribute('rx', String(rx)); el.setAttribute('ry', String(ry))
         el.setAttribute('fill', 'none'); el.setAttribute('stroke', axisColor); el.setAttribute('stroke-width', '1.5')
-        clone.appendChild(el)
+        annotLayer.appendChild(el)
       }
     })
 
-    const svgStr = new XMLSerializer().serializeToString(clone)
+    const svgStr = new XMLSerializer().serializeToString(out)
     const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -959,24 +988,13 @@ export default function ChartPreview({
               <DownloadIcon />
               SVG
             </button>
-            <div className="flex items-center rounded-lg border border-blue-600 overflow-hidden shadow-sm">
-              <select
-                value={exportPreset}
-                onChange={e => setExportPreset(e.target.value as ExportPresetId)}
-                className="px-2 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border-r border-blue-200 focus:outline-none cursor-pointer"
-              >
-                {EXPORT_PRESETS.map(p => (
-                  <option key={p.id} value={p.id}>{p.label}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => triggerExport('png')}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
-              >
-                <DownloadIcon />
-                PNG · 300 DPI
-              </button>
-            </div>
+            <button
+              onClick={() => triggerExport('png')}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <DownloadIcon />
+              PNG · 300 DPI
+            </button>
           </div>
         </div>
 
