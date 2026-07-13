@@ -684,6 +684,17 @@ export default function ChartPreview({
     >×</button>
   )
 
+  // ─── Fill helpers ────────────────────────────────────────────────────────────
+
+  const FILL_COLORS = ['#1e293b', '#ffffff', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
+
+  const toRgba = (hex: string, opacity: number) => {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r},${g},${b},${opacity})`
+  }
+
   // ─── Partition annotations by type ───────────────────────────────────────────
 
   const textAnnotations = annotations.filter((a): a is TextAnnotation => a.type === 'text')
@@ -896,6 +907,7 @@ export default function ChartPreview({
                     width: `${ann.widthPct}%`, height: `${ann.heightPct}%`,
                     border: `1.5px solid ${isSel ? '#3b82f6' : axisColor}`,
                     borderRadius: '50%',
+                    background: ann.fillColor ? toRgba(ann.fillColor, ann.fillOpacity ?? 0.3) : 'transparent',
                     boxSizing: 'border-box',
                     cursor: 'move',
                     touchAction: 'none',
@@ -936,6 +948,7 @@ export default function ChartPreview({
                     left: `${ann.xPct}%`, top: `${ann.yPct}%`,
                     width: `${ann.widthPct}%`, height: `${ann.heightPct}%`,
                     border: `1.5px solid ${isSel ? '#3b82f6' : axisColor}`,
+                    background: ann.fillColor ? toRgba(ann.fillColor, ann.fillOpacity ?? 0.3) : 'transparent',
                     boxSizing: 'border-box',
                     cursor: 'move',
                     touchAction: 'none',
@@ -1044,25 +1057,72 @@ export default function ChartPreview({
           </div>{/* /centering wrapper */}
         </div>{/* /dark workspace */}
 
-        {/* Hints bar */}
-        <div className="flex items-center justify-between px-4 py-1.5 bg-white border-t border-slate-100 shrink-0 min-h-[30px]">
-          <p className="text-xs text-slate-400">
-            {selectedId ? (
-              <span>
-                Sélectionné ·{' '}
-                <kbd className="font-mono bg-slate-100 px-1 rounded text-slate-500">Delete</kbd>
-                {' '}pour supprimer · clic ailleurs pour désélectionner
-              </span>
-            ) : zoomEnabled ? (
-              <span>Glissez sur le graphique pour zoomer · double-clic pour réinitialiser</span>
-            ) : null}
-          </p>
-          {zoomDomain && (
-            <button onClick={resetZoom} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
-              Réinitialiser le zoom
-            </button>
-          )}
-        </div>
+        {/* Context bar: fill controls when shape selected, otherwise hints */}
+        {(() => {
+          const selShape = selectedId
+            ? (rectAnnotations.find(a => a.id === selectedId) ?? ellipseAnnotations.find(a => a.id === selectedId) ?? null)
+            : null
+          return (
+            <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-t border-slate-100 shrink-0 min-h-[36px]">
+              {selShape ? (
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="text-xs font-medium text-slate-500">Remplissage</span>
+                  <div className="flex items-center gap-1">
+                    {/* No fill */}
+                    <button
+                      title="Aucun remplissage"
+                      onClick={() => updateAnnotation(selShape.id, { fillColor: undefined })}
+                      className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-blue-500 ring-1 ring-blue-300' : 'border-slate-200'}`}
+                      style={{
+                        background: 'repeating-conic-gradient(#e2e8f0 0% 25%, white 0% 50%) 0 0 / 6px 6px',
+                      }}
+                    />
+                    {FILL_COLORS.map(c => (
+                      <button
+                        key={c}
+                        title={c}
+                        onClick={() => updateAnnotation(selShape.id, { fillColor: c, fillOpacity: selShape.fillOpacity ?? 0.3 })}
+                        className={`w-5 h-5 rounded transition-all ${selShape.fillColor === c ? 'ring-2 ring-blue-500 ring-offset-1' : 'ring-1 ring-slate-200'}`}
+                        style={{ background: c }}
+                      />
+                    ))}
+                  </div>
+                  {selShape.fillColor && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-400">Opacité</span>
+                      <input
+                        type="range" min={0} max={100}
+                        value={Math.round((selShape.fillOpacity ?? 0.3) * 100)}
+                        onChange={e => updateAnnotation(selShape.id, { fillOpacity: Number(e.target.value) / 100 })}
+                        className="w-24 accent-blue-600 h-1.5 cursor-pointer"
+                      />
+                      <span className="text-xs text-slate-600 tabular-nums w-8">
+                        {Math.round((selShape.fillOpacity ?? 0.3) * 100)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">
+                  {selectedId ? (
+                    <span>
+                      Sélectionné ·{' '}
+                      <kbd className="font-mono bg-slate-100 px-1 rounded text-slate-500">Delete</kbd>
+                      {' '}pour supprimer · clic ailleurs pour désélectionner
+                    </span>
+                  ) : zoomEnabled ? (
+                    <span>Glissez sur le graphique pour zoomer · double-clic pour réinitialiser</span>
+                  ) : null}
+                </p>
+              )}
+              {zoomDomain && (
+                <button onClick={resetZoom} className="text-xs text-slate-400 hover:text-slate-600 transition-colors shrink-0">
+                  Réinitialiser le zoom
+                </button>
+              )}
+            </div>
+          )
+        })()}
 
       </div>{/* /flex-col editor */}
     </>

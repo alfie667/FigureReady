@@ -36,6 +36,8 @@ export interface RectAnnotation {
   yPct: number
   widthPct: number
   heightPct: number
+  fillColor?: string
+  fillOpacity?: number
 }
 
 export interface EllipseAnnotation {
@@ -45,6 +47,8 @@ export interface EllipseAnnotation {
   yPct: number
   widthPct: number
   heightPct: number
+  fillColor?: string
+  fillOpacity?: number
 }
 
 export type ChartAnnotation =
