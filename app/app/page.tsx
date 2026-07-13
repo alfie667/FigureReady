@@ -16,7 +16,6 @@ import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
-import { canCreateFigure, incrementUsage } from '@/lib/usageLimit'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -42,11 +41,6 @@ export default function AppPage() {
   }, [])
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
-    if (!canCreateFigure()) {
-      setShowUpgradeModal(true)
-      return
-    }
-    incrementUsage()
     setColumns(cols)
     setData(rows)
     const x = cols[0] ?? ''
