@@ -14,11 +14,13 @@ export const metadata: Metadata = {
     url: 'https://figure-ready.vercel.app',
     type: 'website',
     siteName: 'FigureReady',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630 }],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'FigureReady — Free Scientific Figure Maker from Excel',
     description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
+    images: ['/opengraph-image'],
   },
 }
 

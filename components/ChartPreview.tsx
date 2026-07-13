@@ -60,6 +60,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const chartRef = useRef<HTMLDivElement>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
+  const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const draggingRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
   const s = chartStyles[styleName]
   const axisColor = styleOverrides.axisColor ?? s.axisColor
@@ -184,6 +185,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         }
       : {}
 
+  const annotationFontSize = styleOverrides.annotationFontSize ?? 12
   const fontFamily = styleOverrides.fontFamily ?? s.fontFamily
   const boldLabels = styleOverrides.boldLabels ?? false
   const tickFontWeight = boldLabels ? 'bold' : 'normal'
@@ -376,27 +378,31 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     const container = chartRef.current
     const annotation = annotations.find(a => a.id === id)
     if (!container || !annotation) return
+    e.stopPropagation()
     const rect = container.getBoundingClientRect()
     draggingRef.current = {
       id,
       offsetX: e.clientX - (rect.left + (annotation.xPct / 100) * rect.width),
       offsetY: e.clientY - (rect.top + (annotation.yPct / 100) * rect.height),
     }
-    e.currentTarget.setPointerCapture(e.pointerId)
+    setIsDraggingAnnotation(true)
   }
 
-  const handleAnnotationPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+  // Attached to the container so fast movements don't lose the event.
+  const handleContainerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const drag = draggingRef.current
     const container = chartRef.current
     if (!drag || !container) return
+    e.preventDefault()
     const rect = container.getBoundingClientRect()
     const xPct = Math.min(100, Math.max(0, ((e.clientX - drag.offsetX - rect.left) / rect.width) * 100))
     const yPct = Math.min(100, Math.max(0, ((e.clientY - drag.offsetY - rect.top) / rect.height) * 100))
     updateAnnotation(drag.id, { xPct, yPct })
   }
 
-  const handleAnnotationPointerUp = () => {
+  const handleContainerPointerUp = () => {
     draggingRef.current = null
+    setIsDraggingAnnotation(false)
   }
 
   const triggerExport = (type: 'png' | 'svg') => {
@@ -453,7 +459,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
       text.setAttribute('text-anchor', 'middle')
       text.setAttribute('dominant-baseline', 'middle')
       text.setAttribute('font-family', fontFamily)
-      text.setAttribute('font-size', String(xTickSize))
+      text.setAttribute('font-size', String(annotationFontSize))
       text.setAttribute('fill', axisColor)
       if (boldLabels) text.setAttribute('font-weight', 'bold')
       text.textContent = ann.text
@@ -485,9 +491,12 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         className="relative bg-white p-6 rounded-lg"
         style={{
           fontFamily,
-          cursor: zoomEnabled ? 'crosshair' : 'default',
+          cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
           width: figureWidth ? `${figureWidth}px` : '100%',
+          userSelect: isDraggingAnnotation ? 'none' : undefined,
         }}
+        onPointerMove={handleContainerPointerMove}
+        onPointerUp={handleContainerPointerUp}
       >
         <ResponsiveContainer width="100%" height={figureHeight}>
           {renderChart() as React.ReactElement}
@@ -500,12 +509,10 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               left: `${ann.xPct}%`,
               top: `${ann.yPct}%`,
               transform: 'translate(-50%, -50%)',
-              cursor: editingId === ann.id ? 'text' : 'move',
+              cursor: editingId === ann.id ? 'text' : 'grab',
               touchAction: 'none',
             }}
             onPointerDown={(e) => handleAnnotationPointerDown(e, ann.id)}
-            onPointerMove={handleAnnotationPointerMove}
-            onPointerUp={handleAnnotationPointerUp}
             onDoubleClick={() => setEditingId(ann.id)}
           >
             <div
@@ -519,7 +526,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               className={`px-1 whitespace-nowrap outline-none ${editingId === ann.id ? 'ring-1 ring-blue-400 rounded' : ''}`}
               style={{
                 fontFamily,
-                fontSize: xTickSize,
+                fontSize: annotationFontSize,
                 color: axisColor,
                 fontWeight: boldLabels ? 'bold' : 'normal',
               }}

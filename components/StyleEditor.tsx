@@ -31,6 +31,12 @@ const tickSizePresets: NumericPreset[] = [
   { label: 'Grand', value: 13 },
 ]
 
+const annotationSizePresets: NumericPreset[] = [
+  { label: 'Petit', value: 10 },
+  { label: 'Moyen', value: 14 },
+  { label: 'Grand', value: 20 },
+]
+
 const legendSizePresets: NumericPreset[] = [
   { label: 'Petit', value: 9 },
   { label: 'Moyen', value: 12 },
@@ -42,6 +48,37 @@ const axisWidthPresets: NumericPreset[] = [
   { label: 'Moyen', value: 2 },
   { label: 'Épais', value: 3 },
 ]
+
+function SizeFieldWithInput({
+  label, value, presets, min = 6, max = 36, onChange,
+}: {
+  label: string
+  value: number
+  presets: NumericPreset[]
+  min?: number
+  max?: number
+  onChange: (v: number) => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-slate-500">{label}</p>
+        <input
+          type="number"
+          min={min}
+          max={max}
+          value={value}
+          onChange={(e) => {
+            const v = Number(e.target.value)
+            if (v >= min && v <= max) onChange(v)
+          }}
+          className="w-14 border border-slate-200 rounded-lg px-2 py-0.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+      </div>
+      <TextSizePicker value={value} presets={presets} onChange={onChange} />
+    </div>
+  )
+}
 
 function SelectField<T extends string>({
   label, value, options, onChange,
@@ -162,6 +199,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
 
   const titleSize = overrides.xTitleSize ?? baseStyle.fontSize
   const tickSize = overrides.xTickSize ?? baseStyle.tickFontSize
+  const annotationFontSize = overrides.annotationFontSize ?? 12
   const axisWidth = overrides.axisWidth ?? baseStyle.axisWidth
   const axisColor = overrides.axisColor ?? baseStyle.axisColor
   const showGrid = overrides.showGrid ?? baseStyle.showGrid
@@ -196,8 +234,9 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
 
       <SelectField label="Police" value={fontFamily} options={fontOptions} onChange={(v) => set('fontFamily', v)} />
 
-      <TextSizePicker label="Taille des titres d'axes" value={titleSize} presets={titleSizePresets} onChange={setTitleSize} />
-      <TextSizePicker label="Taille des graduations" value={tickSize} presets={tickSizePresets} onChange={setTickSize} />
+      <SizeFieldWithInput label="Taille des titres d'axes" value={titleSize} presets={titleSizePresets} onChange={setTitleSize} />
+      <SizeFieldWithInput label="Taille des graduations" value={tickSize} presets={tickSizePresets} onChange={setTickSize} />
+      <SizeFieldWithInput label="Taille des textes ajoutés" value={annotationFontSize} presets={annotationSizePresets} onChange={(v) => set('annotationFontSize', v)} />
 
       <ToggleSwitch label="Texte en gras (titres et graduations)" checked={boldLabels} onChange={(v) => set('boldLabels', v)} />
 

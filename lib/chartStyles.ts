@@ -40,6 +40,9 @@ export interface StyleOverrides {
   // Font used for all chart text (titles, ticks, legend, annotations).
   // Undefined falls back to the base style's font.
   fontFamily?: string
+  // Font size for text annotations added to the figure.
+  // Kept separate from tick label size so both can be set independently.
+  annotationFontSize?: number
 }
 
 // Curated set of widely-available fonts suitable for publication figures.
