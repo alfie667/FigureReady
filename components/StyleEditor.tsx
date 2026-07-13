@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fontOptions, type ChartStyle, type StyleOverrides } from '@/lib/chartStyles'
+import { fontOptions, type ChartStyle, type StyleOverrides, type LegendPosition } from '@/lib/chartStyles'
 import { saveDefaultStyle } from '@/lib/styleStorage'
 import {
   ColorSwatchPicker, LegendPositionPicker, LineThicknessPicker, TextSizePicker, ToggleSwitch,
@@ -252,7 +252,14 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
         <ToggleSwitch label="Show legend" checked={showLegend} onChange={(v) => set('showLegend', v)} />
         {showLegend && (
           <>
-            <LegendPositionPicker label="Position" value={legendPosition} onChange={(v) => set('legendPosition', v)} />
+            <LegendPositionPicker label="Snap to" value={legendPosition} onChange={(v) => {
+              const snap: Record<string, { x: number; y: number }> = {
+                top: { x: 50, y: 3 }, bottom: { x: 50, y: 89 },
+                left: { x: 7, y: 45 }, right: { x: 88, y: 45 },
+              }
+              const pos = snap[v] ?? snap.top
+              onChange({ ...overrides, legendPosition: v as LegendPosition, legendXPct: pos.x, legendYPct: pos.y })
+            }} />
             <TextSizePicker label="Text size" value={legendFontSize} presets={legendSizePresets} onChange={(v) => set('legendFontSize', v)} />
           </>
         )}

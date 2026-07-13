@@ -48,6 +48,11 @@ export interface StyleOverrides {
   xLabelDy?: number
   yLabelDx?: number
   yLabelDy?: number
+  // Draggable legend position (% of chart container), layout and background.
+  legendXPct?: number
+  legendYPct?: number
+  legendOrientation?: 'h' | 'v'
+  legendBg?: boolean
 }
 
 // Curated set of widely-available fonts suitable for publication figures.

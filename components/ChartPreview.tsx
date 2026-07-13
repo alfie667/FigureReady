@@ -7,7 +7,7 @@ import {
   LineChart, Line,
   ScatterChart, Scatter,
   BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceArea, ErrorBar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea, ErrorBar,
   ResponsiveContainer,
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
@@ -115,6 +115,125 @@ function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, 
     >
       {String(value)}
     </text>
+  )
+}
+
+// ─── Draggable legend ────────────────────────────────────────────────────────
+
+const LEGEND_BTN: React.CSSProperties = {
+  background: 'none', border: 'none', cursor: 'pointer', padding: '1px 3px',
+  borderRadius: 4, color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
+}
+
+interface DraggableLegendProps {
+  yCols: string[]
+  seriesNames: Record<string, string>
+  colors: string[]
+  strokeWidths: number[]
+  chartType: string
+  xPct: number
+  yPct: number
+  orientation: 'h' | 'v'
+  bg: boolean
+  fontFamily: string
+  fontSize: number
+  textColor: string
+  containerRef: React.RefObject<HTMLDivElement>
+  onUpdate: (patch: Partial<StyleOverrides>) => void
+}
+
+function DraggableLegend({
+  yCols, seriesNames, colors, strokeWidths, chartType,
+  xPct, yPct, orientation, bg, fontFamily, fontSize, textColor,
+  containerRef, onUpdate,
+}: DraggableLegendProps) {
+  const [hovered, setHovered] = useState(false)
+  const lastClient = useRef({ x: 0, y: 0 })
+  const xRef = useRef(xPct)
+  const yRef = useRef(yPct)
+  useEffect(() => { xRef.current = xPct }, [xPct])
+  useEffect(() => { yRef.current = yPct }, [yPct])
+
+  const isBar = chartType === 'bar'
+  const isScatter = chartType === 'scatter'
+
+  const startDrag = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).tagName === 'BUTTON') return
+    e.preventDefault(); e.stopPropagation()
+    lastClient.current = { x: e.clientX, y: e.clientY }
+    const onMove = (ev: MouseEvent) => {
+      const r = containerRef.current?.getBoundingClientRect()
+      if (!r) return
+      xRef.current += (ev.clientX - lastClient.current.x) / r.width * 100
+      yRef.current += (ev.clientY - lastClient.current.y) / r.height * 100
+      lastClient.current = { x: ev.clientX, y: ev.clientY }
+      onUpdate({ legendXPct: xRef.current, legendYPct: yRef.current })
+    }
+    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
+    window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
+  }
+
+  return (
+    <div
+      style={{ position: 'absolute', left: `${xPct}%`, top: `${yPct}%`, transform: 'translate(-50%, 0)', zIndex: 12, userSelect: 'none' }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Hover toolbar */}
+      {hovered && (
+        <div style={{
+          position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+          marginBottom: 4, display: 'flex', gap: 1,
+          background: 'white', border: '1px solid #e2e8f0', borderRadius: 6,
+          padding: '2px 3px', boxShadow: '0 1px 6px rgba(0,0,0,0.1)', whiteSpace: 'nowrap',
+        }}>
+          <span style={{ ...LEGEND_BTN, cursor: 'grab', fontSize: 14, opacity: 0.5 }} title="Drag to move">⠿</span>
+          <button style={LEGEND_BTN} title={orientation === 'h' ? 'Vertical' : 'Horizontal'}
+            onClick={() => onUpdate({ legendOrientation: orientation === 'h' ? 'v' : 'h' })}>
+            {orientation === 'h'
+              ? <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="3" rx="1" fill="currentColor"/><rect x="1" y="6" width="12" height="3" rx="1" fill="currentColor"/></svg>
+              : <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="3" height="12" rx="1" fill="currentColor"/><rect x="6" y="1" width="3" height="12" rx="1" fill="currentColor"/></svg>}
+          </button>
+          <button style={LEGEND_BTN} title={bg ? 'Remove background' : 'Add background'}
+            onClick={() => onUpdate({ legendBg: !bg })}>
+            <svg width="14" height="14" viewBox="0 0 14 14">
+              <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"
+                fill={bg ? 'currentColor' : 'none'} fillOpacity={bg ? 0.15 : 0}/>
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {/* Legend entries */}
+      <div
+        style={{
+          display: 'flex', flexDirection: orientation === 'h' ? 'row' : 'column',
+          alignItems: orientation === 'h' ? 'center' : 'flex-start',
+          gap: orientation === 'h' ? 14 : 5,
+          background: bg ? 'rgba(255,255,255,0.92)' : 'transparent',
+          border: bg ? '1px solid #e2e8f0' : 'none',
+          borderRadius: 6, padding: '4px 10px', cursor: 'grab',
+          boxShadow: bg ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+        }}
+        onMouseDown={startDrag}
+      >
+        {yCols.map((col, i) => (
+          <div key={col} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <svg width="26" height="14" style={{ flexShrink: 0 }}>
+              {isBar
+                ? <rect x="3" y="3" width="20" height="8" fill={colors[i]} rx="1" />
+                : <>
+                    {!isScatter && <line x1="1" y1="7" x2="25" y2="7" stroke={colors[i]} strokeWidth={Math.min(strokeWidths[i], 3)} />}
+                    <circle cx="13" cy="7" r={isScatter ? 4 : 3.5} fill={colors[i]} />
+                  </>}
+            </svg>
+            <span style={{ fontFamily, fontSize, color: textColor, whiteSpace: 'nowrap' }}>
+              {seriesNames[col] || col}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -330,10 +449,19 @@ export default function ChartPreview({
   const legendFontSize = styleOverrides.legendFontSize ?? s.tickFontSize
   const legendPosition = styleOverrides.legendPosition ?? 'top'
   const legendEnabled = (styleOverrides.showLegend ?? yCols.length > 1) && yCols.length > 1
-  const legendStyle = { fontFamily, fontSize: legendFontSize, color: axisColor }
-  const legendLayoutProps = legendPosition === 'left' || legendPosition === 'right'
-    ? { layout: 'vertical' as const, verticalAlign: 'middle' as const, align: legendPosition }
-    : { layout: 'horizontal' as const, verticalAlign: legendPosition, align: 'center' as const, height: 36 }
+  const legend = null  // replaced by DraggableLegend overlay
+  const legendDefaultPos: Record<string, { x: number; y: number }> = {
+    top: { x: 50, y: 3 }, bottom: { x: 50, y: 89 }, left: { x: 7, y: 45 }, right: { x: 88, y: 45 },
+  }
+  const legendPos = styleOverrides.legendXPct !== undefined
+    ? { x: styleOverrides.legendXPct, y: styleOverrides.legendYPct ?? 3 }
+    : (legendDefaultPos[legendPosition] ?? legendDefaultPos.top)
+  const resolvedColors = yCols.map((col, i) =>
+    (styleOverrides.seriesColors ?? {})[col] ?? s.colors[i % s.colors.length]
+  )
+  const resolvedStrokeWidths = yCols.map(col =>
+    (styleOverrides.seriesStrokeWidths ?? {})[col] ?? s.strokeWidth
+  )
   const figureWidth = styleOverrides.figureWidth
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
@@ -370,7 +498,6 @@ export default function ChartPreview({
     ),
   } : undefined
   const grid = showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
-  const legend = legendEnabled ? <Legend {...legendLayoutProps} wrapperStyle={legendStyle} /> : null
   const zoomArea = refLeft !== null && refRight !== null
     ? <ReferenceArea x1={refLeft} x2={refRight} strokeOpacity={0.3} fill={s.colors[0]} fillOpacity={0.12} />
     : null
@@ -850,6 +977,26 @@ export default function ChartPreview({
             <ResponsiveContainer width="100%" height={figureHeight}>
               {renderChart() as React.ReactElement}
             </ResponsiveContainer>
+
+            {/* Draggable legend overlay */}
+            {legendEnabled && (
+              <DraggableLegend
+                yCols={yCols}
+                seriesNames={seriesNames}
+                colors={resolvedColors}
+                strokeWidths={resolvedStrokeWidths}
+                chartType={chartType}
+                xPct={legendPos.x}
+                yPct={legendPos.y}
+                orientation={styleOverrides.legendOrientation ?? 'h'}
+                bg={styleOverrides.legendBg ?? true}
+                fontFamily={fontFamily}
+                fontSize={legendFontSize}
+                textColor={axisColor}
+                containerRef={chartRef}
+                onUpdate={(patch) => onStyleChange?.(patch)}
+              />
+            )}
 
             {/* SVG overlay for arrows */}
             <svg
