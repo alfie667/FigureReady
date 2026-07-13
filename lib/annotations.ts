@@ -6,9 +6,23 @@ export interface TextAnnotation {
   yPct: number
 }
 
+// Legacy – kept for backward compat. Rendered as a solid arrow.
 export interface ArrowAnnotation {
   id: string
   type: 'arrow'
+  x1Pct: number
+  y1Pct: number
+  x2Pct: number
+  y2Pct: number
+}
+
+// Full-featured line: solid/dashed, optional arrowheads at each end.
+export interface LineAnnotation {
+  id: string
+  type: 'line'
+  dash: boolean
+  headStart: boolean
+  headEnd: boolean
   x1Pct: number
   y1Pct: number
   x2Pct: number
@@ -24,4 +38,18 @@ export interface RectAnnotation {
   heightPct: number
 }
 
-export type ChartAnnotation = TextAnnotation | ArrowAnnotation | RectAnnotation
+export interface EllipseAnnotation {
+  id: string
+  type: 'ellipse'
+  xPct: number
+  yPct: number
+  widthPct: number
+  heightPct: number
+}
+
+export type ChartAnnotation =
+  | TextAnnotation
+  | ArrowAnnotation
+  | LineAnnotation
+  | RectAnnotation
+  | EllipseAnnotation

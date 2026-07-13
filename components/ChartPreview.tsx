@@ -12,7 +12,8 @@ import {
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
-import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, RectAnnotation } from '@/lib/annotations'
+import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, LineAnnotation, RectAnnotation, EllipseAnnotation } from '@/lib/annotations'
+import AnnotationToolbar from '@/components/AnnotationToolbar'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks, buildStepTicks } from '@/lib/niceTicks'
 import { renderMarker, type MarkerShape } from '@/lib/markerShapes'
@@ -27,28 +28,6 @@ function DownloadIcon() {
     </svg>
   )
 }
-function TextIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 6.75h15M5.25 12h13.5M6 17.25h12" />
-    </svg>
-  )
-}
-function ArrowAnnotIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-    </svg>
-  )
-}
-function RectAnnotIcon() {
-  return (
-    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <rect x="3" y="6" width="18" height="13" rx="1" strokeWidth={2} />
-    </svg>
-  )
-}
-
 // ─── Tooltip content components ───────────────────────────────────────────────
 
 function ScatterTooltipContent({ active, payload }: {
@@ -350,15 +329,29 @@ export default function ChartPreview({
     if (editingIdRef.current === id) { editingIdRef.current = null; _setEditingId(null) }
   }
 
-  const addAnnotation = (type: 'text' | 'arrow' | 'rect') => {
+  const addAnnotation = (type: string, options: Record<string, unknown> = {}) => {
     const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ann-${Date.now()}`
     if (type === 'text') {
       onAnnotationsChange([...annotations, { id, type: 'text', text: 'Texte', xPct: 50, yPct: 50 }])
-    } else if (type === 'arrow') {
-      onAnnotationsChange([...annotations, { id, type: 'arrow', x1Pct: 28, y1Pct: 65, x2Pct: 58, y2Pct: 35 }])
-    } else {
+    } else if (type === 'line') {
+      onAnnotationsChange([...annotations, {
+        id, type: 'line',
+        dash: options.dash ?? false,
+        headStart: options.headStart ?? false,
+        headEnd: options.headEnd ?? false,
+        x1Pct: 28, y1Pct: 65, x2Pct: 58, y2Pct: 35,
+      } as LineAnnotation])
+    } else if (type === 'rect') {
       onAnnotationsChange([...annotations, { id, type: 'rect', xPct: 28, yPct: 28, widthPct: 30, heightPct: 20 }])
+    } else if (type === 'ellipse') {
+      onAnnotationsChange([...annotations, { id, type: 'ellipse', xPct: 28, yPct: 28, widthPct: 30, heightPct: 20 }])
     }
+    setSelectedId(id)
+  }
+
+  const insertSymbol = (sym: string) => {
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ann-${Date.now()}`
+    onAnnotationsChange([...annotations, { id, type: 'text', text: sym, xPct: 50, yPct: 50 }])
     setSelectedId(id)
   }
 
@@ -384,7 +377,7 @@ export default function ChartPreview({
     setIsDraggingAnnotation(true)
   }
 
-  const startArrowBodyDrag = (e: React.PointerEvent, ann: ArrowAnnotation) => {
+  const startArrowBodyDrag = (e: React.PointerEvent, ann: { id: string; x1Pct: number; y1Pct: number; x2Pct: number; y2Pct: number }) => {
     e.stopPropagation()
     setSelectedId(ann.id)
     setPointTooltip(null)
@@ -405,7 +398,7 @@ export default function ChartPreview({
     setIsDraggingAnnotation(true)
   }
 
-  const startRectBodyDrag = (e: React.PointerEvent, ann: RectAnnotation) => {
+  const startRectBodyDrag = (e: React.PointerEvent, ann: { id: string; xPct: number; yPct: number; widthPct: number; heightPct: number }) => {
     e.stopPropagation()
     setSelectedId(ann.id)
     setPointTooltip(null)
@@ -418,7 +411,7 @@ export default function ChartPreview({
     setIsDraggingAnnotation(true)
   }
 
-  const startRectCornerDrag = (e: React.PointerEvent, ann: RectAnnotation, corner: 'nw' | 'ne' | 'sw' | 'se') => {
+  const startRectCornerDrag = (e: React.PointerEvent, ann: { id: string; xPct: number; yPct: number; widthPct: number; heightPct: number }, corner: 'nw' | 'ne' | 'sw' | 'se') => {
     e.stopPropagation()
     const anchor = {
       nw: { xPct: ann.xPct + ann.widthPct, yPct: ann.yPct + ann.heightPct },
@@ -585,8 +578,10 @@ export default function ChartPreview({
     const toSVGX = (pct: number) => (pct / 100) * containerRect.width - (svgRect.left - containerRect.left)
     const toSVGY = (pct: number) => (pct / 100) * containerRect.height - (svgRect.top - containerRect.top)
 
-    // Add arrowhead marker once if needed
-    const hasArrows = annotations.some(a => a.type === 'arrow')
+    // Add arrowhead markers once if needed
+    const hasArrows = annotations.some(a =>
+      a.type === 'arrow' || (a.type === 'line' && (a.headEnd || a.headStart))
+    )
     if (hasArrows) {
       const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
       const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker')
@@ -596,6 +591,13 @@ export default function ChartPreview({
       const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
       poly.setAttribute('points', '0 0, 8 3, 0 6'); poly.setAttribute('fill', axisColor)
       marker.appendChild(poly); defs.appendChild(marker)
+      const revMarker = document.createElementNS('http://www.w3.org/2000/svg', 'marker')
+      revMarker.setAttribute('id', 'fr-exp-arrow-rev')
+      revMarker.setAttribute('markerWidth', '8'); revMarker.setAttribute('markerHeight', '6')
+      revMarker.setAttribute('refX', '1'); revMarker.setAttribute('refY', '3'); revMarker.setAttribute('orient', 'auto')
+      const revPoly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+      revPoly.setAttribute('points', '8 0, 0 3, 8 6'); revPoly.setAttribute('fill', axisColor)
+      revMarker.appendChild(revPoly); defs.appendChild(revMarker)
       clone.insertBefore(defs, clone.firstChild)
     }
 
@@ -617,6 +619,15 @@ export default function ChartPreview({
         line.setAttribute('stroke', axisColor); line.setAttribute('stroke-width', '1.5')
         line.setAttribute('marker-end', 'url(#fr-exp-arrow)')
         clone.appendChild(line)
+      } else if (ann.type === 'line') {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+        line.setAttribute('x1', String(toSVGX(ann.x1Pct))); line.setAttribute('y1', String(toSVGY(ann.y1Pct)))
+        line.setAttribute('x2', String(toSVGX(ann.x2Pct))); line.setAttribute('y2', String(toSVGY(ann.y2Pct)))
+        line.setAttribute('stroke', axisColor); line.setAttribute('stroke-width', '1.5')
+        if (ann.dash) line.setAttribute('stroke-dasharray', '6 4')
+        if (ann.headEnd) line.setAttribute('marker-end', 'url(#fr-exp-arrow)')
+        if (ann.headStart) line.setAttribute('marker-start', 'url(#fr-exp-arrow-rev)')
+        clone.appendChild(line)
       } else if (ann.type === 'rect') {
         const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
         r.setAttribute('x', String(toSVGX(ann.xPct))); r.setAttribute('y', String(toSVGY(ann.yPct)))
@@ -624,6 +635,15 @@ export default function ChartPreview({
         r.setAttribute('height', String((ann.heightPct / 100) * containerRect.height))
         r.setAttribute('fill', 'none'); r.setAttribute('stroke', axisColor); r.setAttribute('stroke-width', '1.5')
         clone.appendChild(r)
+      } else if (ann.type === 'ellipse') {
+        const el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse')
+        const rx = (ann.widthPct / 100) * containerRect.width / 2
+        const ry = (ann.heightPct / 100) * containerRect.height / 2
+        el.setAttribute('cx', String(toSVGX(ann.xPct) + rx))
+        el.setAttribute('cy', String(toSVGY(ann.yPct) + ry))
+        el.setAttribute('rx', String(rx)); el.setAttribute('ry', String(ry))
+        el.setAttribute('fill', 'none'); el.setAttribute('stroke', axisColor); el.setAttribute('stroke-width', '1.5')
+        clone.appendChild(el)
       }
     })
 
@@ -668,7 +688,9 @@ export default function ChartPreview({
 
   const textAnnotations = annotations.filter((a): a is TextAnnotation => a.type === 'text')
   const arrowAnnotations = annotations.filter((a): a is ArrowAnnotation => a.type === 'arrow')
+  const lineAnnotations = annotations.filter((a): a is LineAnnotation => a.type === 'line')
   const rectAnnotations = annotations.filter((a): a is RectAnnotation => a.type === 'rect')
+  const ellipseAnnotations = annotations.filter((a): a is EllipseAnnotation => a.type === 'ellipse')
 
   // ─── JSX ─────────────────────────────────────────────────────────────────────
 
@@ -710,12 +732,18 @@ export default function ChartPreview({
                 <marker id="fr-arrow-sel" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                   <polygon points="0 0, 8 3, 0 6" fill="#3b82f6" />
                 </marker>
+                <marker id="fr-arrow-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto">
+                  <polygon points="8 0, 0 3, 8 6" fill={axisColor} />
+                </marker>
+                <marker id="fr-arrow-rev-sel" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto">
+                  <polygon points="8 0, 0 3, 8 6" fill="#3b82f6" />
+                </marker>
               </defs>
+              {/* Legacy arrow annotations */}
               {arrowAnnotations.map(ann => {
                 const isSel = selectedId === ann.id
                 return (
                   <g key={ann.id}>
-                    {/* Wide transparent hit zone */}
                     <line
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
@@ -724,7 +752,6 @@ export default function ChartPreview({
                       onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
                       onPointerDown={e => startArrowBodyDrag(e, ann)}
                     />
-                    {/* Visible arrow */}
                     <line
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
@@ -733,7 +760,50 @@ export default function ChartPreview({
                       markerEnd={isSel ? 'url(#fr-arrow-sel)' : 'url(#fr-arrow)'}
                       style={{ pointerEvents: 'none' }}
                     />
-                    {/* Endpoint handles when selected */}
+                    {isSel && (
+                      <>
+                        <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
+                          fill="white" stroke="#3b82f6" strokeWidth={1.5}
+                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          onClick={e => e.stopPropagation()}
+                          onPointerDown={e => startArrowEndDrag(e, ann.id, 1)}
+                        />
+                        <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
+                          fill="white" stroke="#3b82f6" strokeWidth={1.5}
+                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          onClick={e => e.stopPropagation()}
+                          onPointerDown={e => startArrowEndDrag(e, ann.id, 2)}
+                        />
+                      </>
+                    )}
+                  </g>
+                )
+              })}
+              {/* New line annotations (solid/dashed, optional arrowheads) */}
+              {lineAnnotations.map(ann => {
+                const isSel = selectedId === ann.id
+                const strokeColor = isSel ? '#3b82f6' : axisColor
+                const mEnd = ann.headEnd ? (isSel ? 'url(#fr-arrow-sel)' : 'url(#fr-arrow)') : undefined
+                const mStart = ann.headStart ? (isSel ? 'url(#fr-arrow-rev-sel)' : 'url(#fr-arrow-rev)') : undefined
+                return (
+                  <g key={ann.id}>
+                    <line
+                      x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
+                      x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
+                      stroke="transparent" strokeWidth={14}
+                      style={{ pointerEvents: 'all', cursor: 'move' }}
+                      onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
+                      onPointerDown={e => startArrowBodyDrag(e, ann)}
+                    />
+                    <line
+                      x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
+                      x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
+                      stroke={strokeColor} strokeWidth={1.5}
+                      strokeDasharray={ann.dash ? '6 4' : undefined}
+                      markerEnd={mEnd}
+                      markerStart={mStart}
+                      style={{ pointerEvents: 'none' }}
+                    />
                     {isSel && (
                       <>
                         <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
@@ -755,8 +825,8 @@ export default function ChartPreview({
               })}
             </svg>
 
-            {/* Arrow delete buttons (DOM overlay for selected arrow) */}
-            {arrowAnnotations.filter(a => a.id === selectedId).map(ann => (
+            {/* Delete buttons for selected arrow/line (midpoint overlay) */}
+            {[...arrowAnnotations, ...lineAnnotations].filter(a => a.id === selectedId).map(ann => (
               <div
                 key={`del-arrow-${ann.id}`}
                 style={{
@@ -778,6 +848,47 @@ export default function ChartPreview({
                 >×</button>
               </div>
             ))}
+
+            {/* Ellipse annotations */}
+            {ellipseAnnotations.map(ann => {
+              const isSel = selectedId === ann.id
+              return (
+                <div
+                  key={ann.id}
+                  style={{
+                    position: 'absolute',
+                    left: `${ann.xPct}%`, top: `${ann.yPct}%`,
+                    width: `${ann.widthPct}%`, height: `${ann.heightPct}%`,
+                    border: `1.5px solid ${isSel ? '#3b82f6' : axisColor}`,
+                    borderRadius: '50%',
+                    boxSizing: 'border-box',
+                    cursor: 'move',
+                    touchAction: 'none',
+                    zIndex: 5,
+                  }}
+                  onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
+                  onPointerDown={e => startRectBodyDrag(e, ann)}
+                >
+                  {isSel && (
+                    <>
+                      {(['nw', 'ne', 'sw', 'se'] as const).map(corner => (
+                        <div
+                          key={corner}
+                          style={{
+                            ...cornerHandleStyle(corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize'),
+                            left: corner.includes('e') ? '100%' : '0%',
+                            top: corner.includes('s') ? '100%' : '0%',
+                          }}
+                          onClick={e => e.stopPropagation()}
+                          onPointerDown={e => startRectCornerDrag(e, ann, corner)}
+                        />
+                      ))}
+                      <DeleteBtn onDelete={() => removeAnnotation(ann.id)} />
+                    </>
+                  )}
+                </div>
+              )
+            })}
 
             {/* Rectangle annotations */}
             {rectAnnotations.map(ann => {
@@ -910,27 +1021,7 @@ export default function ChartPreview({
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => addAnnotation('text')}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <TextIcon />
-              Texte
-            </button>
-            <button
-              onClick={() => addAnnotation('arrow')}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <ArrowAnnotIcon />
-              Flèche
-            </button>
-            <button
-              onClick={() => addAnnotation('rect')}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <RectAnnotIcon />
-              Rectangle
-            </button>
+            <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
             {zoomDomain && (
               <button
                 onClick={resetZoom}
