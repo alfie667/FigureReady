@@ -90,7 +90,7 @@ function ToolBtn({
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 rounded-lg transition-all duration-150 select-none min-w-[52px] ${
         active
-          ? 'bg-blue-600 text-white shadow-sm'
+          ? 'bg-teal-700 text-white shadow-sm'
           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
       }`}
     >
@@ -128,11 +128,11 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
   }, [])
 
   const lineTools = [
-    { key: 'line-straight',      label: 'Trait droit',        shortLabel: 'Trait',    icon: <StraightLine />, opts: { dash: false, headStart: false, headEnd: false } },
-    { key: 'line-arrow',         label: 'Flèche',             shortLabel: 'Flèche',   icon: <ArrowLine />,    opts: { dash: false, headStart: false, headEnd: true  } },
-    { key: 'line-double',        label: 'Double flèche',      shortLabel: 'Double',   icon: <DoubleArrow />,  opts: { dash: false, headStart: true,  headEnd: true  } },
-    { key: 'line-dashed',        label: 'Trait pointillé',    shortLabel: 'Ptl.',     icon: <DashedLine />,   opts: { dash: true,  headStart: false, headEnd: false } },
-    { key: 'line-dashed-arrow',  label: 'Flèche pointillée',  shortLabel: 'Fl. ptl.', icon: <DashedArrow />, opts: { dash: true,  headStart: false, headEnd: true  } },
+    { key: 'line-straight',      label: 'Straight line',   shortLabel: 'Line',    icon: <StraightLine />, opts: { dash: false, headStart: false, headEnd: false } },
+    { key: 'line-arrow',         label: 'Arrow',           shortLabel: 'Arrow',   icon: <ArrowLine />,    opts: { dash: false, headStart: false, headEnd: true  } },
+    { key: 'line-double',        label: 'Double arrow',    shortLabel: 'Double',  icon: <DoubleArrow />,  opts: { dash: false, headStart: true,  headEnd: true  } },
+    { key: 'line-dashed',        label: 'Dashed line',     shortLabel: 'Dashed',  icon: <DashedLine />,   opts: { dash: true,  headStart: false, headEnd: false } },
+    { key: 'line-dashed-arrow',  label: 'Dashed arrow',    shortLabel: 'D.Arrow', icon: <DashedArrow />, opts: { dash: true,  headStart: false, headEnd: true  } },
   ]
 
   const sep = <div className="w-px h-14 bg-slate-100 mx-0.5 shrink-0" />
@@ -159,14 +159,14 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
       <div className="flex items-center">
         <ToolBtn
           icon={<RectShape />}
-          label="Ajouter un rectangle"
+          label="Add rectangle"
           shortLabel="Rect."
           active={activeKey === 'rect'}
           onClick={() => activate('rect', () => onAdd('rect'))}
         />
         <ToolBtn
           icon={<EllipseShape />}
-          label="Ajouter une ellipse"
+          label="Add ellipse"
           shortLabel="Ellipse"
           active={activeKey === 'ellipse'}
           onClick={() => activate('ellipse', () => onAdd('ellipse'))}
@@ -178,8 +178,8 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
       {/* Text */}
       <ToolBtn
         icon={<TextShape />}
-        label="Ajouter du texte"
-        shortLabel="Texte"
+        label="Add text"
+        shortLabel="Text"
         active={activeKey === 'text'}
         onClick={() => activate('text', () => onAdd('text'))}
       />
@@ -189,11 +189,11 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
       {/* Symbol picker */}
       <div ref={symRef} className="relative flex items-center">
         <button
-          title="Insérer un symbole scientifique"
+          title="Insert scientific symbol"
           onClick={() => setShowSymbols(v => !v)}
           className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 min-w-[52px] rounded-lg transition-all duration-150 select-none ${
             showSymbols
-              ? 'bg-blue-600 text-white shadow-sm'
+              ? 'bg-teal-700 text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -211,7 +211,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
         {showSymbols && (
           <div className="absolute top-full mt-2 left-0 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 min-w-max">
             <p className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-2.5 select-none px-0.5">
-              Symboles scientifiques
+              Scientific symbols
             </p>
             <div className="grid grid-cols-12 gap-0.5">
               {SYMBOLS.map(sym => (

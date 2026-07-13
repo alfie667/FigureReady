@@ -4,17 +4,17 @@ import type { MarkerShape } from '@/lib/markerShapes'
 import { ColorSwatchPicker, LineThicknessPicker, MarkerShapePicker, MarkerSizePicker, type NumericPreset } from './StyleControls'
 
 const strokeWidthPresets: NumericPreset[] = [
-  { label: 'Fin', value: 1 },
-  { label: 'Moyen', value: 2 },
-  { label: 'Épais', value: 3 },
-  { label: 'Très épais', value: 4 },
+  { label: 'Thin', value: 1 },
+  { label: 'Medium', value: 2 },
+  { label: 'Thick', value: 3 },
+  { label: 'X-Thick', value: 4 },
 ]
 
 const markerSizePresets: NumericPreset[] = [
-  { label: 'Aucun', value: 0 },
-  { label: 'Petit', value: 2 },
-  { label: 'Moyen', value: 4 },
-  { label: 'Grand', value: 6 },
+  { label: 'None', value: 0 },
+  { label: 'Small', value: 2 },
+  { label: 'Medium', value: 4 },
+  { label: 'Large', value: 6 },
 ]
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
@@ -95,7 +95,7 @@ export default function ColumnSelector({
           </select>
         </div>
         <div className="flex-1 min-w-[200px]">
-          <label className="block text-xs font-medium text-slate-500 mb-1.5">Y Axis (une ou plusieurs colonnes)</label>
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">Y Axis (one or more columns)</label>
           <div className="border border-slate-200 rounded-xl p-2 max-h-32 overflow-y-auto bg-white space-y-0.5">
             {yCandidates.map(col => (
               <label key={col} className="flex items-center gap-2 text-sm text-slate-700 px-1.5 py-1 rounded hover:bg-slate-50 cursor-pointer">
@@ -114,7 +114,7 @@ export default function ColumnSelector({
 
       <div className="flex flex-wrap gap-4">
         <div className="flex-1 min-w-[160px]">
-          <label className="block text-xs font-medium text-slate-500 mb-1.5">Titre axe X</label>
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">X Axis Label</label>
           <input
             type="text"
             placeholder={formatAxisLabel(xCol)}
@@ -124,10 +124,10 @@ export default function ColumnSelector({
           />
         </div>
         <div className="flex-1 min-w-[160px]">
-          <label className="block text-xs font-medium text-slate-500 mb-1.5">Titre axe Y</label>
+          <label className="block text-xs font-medium text-slate-500 mb-1.5">Y Axis Label</label>
           <input
             type="text"
-            placeholder={yCols.length === 1 ? formatAxisLabel(yCols[0]) : 'Titre de l’axe Y'}
+            placeholder={yCols.length === 1 ? formatAxisLabel(yCols[0]) : "Y axis label"}
             value={yAxisLabel}
             onChange={(e) => onYAxisLabelChange(e.target.value)}
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -137,7 +137,7 @@ export default function ColumnSelector({
 
       {yCols.length > 0 && (
         <div className="pt-1 border-t border-slate-100">
-          <p className="text-xs font-semibold text-slate-600 mt-3 mb-2">Séries</p>
+          <p className="text-xs font-semibold text-slate-600 mt-3 mb-2">Series</p>
           <div className="space-y-3">
             {yCols.map((col, i) => {
               const strokeWidth = seriesStrokeWidths[col] ?? defaultStrokeWidth
@@ -160,7 +160,7 @@ export default function ColumnSelector({
                     {errorCandidates.length > 0 && (
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-slate-400 shrink-0">
-                          {yCols.length > 1 ? 'Erreur' : `${col} — Erreur`}
+                          {yCols.length > 1 ? 'Error' : `${col} — Error`}
                         </span>
                         <select
                           value={errorCols[col] ?? ''}
@@ -175,7 +175,7 @@ export default function ColumnSelector({
                           }}
                           className="border border-slate-200 rounded-xl px-2 py-1.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                          <option value="">Aucune</option>
+                          <option value="">None</option>
                           {errorCandidates.map(errCol => (
                             <option key={errCol} value={errCol}>{errCol}</option>
                           ))}
@@ -185,7 +185,7 @@ export default function ColumnSelector({
                   </div>
 
                   <ColorSwatchPicker
-                    label="Couleur"
+                    label="Color"
                     value={seriesColors[col] ?? defaultColors[i % defaultColors.length]}
                     onChange={(v) => onSeriesColorsChange({ ...seriesColors, [col]: v })}
                   />
@@ -193,7 +193,7 @@ export default function ColumnSelector({
                   <div className="flex flex-wrap gap-4">
                     {chartType !== 'scatter' && (
                       <LineThicknessPicker
-                        label="Épaisseur du trait"
+                        label="Line thickness"
                         value={strokeWidth}
                         presets={strokeWidthPresets}
                         onChange={(v) => onSeriesStrokeWidthsChange({ ...seriesStrokeWidths, [col]: v })}
@@ -203,14 +203,14 @@ export default function ColumnSelector({
                     {chartType !== 'bar' && (
                       <>
                         <MarkerSizePicker
-                          label="Taille des marqueurs"
+                          label="Marker size"
                           value={markerSize}
                           presets={markerSizePresets}
                           onChange={(v) => onSeriesMarkerSizesChange({ ...seriesMarkerSizes, [col]: v })}
                           compact
                         />
                         <MarkerShapePicker
-                          label="Forme des marqueurs"
+                          label="Marker shape"
                           value={markerShape}
                           onChange={(shape: MarkerShape) => onSeriesMarkerShapesChange({ ...seriesMarkerShapes, [col]: shape })}
                           compact

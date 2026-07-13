@@ -94,7 +94,7 @@ export default function AppPage() {
         <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-100 lg:overflow-y-auto bg-white">
           <Panel
             id="data"
-            title="Données"
+            title="Data"
             icon={
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -108,7 +108,7 @@ export default function AppPage() {
           {columns.length > 0 && (
             <Panel
               id="config"
-              title="Configuration"
+              title="Settings"
               icon={
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

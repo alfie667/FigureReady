@@ -20,33 +20,33 @@ const figurePresets: { label: string; width: number; height: number }[] = [
 ]
 
 const titleSizePresets: NumericPreset[] = [
-  { label: 'Petit', value: 10 },
-  { label: 'Moyen', value: 13 },
-  { label: 'Grand', value: 16 },
+  { label: 'Small', value: 10 },
+  { label: 'Medium', value: 13 },
+  { label: 'Large', value: 16 },
 ]
 
 const tickSizePresets: NumericPreset[] = [
-  { label: 'Petit', value: 9 },
-  { label: 'Moyen', value: 11 },
-  { label: 'Grand', value: 13 },
+  { label: 'Small', value: 9 },
+  { label: 'Medium', value: 11 },
+  { label: 'Large', value: 13 },
 ]
 
 const annotationSizePresets: NumericPreset[] = [
-  { label: 'Petit', value: 10 },
-  { label: 'Moyen', value: 14 },
-  { label: 'Grand', value: 20 },
+  { label: 'Small', value: 10 },
+  { label: 'Medium', value: 14 },
+  { label: 'Large', value: 20 },
 ]
 
 const legendSizePresets: NumericPreset[] = [
-  { label: 'Petit', value: 9 },
-  { label: 'Moyen', value: 12 },
-  { label: 'Grand', value: 15 },
+  { label: 'Small', value: 9 },
+  { label: 'Medium', value: 12 },
+  { label: 'Large', value: 15 },
 ]
 
 const axisWidthPresets: NumericPreset[] = [
-  { label: 'Fin', value: 1 },
-  { label: 'Moyen', value: 2 },
-  { label: 'Épais', value: 3 },
+  { label: 'Thin', value: 1 },
+  { label: 'Medium', value: 2 },
+  { label: 'Thick', value: 3 },
 ]
 
 function SizeFieldWithInput({
@@ -137,7 +137,7 @@ function AxisRangeField({
         />
       </div>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-400 shrink-0">Pas</span>
+        <span className="text-xs text-slate-400 shrink-0">Step</span>
         <input
           type="number"
           value={step ?? ''}
@@ -221,45 +221,45 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
             onClick={saveAsDefault}
             className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
           >
-            {saved ? 'Enregistré !' : 'Enregistrer par défaut'}
+            {saved ? 'Saved!' : 'Save as default'}
           </button>
           <button
             onClick={reset}
             className="text-xs font-medium text-slate-400 hover:text-slate-600 transition-colors"
           >
-            Réinitialiser
+            Reset
           </button>
         </div>
       </div>
 
-      <SelectField label="Police" value={fontFamily} options={fontOptions} onChange={(v) => set('fontFamily', v)} />
+      <SelectField label="Font" value={fontFamily} options={fontOptions} onChange={(v) => set('fontFamily', v)} />
 
-      <SizeFieldWithInput label="Taille des titres d'axes" value={titleSize} presets={titleSizePresets} onChange={setTitleSize} />
-      <SizeFieldWithInput label="Taille des graduations" value={tickSize} presets={tickSizePresets} onChange={setTickSize} />
-      <SizeFieldWithInput label="Taille des textes ajoutés" value={annotationFontSize} presets={annotationSizePresets} onChange={(v) => set('annotationFontSize', v)} />
+      <SizeFieldWithInput label="Axis label size" value={titleSize} presets={titleSizePresets} onChange={setTitleSize} />
+      <SizeFieldWithInput label="Tick label size" value={tickSize} presets={tickSizePresets} onChange={setTickSize} />
+      <SizeFieldWithInput label="Annotation text size" value={annotationFontSize} presets={annotationSizePresets} onChange={(v) => set('annotationFontSize', v)} />
 
-      <ToggleSwitch label="Texte en gras (titres et graduations)" checked={boldLabels} onChange={(v) => set('boldLabels', v)} />
+      <ToggleSwitch label="Bold labels (titles & ticks)" checked={boldLabels} onChange={(v) => set('boldLabels', v)} />
 
       <div className="pt-2 border-t border-slate-100 space-y-4">
         <p className="text-xs font-semibold text-slate-600">Axes</p>
-        <LineThicknessPicker label="Épaisseur des axes" value={axisWidth} presets={axisWidthPresets} onChange={(v) => set('axisWidth', v)} />
-        <ColorSwatchPicker label="Couleur des axes" value={axisColor} onChange={(v) => set('axisColor', v)} />
-        <ToggleSwitch label="Afficher la grille" checked={showGrid} onChange={(v) => set('showGrid', v)} />
+        <LineThicknessPicker label="Axis line width" value={axisWidth} presets={axisWidthPresets} onChange={(v) => set('axisWidth', v)} />
+        <ColorSwatchPicker label="Axis color" value={axisColor} onChange={(v) => set('axisColor', v)} />
+        <ToggleSwitch label="Show grid" checked={showGrid} onChange={(v) => set('showGrid', v)} />
       </div>
 
       <div className="pt-2 border-t border-slate-100 space-y-4">
-        <p className="text-xs font-semibold text-slate-600">Légende</p>
-        <ToggleSwitch label="Afficher la légende" checked={showLegend} onChange={(v) => set('showLegend', v)} />
+        <p className="text-xs font-semibold text-slate-600">Legend</p>
+        <ToggleSwitch label="Show legend" checked={showLegend} onChange={(v) => set('showLegend', v)} />
         {showLegend && (
           <>
             <LegendPositionPicker label="Position" value={legendPosition} onChange={(v) => set('legendPosition', v)} />
-            <TextSizePicker label="Taille du texte" value={legendFontSize} presets={legendSizePresets} onChange={(v) => set('legendFontSize', v)} />
+            <TextSizePicker label="Text size" value={legendFontSize} presets={legendSizePresets} onChange={(v) => set('legendFontSize', v)} />
           </>
         )}
       </div>
 
       <div className="pt-2 border-t border-slate-100 space-y-3">
-        <p className="text-xs font-semibold text-slate-600">Taille de la figure</p>
+        <p className="text-xs font-semibold text-slate-600">Figure size</p>
         <div className="flex flex-wrap gap-2">
           {figurePresets.map(preset => (
             <button
@@ -275,7 +275,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
 
       <details className="pt-2 border-t border-slate-100 group">
         <summary className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
-          Options avancées
+          Advanced options
           <svg className="w-3.5 h-3.5 text-slate-400 transition-transform duration-200 group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
@@ -284,7 +284,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
         <div className="mt-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <AxisRangeField
-              label="Plage de l'axe X (début → fin)"
+              label="X axis range (min → max)"
               min={overrides.xMin}
               max={overrides.xMax}
               step={overrides.xStep}
@@ -293,7 +293,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
               onStepChange={(v) => set('xStep', v)}
             />
             <AxisRangeField
-              label="Plage de l'axe Y (début → fin)"
+              label="Y axis range (min → max)"
               min={overrides.yMin}
               max={overrides.yMax}
               step={overrides.yStep}
@@ -304,8 +304,8 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <DimensionField label="Largeur personnalisée" value={overrides.figureWidth} placeholder={700} onChange={(v) => set('figureWidth', v)} />
-            <DimensionField label="Hauteur personnalisée" value={overrides.figureHeight} placeholder={baseStyle.chartHeight} onChange={(v) => set('figureHeight', v)} />
+            <DimensionField label="Custom width" value={overrides.figureWidth} placeholder={700} onChange={(v) => set('figureWidth', v)} />
+            <DimensionField label="Custom height" value={overrides.figureHeight} placeholder={baseStyle.chartHeight} onChange={(v) => set('figureHeight', v)} />
           </div>
         </div>
       </details>

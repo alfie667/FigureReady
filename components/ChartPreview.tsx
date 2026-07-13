@@ -1066,11 +1066,11 @@ export default function ChartPreview({
             <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-t border-slate-100 shrink-0 min-h-[36px]">
               {selShape ? (
                 <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xs font-medium text-slate-500">Remplissage</span>
+                  <span className="text-xs font-medium text-slate-500">Fill</span>
                   <div className="flex items-center gap-1">
                     {/* No fill */}
                     <button
-                      title="Aucun remplissage"
+                      title="No fill"
                       onClick={() => updateAnnotation(selShape.id, { fillColor: undefined })}
                       className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-blue-500 ring-1 ring-blue-300' : 'border-slate-200'}`}
                       style={{
@@ -1089,7 +1089,7 @@ export default function ChartPreview({
                   </div>
                   {selShape.fillColor && (
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">Opacité</span>
+                      <span className="text-xs text-slate-400">Opacity</span>
                       <input
                         type="range" min={0} max={100}
                         value={Math.round((selShape.fillOpacity ?? 0.3) * 100)}
@@ -1106,18 +1106,18 @@ export default function ChartPreview({
                 <p className="text-xs text-slate-400">
                   {selectedId ? (
                     <span>
-                      Sélectionné ·{' '}
+                      Selected ·{' '}
                       <kbd className="font-mono bg-slate-100 px-1 rounded text-slate-500">Delete</kbd>
-                      {' '}pour supprimer · clic ailleurs pour désélectionner
+                      {' '}to remove · click elsewhere to deselect
                     </span>
                   ) : zoomEnabled ? (
-                    <span>Glissez sur le graphique pour zoomer · double-clic pour réinitialiser</span>
+                    <span>Drag on the chart to zoom · double-click to reset</span>
                   ) : null}
                 </p>
               )}
               {zoomDomain && (
                 <button onClick={resetZoom} className="text-xs text-slate-400 hover:text-slate-600 transition-colors shrink-0">
-                  Réinitialiser le zoom
+                  Reset zoom
                 </button>
               )}
             </div>
