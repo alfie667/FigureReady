@@ -16,8 +16,6 @@ import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
-import JournalSelector from '@/components/JournalSelector'
-import type { JournalApplyArgs } from '@/lib/journalPresets'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -36,8 +34,6 @@ export default function AppPage() {
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
-  const [journalExportWidth, setJournalExportWidth] = useState<number | undefined>(undefined)
-  const [journalExportPixelRatio, setJournalExportPixelRatio] = useState<number>(3)
 
   useEffect(() => {
     const saved = loadDefaultStyle()
@@ -60,8 +56,8 @@ export default function AppPage() {
       if (match) initialErrorCols[y] = match
     })
     setErrorCols(initialErrorCols)
-    setXAxisLabel('')
-    setYAxisLabel('')
+    setXAxisLabel(x)
+    setYAxisLabel(initialY[0] ?? '')
     setStyleOverrides({})
     setAnnotations([])
 
@@ -80,16 +76,6 @@ export default function AppPage() {
     setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
-  }
-
-  const handleJournalApply = ({ exportWidth, exportPixelRatio }: JournalApplyArgs) => {
-    setJournalExportWidth(exportWidth)
-    setJournalExportPixelRatio(exportPixelRatio)
-  }
-
-  const handleJournalClear = () => {
-    setJournalExportWidth(undefined)
-    setJournalExportPixelRatio(3)
   }
 
   const focusUpload = () => {
@@ -160,9 +146,6 @@ export default function AppPage() {
                 <div className="flex flex-wrap gap-6">
                   <ChartTypeSelector value={chartType} onChange={setChartType} />
                 </div>
-                <div className="pt-2 border-t border-slate-100">
-                  <JournalSelector onApply={handleJournalApply} onClear={handleJournalClear} />
-                </div>
               </div>
             </Panel>
           )}
@@ -204,8 +187,6 @@ export default function AppPage() {
               styleOverrides={styleOverrides}
               annotations={annotations}
               onAnnotationsChange={setAnnotations}
-              exportWidth={journalExportWidth}
-              exportPixelRatio={journalExportPixelRatio}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-slate-50">
