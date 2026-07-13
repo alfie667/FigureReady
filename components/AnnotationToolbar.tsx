@@ -6,7 +6,7 @@ interface Props {
   onInsertSymbol: (sym: string) => void
 }
 
-// ── Inline SVG tool icons ──────────────────────────────────────────────────
+// ── Inline SVG icons ───────────────────────────────────────────────────────
 const StraightLine = () => (
   <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
     <line x1="1" y1="7" x2="19" y2="7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -54,50 +54,31 @@ const TextShape = () => (
 
 // ── Symbol grid ────────────────────────────────────────────────────────────
 const SYMBOLS = [
-  // Greek lowercase
   'α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ',
   'ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω',
-  // Greek uppercase (selected)
   'Γ','Δ','Θ','Λ','Σ','Φ','Ψ','Ω',
-  // Math operators
   '±','×','÷','∞','≤','≥','≈','≠',
-  // Calculus / advanced
   '∑','∫','√','∂','∇','°','·','~',
-  // Super/subscript & fractions
   '¹','²','³','⁻¹','⁻²','⁻³','½','¼',
-  // Arrows
   '→','←','↑','↓','↔','⇒','⇐','⇔',
 ]
 
 // ── Tool button ────────────────────────────────────────────────────────────
-function ToolBtn({
-  icon, label, onClick,
-}: {
-  icon: React.ReactNode
-  label: string
-  onClick: () => void
-}) {
+function ToolBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
     <button
       title={label}
       onClick={onClick}
-      className="w-8 h-8 flex items-center justify-center rounded-lg border border-transparent text-slate-500 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors"
+      className="w-7 h-7 flex items-center justify-center rounded-md text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors"
     >
       {icon}
     </button>
   )
 }
 
-// ── Group pill ─────────────────────────────────────────────────────────────
-function Group({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-0.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
-      <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 select-none mr-1">
-        {label}
-      </span>
-      {children}
-    </div>
-  )
+// ── Divider ────────────────────────────────────────────────────────────────
+function Divider() {
+  return <div className="w-px h-6 bg-slate-100 mx-1 shrink-0" />
 }
 
 // ── Main component ─────────────────────────────────────────────────────────
@@ -105,7 +86,6 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
   const [showSymbols, setShowSymbols] = useState(false)
   const symRef = useRef<HTMLDivElement>(null)
 
-  // Close symbol panel on outside click
   useEffect(() => {
     if (!showSymbols) return
     const handler = (e: MouseEvent) => {
@@ -124,32 +104,44 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
   ]
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center bg-white border border-slate-200 rounded-xl shadow-sm w-fit">
       {/* Lines */}
-      <Group label="Lignes">
+      <div className="flex items-center gap-0.5 px-3 py-2">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-300 mr-1.5 select-none">
+          Lignes
+        </span>
         {lineTools.map((t, i) => (
           <ToolBtn key={i} icon={t.icon} label={t.label} onClick={() => onAdd('line', t.opts)} />
         ))}
-      </Group>
+      </div>
+
+      <Divider />
 
       {/* Shapes */}
-      <Group label="Formes">
+      <div className="flex items-center gap-0.5 px-3 py-2">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-slate-300 mr-1.5 select-none">
+          Formes
+        </span>
         <ToolBtn icon={<RectShape />} label="Rectangle" onClick={() => onAdd('rect')} />
         <ToolBtn icon={<EllipseShape />} label="Ellipse" onClick={() => onAdd('ellipse')} />
-      </Group>
+      </div>
+
+      <Divider />
 
       {/* Text */}
-      <Group label="Texte">
+      <div className="flex items-center px-2 py-2">
         <ToolBtn icon={<TextShape />} label="Texte libre" onClick={() => onAdd('text')} />
-      </Group>
+      </div>
 
-      {/* Symbols dropdown */}
-      <div ref={symRef} className="relative">
+      <Divider />
+
+      {/* Symbols */}
+      <div ref={symRef} className="relative flex items-center px-2 py-2">
         <button
           onClick={() => setShowSymbols(v => !v)}
-          className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors select-none"
+          className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors select-none"
         >
-          <span className="text-sm font-normal">Σ</span>
+          <span className="text-sm font-normal leading-none">Σ</span>
           Symboles
           <svg
             className={`w-3 h-3 text-slate-400 transition-transform ${showSymbols ? 'rotate-180' : ''}`}
@@ -160,8 +152,8 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
         </button>
 
         {showSymbols && (
-          <div className="absolute bottom-full mb-2 left-0 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 min-w-max">
-            <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-2 select-none">
+          <div className="absolute top-full mt-2 left-0 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 min-w-max">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2 select-none">
               Symboles scientifiques
             </p>
             <div className="grid grid-cols-12 gap-0.5">

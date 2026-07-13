@@ -697,11 +697,14 @@ export default function ChartPreview({
   return (
     <>
       {emailGate && <EmailGateModal onConfirm={handleEmailConfirm} onClose={() => setEmailGate(null)} />}
-      <div className="space-y-4">
+      <div className="space-y-3">
+        {/* Drawing toolbar */}
+        <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
+
         <div className="overflow-x-auto">
           <div
             ref={chartRef}
-            className="relative bg-white p-6 rounded-lg"
+            className="relative bg-white p-6 rounded-xl border border-slate-200 shadow-sm"
             style={{
               fontFamily,
               cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
@@ -1006,43 +1009,41 @@ export default function ChartPreview({
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            {zoomEnabled && (
-              <p className="text-xs text-slate-400">
-                Glissez sur le graphique pour zoomer · double-clic pour réinitialiser
-              </p>
-            )}
-            {selectedId && (
-              <p className="text-xs text-slate-400">
-                Élément sélectionné · <kbd className="font-mono bg-slate-100 px-1 rounded">Delete</kbd> pour supprimer · clic ailleurs pour désélectionner
-              </p>
-            )}
+        {/* Bottom bar: hints + export */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-slate-400 min-h-[18px]">
+            {selectedId ? (
+              <span>
+                Sélectionné ·{' '}
+                <kbd className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600 text-[10px]">Delete</kbd>
+                {' '}pour supprimer · clic ailleurs pour désélectionner
+              </span>
+            ) : zoomEnabled ? (
+              <span>Glissez sur le graphique pour zoomer · double-clic pour réinitialiser</span>
+            ) : null}
           </div>
-          <div className="flex flex-wrap gap-2">
-            <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
+          <div className="flex items-center gap-2">
             {zoomDomain && (
               <button
                 onClick={resetZoom}
-                className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+                className="px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
               >
                 Réinitialiser le zoom
               </button>
             )}
             <button
               onClick={() => triggerExport('svg')}
-              className="flex items-center gap-2 px-5 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1.5 px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
               <DownloadIcon />
-              Export SVG
+              SVG
             </button>
             <button
               onClick={() => triggerExport('png')}
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
             >
               <DownloadIcon />
-              Export PNG (3×)
+              PNG · 3×
             </button>
           </div>
         </div>
