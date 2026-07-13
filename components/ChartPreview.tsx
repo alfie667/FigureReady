@@ -712,7 +712,7 @@ export default function ChartPreview({
       <div className="flex flex-col" style={{ height: '100%' }}>
 
         {/* Chrome bar: annotation tools + export */}
-        <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20">
+        <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-b border-slate-200 shrink-0 z-20">
           <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
           <div className="flex items-center gap-2 shrink-0">
             {zoomDomain && (
