@@ -189,7 +189,7 @@ export default function AppPage() {
               onAnnotationsChange={setAnnotations}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-[#1a1a1a]">
+            <div className="flex-1 flex items-center justify-center bg-slate-50">
               <EmptyState onUploadClick={focusUpload} />
             </div>
           )}

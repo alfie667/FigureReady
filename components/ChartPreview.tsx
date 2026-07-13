@@ -729,15 +729,15 @@ export default function ChartPreview({
           </div>
         </div>
 
-        {/* Dark workspace */}
-        <div className="flex-1 overflow-auto bg-[#1a1a1a]">
-          <div className="min-h-full flex items-center justify-center p-10 lg:p-14">
+        {/* Light workspace */}
+        <div className="flex-1 overflow-auto bg-slate-50">
+          <div className="min-h-full flex items-center justify-center p-6 lg:p-10">
             <div className="overflow-x-auto">
               <div
                 ref={chartRef}
-                className="relative bg-white p-6 rounded-2xl"
+                className="relative bg-white p-6 rounded-xl"
                 style={{
-                  boxShadow: '0 32px 80px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.35)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.08)',
                   fontFamily,
                   cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
@@ -1044,34 +1044,24 @@ export default function ChartPreview({
           </div>{/* /centering wrapper */}
         </div>{/* /dark workspace */}
 
-        {/* Status bar */}
-        <div className="flex items-center justify-between px-5 py-2 bg-[#111111] border-t border-white/5 shrink-0">
-          <div className="text-xs text-zinc-500 min-h-[16px]">
+        {/* Hints bar */}
+        <div className="flex items-center justify-between px-4 py-1.5 bg-white border-t border-slate-100 shrink-0 min-h-[30px]">
+          <p className="text-xs text-slate-400">
             {selectedId ? (
               <span>
                 Sélectionné ·{' '}
-                <kbd className="bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded text-[10px] font-mono">Delete</kbd>
-                {' '}pour supprimer
+                <kbd className="font-mono bg-slate-100 px-1 rounded text-slate-500">Delete</kbd>
+                {' '}pour supprimer · clic ailleurs pour désélectionner
               </span>
             ) : zoomEnabled ? (
-              <span>Glissez pour zoomer · double-clic pour réinitialiser</span>
-            ) : (
-              <span>Cliquez sur un outil pour annoter votre figure</span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {zoomDomain && (
-              <button
-                onClick={resetZoom}
-                className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
-              >
-                Réinitialiser zoom
-              </button>
-            )}
-            <span className="text-[10px] text-zinc-700 select-none font-semibold tracking-widest uppercase">
-              FigureReady
-            </span>
-          </div>
+              <span>Glissez sur le graphique pour zoomer · double-clic pour réinitialiser</span>
+            ) : null}
+          </p>
+          {zoomDomain && (
+            <button onClick={resetZoom} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
+              Réinitialiser le zoom
+            </button>
+          )}
         </div>
 
       </div>{/* /flex-col editor */}
