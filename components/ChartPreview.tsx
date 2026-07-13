@@ -35,6 +35,43 @@ function TextIcon() {
   )
 }
 
+function ScatterTooltipContent({ active, payload }: {
+  active?: boolean
+  payload?: Array<{ payload: Record<string, unknown>; color?: string; fill?: string }>
+}) {
+  if (!active || !payload?.length) return null
+  const d = payload[0].payload
+  const fmt = (v: unknown) => typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toPrecision(4)) : String(v)
+  const color = payload[0].color ?? payload[0].fill ?? '#000'
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-md px-3 py-1.5 text-xs whitespace-nowrap" style={{ color }}>
+      <span className="text-slate-500">x = </span><span className="font-mono text-slate-800">{fmt(d.x)}</span>
+      <span className="mx-2 text-slate-300">·</span>
+      <span className="text-slate-500">y = </span><span className="font-mono">{fmt(d.y)}</span>
+    </div>
+  )
+}
+
+function BarTooltipContent({ active, payload, label }: {
+  active?: boolean
+  payload?: Array<{ value: number; name?: string; fill?: string }>
+  label?: string | number
+}) {
+  if (!active || !payload?.length) return null
+  const fmt = (v: number) => Number.isInteger(v) ? String(v) : v.toPrecision(4)
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg shadow-md px-3 py-1.5 text-xs whitespace-nowrap space-y-0.5">
+      <p className="text-slate-400 font-mono">{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.fill }}>
+          <span className="text-slate-500">{p.name} = </span>
+          <span className="font-mono">{typeof p.value === 'number' ? fmt(p.value) : p.value}</span>
+        </p>
+      ))}
+    </div>
+  )
+}
+
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
 interface ChartMouseEvent {
@@ -62,6 +99,9 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const draggingRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
+  const [pointTooltip, setPointTooltip] = useState<{
+    x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
+  } | null>(null)
   const s = chartStyles[styleName]
   const axisColor = styleOverrides.axisColor ?? s.axisColor
   const axisWidth = styleOverrides.axisWidth ?? s.axisWidth
@@ -84,6 +124,30 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     return renderMarker(cx, cy, shape, size, color, key) ?? <g key={key} />
   }
 
+  // Line chart dot renderer: visible marker + transparent hit area for precise hover tooltip.
+  const makeLineDot = (col: string, color: string, shape: MarkerShape, size: number) =>
+    (props: unknown) => {
+      const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Record<string, unknown> }
+      if (cx === undefined || cy === undefined || !payload) return <g />
+      const hitR = Math.max(size + 5, 9)
+      return (
+        <g key={`ldot-${col}-${cx}-${cy}`}>
+          {renderMarker(cx, cy, shape, size, color) ?? <circle cx={cx} cy={cy} r={size} fill={color} />}
+          <circle
+            cx={cx}
+            cy={cy}
+            r={hitR}
+            fill="transparent"
+            onMouseEnter={() => {
+              if (draggingRef.current) return
+              setPointTooltip({ x: payload.x, y: payload[col] as number, name: seriesLabel(col), color, svgX: cx, svgY: cy })
+            }}
+            onMouseLeave={() => setPointTooltip(null)}
+          />
+        </g>
+      )
+    }
+
   const isNumericX = data.length > 0 && typeof data[0][xCol] === 'number'
   const zoomEnabled = isNumericX && chartType !== 'bar'
 
@@ -95,6 +159,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     setZoomDomain(null)
     setRefLeft(null)
     setRefRight(null)
+    setPointTooltip(null)
   }, [xCol, yCols.join(','), chartType, data.length])
 
   const handleMouseDown = (e: ChartMouseEvent) => {
@@ -253,7 +318,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
             tickLine={axisLine}
             label={yLabel}
           />
-          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+          <Tooltip content={<ScatterTooltipContent />} cursor={false} />
           {legend}
           {scatterSeries.map(series => {
             const markerSize = seriesMarkerSize(series.key)
@@ -283,7 +348,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} />
           <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
-          <Tooltip />
+          <Tooltip content={<BarTooltipContent />} cursor={false} />
           {legend}
           {yCols.map((col, i) => (
             <Bar
@@ -324,7 +389,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           allowDataOverflow
         />
         <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
-        <Tooltip />
+        <Tooltip content={() => null} cursor={false} />
         {legend}
         {yCols.map((col, i) => {
           const color = seriesColor(col, i)
@@ -339,8 +404,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
               name={seriesLabel(col)}
               stroke={color}
               strokeWidth={seriesStrokeWidth(col)}
-              dot={showDots ? markerRenderer(markerShape, markerSize, color) : false}
-              activeDot={markerRenderer(markerShape, markerSize + 2, color)}
+              dot={showDots ? makeLineDot(col, color, markerShape, markerSize) : false}
+              activeDot={false}
               connectNulls
             >
               {hasError(col) && (
@@ -501,6 +566,32 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
         <ResponsiveContainer width="100%" height={figureHeight}>
           {renderChart() as React.ReactElement}
         </ResponsiveContainer>
+        {pointTooltip && (
+          <div
+            style={{
+              position: 'absolute',
+              left: 24 + pointTooltip.svgX,
+              top: Math.max(4, 24 + pointTooltip.svgY - 48),
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none',
+              zIndex: 10,
+              fontFamily,
+            }}
+            className="bg-white border border-slate-200 rounded-lg shadow-md px-3 py-1.5 text-xs whitespace-nowrap"
+          >
+            <span className="text-slate-500">x = </span>
+            <span className="font-mono text-slate-800">
+              {typeof pointTooltip.x === 'number'
+                ? (Number.isInteger(pointTooltip.x) ? String(pointTooltip.x) : (pointTooltip.x as number).toPrecision(4))
+                : String(pointTooltip.x)}
+            </span>
+            <span className="mx-2 text-slate-300">·</span>
+            <span className="text-slate-500">{pointTooltip.name} = </span>
+            <span className="font-mono" style={{ color: pointTooltip.color }}>
+              {Number.isInteger(pointTooltip.y) ? String(pointTooltip.y) : pointTooltip.y.toPrecision(4)}
+            </span>
+          </div>
+        )}
         {annotations.map(ann => (
           <div
             key={ann.id}
