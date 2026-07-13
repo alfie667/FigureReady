@@ -98,23 +98,6 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
   },
 ]
 
-// Keys of StyleOverrides that a journal preset controls.
-// figureWidth is intentionally excluded — journal dimensions only apply at export.
-export type JournalOverrideKeys =
-  'fontFamily' | 'xTitleSize' | 'yTitleSize' | 'xTickSize' | 'yTickSize'
-
-export function getJournalOverrides(
-  preset: JournalPreset,
-): Pick<StyleOverrides, JournalOverrideKeys> {
-  return {
-    fontFamily:  preset.fontFamily,
-    xTitleSize:  preset.labelSize,
-    yTitleSize:  preset.labelSize,
-    xTickSize:   preset.tickSize,
-    yTickSize:   preset.tickSize,
-  }
-}
-
 /** Pixel width to use at export time (at 96 dpi screen resolution). */
 export function getJournalExportWidth(preset: JournalPreset, column: 'single' | 'double'): number {
   return column === 'single' ? preset.singleWidth : preset.doubleWidth
@@ -129,8 +112,8 @@ export function getJournalExportPixelRatio(preset: JournalPreset): number {
   return Math.min(preset.dpiValue / 96, 5)
 }
 
+// Journal selection never modifies the live preview — only export dimensions change.
 export interface JournalApplyArgs {
-  overrides: Pick<StyleOverrides, JournalOverrideKeys>
   exportWidth: number
   exportPixelRatio: number
 }

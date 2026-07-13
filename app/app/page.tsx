@@ -17,7 +17,7 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
 import JournalSelector from '@/components/JournalSelector'
-import type { JournalApplyArgs, JournalOverrideKeys } from '@/lib/journalPresets'
+import type { JournalApplyArgs } from '@/lib/journalPresets'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -82,19 +82,12 @@ export default function AppPage() {
     setAnnotations([])
   }
 
-  const handleJournalApply = ({ overrides, exportWidth, exportPixelRatio }: JournalApplyArgs) => {
-    setStyleOverrides(prev => ({ ...prev, ...overrides }))
+  const handleJournalApply = ({ exportWidth, exportPixelRatio }: JournalApplyArgs) => {
     setJournalExportWidth(exportWidth)
     setJournalExportPixelRatio(exportPixelRatio)
   }
 
   const handleJournalClear = () => {
-    setStyleOverrides(prev => {
-      const next = { ...prev }
-      const keys: JournalOverrideKeys[] = ['fontFamily', 'xTitleSize', 'yTitleSize', 'xTickSize', 'yTickSize']
-      keys.forEach(k => { delete next[k] })
-      return next
-    })
     setJournalExportWidth(undefined)
     setJournalExportPixelRatio(3)
   }

@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import {
   JOURNAL_PRESETS,
-  getJournalOverrides,
   getJournalExportWidth,
   getJournalExportPixelRatio,
   type JournalApplyArgs,
@@ -22,7 +21,6 @@ export default function JournalSelector({ onApply, onClear }: Props) {
   function applyPreset(p: typeof preset, col: 'single' | 'double') {
     if (!p) return
     onApply({
-      overrides: getJournalOverrides(p),
       exportWidth: getJournalExportWidth(p, col),
       exportPixelRatio: getJournalExportPixelRatio(p),
     })
