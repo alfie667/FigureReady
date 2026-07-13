@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { fontOptions, type ChartStyle, type StyleOverrides, type LegendPosition } from '@/lib/chartStyles'
+import { fontOptions, type ChartStyle, type StyleOverrides } from '@/lib/chartStyles'
 import { saveDefaultStyle } from '@/lib/styleStorage'
 import {
-  ColorSwatchPicker, LegendPositionPicker, LineThicknessPicker, TextSizePicker, ToggleSwitch,
+  ColorSwatchPicker, LineThicknessPicker, TextSizePicker, ToggleSwitch,
   type NumericPreset,
 } from './StyleControls'
 
@@ -206,7 +206,6 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
   const boldLabels = overrides.boldLabels ?? false
   const fontFamily = overrides.fontFamily ?? baseStyle.fontFamily
   const legendFontSize = overrides.legendFontSize ?? baseStyle.tickFontSize
-  const legendPosition = overrides.legendPosition ?? 'top'
   const showLegend = overrides.showLegend ?? hasMultipleSeries
 
   const setTitleSize = (v: number) => onChange({ ...overrides, xTitleSize: v, yTitleSize: v })
@@ -252,14 +251,6 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
         <ToggleSwitch label="Show legend" checked={showLegend} onChange={(v) => set('showLegend', v)} />
         {showLegend && (
           <>
-            <LegendPositionPicker label="Snap to" value={legendPosition} onChange={(v) => {
-              const snap: Record<string, { x: number; y: number }> = {
-                top: { x: 50, y: 3 }, bottom: { x: 50, y: 89 },
-                left: { x: 7, y: 45 }, right: { x: 88, y: 45 },
-              }
-              const pos = snap[v] ?? snap.top
-              onChange({ ...overrides, legendPosition: v as LegendPosition, legendXPct: pos.x, legendYPct: pos.y })
-            }} />
             <TextSizePicker label="Text size" value={legendFontSize} presets={legendSizePresets} onChange={(v) => set('legendFontSize', v)} />
             <div className="flex gap-3">
               <ToggleSwitch label="Vertical layout" checked={(overrides.legendOrientation ?? 'h') === 'v'} onChange={(v) => set('legendOrientation', v ? 'v' : 'h')} />

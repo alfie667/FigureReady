@@ -734,7 +734,7 @@ export default function ChartPreview({
     trackExport()
     const { toPng } = await import('html-to-image')
     try {
-      const dataUrl = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 3 })
+      const dataUrl = await toPng(chartRef.current, { backgroundColor: 'white' })
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
     } catch (err) { console.error('PNG export failed:', err) }
