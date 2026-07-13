@@ -95,7 +95,9 @@ interface Props {
 
 export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides, annotations, onAnnotationsChange }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingId, _setEditingId] = useState<string | null>(null)
+  const editingIdRef = useRef<string | null>(null)
+  const setEditingId = (id: string | null) => { editingIdRef.current = id; _setEditingId(id) }
   const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const draggingRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
@@ -427,7 +429,6 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
       yPct: 50,
     }
     onAnnotationsChange([...annotations, annotation])
-    setEditingId(annotation.id)
   }
 
   const updateAnnotation = (id: string, changes: Partial<ChartAnnotation>) => {
@@ -439,7 +440,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   }
 
   const handleAnnotationPointerDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
-    if (editingId === id) return
+    if (editingIdRef.current === id) return
     const container = chartRef.current
     const annotation = annotations.find(a => a.id === id)
     if (!container || !annotation) return
