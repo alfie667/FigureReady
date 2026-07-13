@@ -67,6 +67,55 @@ function BarTooltipContent({ active, payload, label }: {
   )
 }
 
+// ─── Draggable axis label ────────────────────────────────────────────────────
+
+interface DraggableLabelProps {
+  viewBox?: { x: number; y: number; width: number; height: number }
+  value?: string | number
+  angle?: number
+  dy?: number
+  style?: React.CSSProperties
+  onDrag: (delta: number) => void
+}
+
+function DraggableAxisLabel({ viewBox, value, angle = 0, dy = 0, style, onDrag }: DraggableLabelProps) {
+  const lastClientY = useRef(0)
+
+  if (!value || !viewBox) return null
+  const cx = viewBox.x + viewBox.width / 2
+  const cy = viewBox.y + viewBox.height / 2 + dy
+
+  const handleMouseDown = (e: React.MouseEvent<SVGTextElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    lastClientY.current = e.clientY
+    const onMove = (ev: MouseEvent) => {
+      const delta = ev.clientY - lastClientY.current
+      lastClientY.current = ev.clientY
+      onDrag(delta)
+    }
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }
+
+  return (
+    <text
+      x={cx} y={cy}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      transform={angle ? `rotate(${angle}, ${cx}, ${cy})` : undefined}
+      style={{ ...style, cursor: 'grab', userSelect: 'none' }}
+      onMouseDown={handleMouseDown}
+    >
+      {String(value)}
+    </text>
+  )
+}
+
 // ─── Drag state ───────────────────────────────────────────────────────────────
 
 type DragState =
@@ -97,6 +146,7 @@ interface Props {
   styleOverrides: StyleOverrides
   annotations: ChartAnnotation[]
   onAnnotationsChange: (annotations: ChartAnnotation[]) => void
+  onStyleChange?: (patch: Partial<StyleOverrides>) => void
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -104,10 +154,14 @@ interface Props {
 export default function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
-  annotations, onAnnotationsChange,
+  annotations, onAnnotationsChange, onStyleChange,
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
+  const xLabelDyRef = useRef(styleOverrides.xLabelDy ?? 0)
+  const yLabelDyRef = useRef(styleOverrides.yLabelDy ?? 0)
+  useEffect(() => { xLabelDyRef.current = styleOverrides.xLabelDy ?? 0 }, [styleOverrides.xLabelDy])
+  useEffect(() => { yLabelDyRef.current = styleOverrides.yLabelDy ?? 0 }, [styleOverrides.yLabelDy])
 
   // editingId: which text annotation is in text-edit mode
   const [editingId, _setEditingId] = useState<string | null>(null)
@@ -276,11 +330,31 @@ export default function ChartPreview({
     : { layout: 'horizontal' as const, verticalAlign: legendPosition, align: 'center' as const, height: 36 }
   const figureWidth = styleOverrides.figureWidth
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
-  const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, dy: styleOverrides.xLabelDy ?? 0, style: xLabelStyle }
+  const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
+  const xLabel = {
+    content: (props: Record<string, unknown>) => (
+      <DraggableAxisLabel
+        viewBox={props.viewBox as DraggableLabelProps['viewBox']}
+        value={xLabelText}
+        dy={styleOverrides.xLabelDy ?? 0}
+        style={xLabelStyle}
+        onDrag={(d) => { xLabelDyRef.current += d; onStyleChange?.({ xLabelDy: xLabelDyRef.current }) }}
+      />
+    ),
+  }
   const yLabelText = yAxisLabel.trim() || (yCols.length === 1 ? formatAxisLabel(yCols[0]) : '')
-  const yLabel = yLabelText
-    ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, dy: styleOverrides.yLabelDy ?? 0, style: yLabelStyle }
-    : undefined
+  const yLabel = yLabelText ? {
+    content: (props: Record<string, unknown>) => (
+      <DraggableAxisLabel
+        viewBox={props.viewBox as DraggableLabelProps['viewBox']}
+        value={yLabelText}
+        angle={-90}
+        dy={styleOverrides.yLabelDy ?? 0}
+        style={yLabelStyle}
+        onDrag={(d) => { yLabelDyRef.current += d; onStyleChange?.({ yLabelDy: yLabelDyRef.current }) }}
+      />
+    ),
+  } : undefined
   const grid = showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
   const legend = legendEnabled ? <Legend {...legendLayoutProps} wrapperStyle={legendStyle} /> : null
   const zoomArea = refLeft !== null && refRight !== null

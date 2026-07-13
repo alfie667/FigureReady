@@ -187,6 +187,7 @@ export default function AppPage() {
               styleOverrides={styleOverrides}
               annotations={annotations}
               onAnnotationsChange={setAnnotations}
+              onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-slate-50">
