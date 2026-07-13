@@ -200,6 +200,51 @@ function DraggableLegend({
   )
 }
 
+// ─── PNG 300 DPI helpers ─────────────────────────────────────────────────────
+
+function crc32(data: Uint8Array): number {
+  let crc = 0xffffffff
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i]
+    for (let j = 0; j < 8; j++) crc = (crc & 1) ? (0xedb88320 ^ (crc >>> 1)) : (crc >>> 1)
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+function injectPngDpi(dataUrl: string, dpi: number): string {
+  const binary = atob(dataUrl.split(',')[1])
+  const src = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) src[i] = binary.charCodeAt(i)
+  const ppm = Math.round(dpi / 0.0254)
+  // 21-byte pHYs chunk: 4 length + 4 type + 9 data + 4 CRC
+  const chunk = new Uint8Array(21)
+  chunk[3] = 9
+  chunk[4] = 0x70; chunk[5] = 0x48; chunk[6] = 0x59; chunk[7] = 0x73 // "pHYs"
+  chunk[8] = (ppm >>> 24) & 0xff; chunk[9] = (ppm >>> 16) & 0xff
+  chunk[10] = (ppm >>> 8) & 0xff; chunk[11] = ppm & 0xff
+  chunk[12] = chunk[8]; chunk[13] = chunk[9]; chunk[14] = chunk[10]; chunk[15] = chunk[11]
+  chunk[16] = 1 // unit = metre
+  const crc = crc32(chunk.slice(4, 17))
+  chunk[17] = (crc >>> 24) & 0xff; chunk[18] = (crc >>> 16) & 0xff
+  chunk[19] = (crc >>> 8) & 0xff; chunk[20] = crc & 0xff
+  // Insert after 8-byte PNG signature + 25-byte IHDR = offset 33
+  const out = new Uint8Array(src.length + 21)
+  out.set(src.slice(0, 33)); out.set(chunk, 33); out.set(src.slice(33), 54)
+  let str = ''
+  out.forEach(b => { str += String.fromCharCode(b) })
+  return 'data:image/png;base64,' + btoa(str)
+}
+
+const EXPORT_PRESETS = [
+  { id: 'nature-single', label: 'Nature 1-col · 90mm',  mm: 90 },
+  { id: 'nature-double', label: 'Nature 2-col · 183mm', mm: 183 },
+  { id: 'acs-single',    label: 'ACS 1-col · 89mm',     mm: 88.9 },
+  { id: 'acs-double',    label: 'ACS 2-col · 180mm',    mm: 180.3 },
+  { id: 'cell-single',   label: 'Cell 1-col · 85mm',    mm: 85 },
+  { id: 'cell-double',   label: 'Cell 2-col · 174mm',   mm: 174 },
+] as const
+type ExportPresetId = typeof EXPORT_PRESETS[number]['id']
+
 // ─── Drag state ───────────────────────────────────────────────────────────────
 
 type DragState =
@@ -262,6 +307,7 @@ export default function ChartPreview({
   const setSelectedId = (id: string | null) => { selectedIdRef.current = id; _setSelectedId(id) }
 
   const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
+  const [exportPreset, setExportPreset] = useState<ExportPresetId>('nature-single')
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
@@ -734,7 +780,12 @@ export default function ChartPreview({
     trackExport()
     const { toPng } = await import('html-to-image')
     try {
-      const dataUrl = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
+      const preset = EXPORT_PRESETS.find(p => p.id === exportPreset) ?? EXPORT_PRESETS[0]
+      const containerWidth = chartRef.current.offsetWidth
+      const targetPx = Math.round(preset.mm / 25.4 * 300)
+      const pixelRatio = targetPx / containerWidth
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio })
+      const dataUrl = injectPngDpi(raw, 300)
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
     } catch (err) { console.error('PNG export failed:', err) }
@@ -908,13 +959,24 @@ export default function ChartPreview({
               <DownloadIcon />
               SVG
             </button>
-            <button
-              onClick={() => triggerExport('png')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm"
-            >
-              <DownloadIcon />
-              PNG · 3×
-            </button>
+            <div className="flex items-center rounded-lg border border-blue-600 overflow-hidden shadow-sm">
+              <select
+                value={exportPreset}
+                onChange={e => setExportPreset(e.target.value as ExportPresetId)}
+                className="px-2 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border-r border-blue-200 focus:outline-none cursor-pointer"
+              >
+                {EXPORT_PRESETS.map(p => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => triggerExport('png')}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+              >
+                <DownloadIcon />
+                PNG · 300 DPI
+              </button>
+            </div>
           </div>
         </div>
 
