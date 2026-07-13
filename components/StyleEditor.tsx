@@ -261,6 +261,10 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
               onChange({ ...overrides, legendPosition: v as LegendPosition, legendXPct: pos.x, legendYPct: pos.y })
             }} />
             <TextSizePicker label="Text size" value={legendFontSize} presets={legendSizePresets} onChange={(v) => set('legendFontSize', v)} />
+            <div className="flex gap-3">
+              <ToggleSwitch label="Vertical layout" checked={(overrides.legendOrientation ?? 'h') === 'v'} onChange={(v) => set('legendOrientation', v ? 'v' : 'h')} />
+              <ToggleSwitch label="Background" checked={overrides.legendBg ?? true} onChange={(v) => set('legendBg', v)} />
+            </div>
           </>
         )}
       </div>

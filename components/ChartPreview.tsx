@@ -120,11 +120,6 @@ function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, 
 
 // ─── Draggable legend ────────────────────────────────────────────────────────
 
-const LEGEND_BTN: React.CSSProperties = {
-  background: 'none', border: 'none', cursor: 'pointer', padding: '1px 3px',
-  borderRadius: 4, color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center',
-}
-
 interface DraggableLegendProps {
   yCols: string[]
   seriesNames: Record<string, string>
@@ -147,7 +142,6 @@ function DraggableLegend({
   xPct, yPct, orientation, bg, fontFamily, fontSize, textColor,
   containerRef, onUpdate,
 }: DraggableLegendProps) {
-  const [hovered, setHovered] = useState(false)
   const lastClient = useRef({ x: 0, y: 0 })
   const xRef = useRef(xPct)
   const yRef = useRef(yPct)
@@ -158,7 +152,6 @@ function DraggableLegend({
   const isScatter = chartType === 'scatter'
 
   const startDrag = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).tagName === 'BUTTON') return
     e.preventDefault(); e.stopPropagation()
     lastClient.current = { x: e.clientX, y: e.clientY }
     const onMove = (ev: MouseEvent) => {
@@ -175,64 +168,34 @@ function DraggableLegend({
 
   return (
     <div
-      style={{ position: 'absolute', left: `${xPct}%`, top: `${yPct}%`, transform: 'translate(-50%, 0)', zIndex: 12, userSelect: 'none' }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: 'absolute', left: `${xPct}%`, top: `${yPct}%`,
+        transform: 'translate(-50%, 0)', zIndex: 12, userSelect: 'none',
+        display: 'flex', flexDirection: orientation === 'h' ? 'row' : 'column',
+        alignItems: orientation === 'h' ? 'center' : 'flex-start',
+        gap: orientation === 'h' ? 14 : 5,
+        background: bg ? 'rgba(255,255,255,0.92)' : 'transparent',
+        border: bg ? '1px solid #e2e8f0' : 'none',
+        borderRadius: 6, padding: '4px 10px', cursor: 'grab',
+        boxShadow: bg ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+      }}
+      onMouseDown={startDrag}
     >
-      {/* Hover toolbar */}
-      {hovered && (
-        <div style={{
-          position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-          marginBottom: 4, display: 'flex', gap: 1,
-          background: 'white', border: '1px solid #e2e8f0', borderRadius: 6,
-          padding: '2px 3px', boxShadow: '0 1px 6px rgba(0,0,0,0.1)', whiteSpace: 'nowrap',
-        }}>
-          <span style={{ ...LEGEND_BTN, cursor: 'grab', fontSize: 14, opacity: 0.5 }} title="Drag to move">⠿</span>
-          <button style={LEGEND_BTN} title={orientation === 'h' ? 'Vertical' : 'Horizontal'}
-            onClick={() => onUpdate({ legendOrientation: orientation === 'h' ? 'v' : 'h' })}>
-            {orientation === 'h'
-              ? <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="3" rx="1" fill="currentColor"/><rect x="1" y="6" width="12" height="3" rx="1" fill="currentColor"/></svg>
-              : <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="3" height="12" rx="1" fill="currentColor"/><rect x="6" y="1" width="3" height="12" rx="1" fill="currentColor"/></svg>}
-          </button>
-          <button style={LEGEND_BTN} title={bg ? 'Remove background' : 'Add background'}
-            onClick={() => onUpdate({ legendBg: !bg })}>
-            <svg width="14" height="14" viewBox="0 0 14 14">
-              <rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"
-                fill={bg ? 'currentColor' : 'none'} fillOpacity={bg ? 0.15 : 0}/>
-            </svg>
-          </button>
+      {yCols.map((col, i) => (
+        <div key={col} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="26" height="14" style={{ flexShrink: 0 }}>
+            {isBar
+              ? <rect x="3" y="3" width="20" height="8" fill={colors[i]} rx="1" />
+              : <>
+                  {!isScatter && <line x1="1" y1="7" x2="25" y2="7" stroke={colors[i]} strokeWidth={Math.min(strokeWidths[i], 3)} />}
+                  <circle cx="13" cy="7" r={isScatter ? 4 : 3.5} fill={colors[i]} />
+                </>}
+          </svg>
+          <span style={{ fontFamily, fontSize, color: textColor, whiteSpace: 'nowrap' }}>
+            {seriesNames[col] || col}
+          </span>
         </div>
-      )}
-
-      {/* Legend entries */}
-      <div
-        style={{
-          display: 'flex', flexDirection: orientation === 'h' ? 'row' : 'column',
-          alignItems: orientation === 'h' ? 'center' : 'flex-start',
-          gap: orientation === 'h' ? 14 : 5,
-          background: bg ? 'rgba(255,255,255,0.92)' : 'transparent',
-          border: bg ? '1px solid #e2e8f0' : 'none',
-          borderRadius: 6, padding: '4px 10px', cursor: 'grab',
-          boxShadow: bg ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
-        }}
-        onMouseDown={startDrag}
-      >
-        {yCols.map((col, i) => (
-          <div key={col} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <svg width="26" height="14" style={{ flexShrink: 0 }}>
-              {isBar
-                ? <rect x="3" y="3" width="20" height="8" fill={colors[i]} rx="1" />
-                : <>
-                    {!isScatter && <line x1="1" y1="7" x2="25" y2="7" stroke={colors[i]} strokeWidth={Math.min(strokeWidths[i], 3)} />}
-                    <circle cx="13" cy="7" r={isScatter ? 4 : 3.5} fill={colors[i]} />
-                  </>}
-            </svg>
-            <span style={{ fontFamily, fontSize, color: textColor, whiteSpace: 'nowrap' }}>
-              {seriesNames[col] || col}
-            </span>
-          </div>
-        ))}
-      </div>
+      ))}
     </div>
   )
 }
