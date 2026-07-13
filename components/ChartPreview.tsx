@@ -73,26 +73,28 @@ interface DraggableLabelProps {
   viewBox?: { x: number; y: number; width: number; height: number }
   value?: string | number
   angle?: number
+  dx?: number
   dy?: number
   style?: React.CSSProperties
-  onDrag: (delta: number) => void
+  onDrag: (dx: number, dy: number) => void
 }
 
-function DraggableAxisLabel({ viewBox, value, angle = 0, dy = 0, style, onDrag }: DraggableLabelProps) {
-  const lastClientY = useRef(0)
+function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, onDrag }: DraggableLabelProps) {
+  const lastClient = useRef({ x: 0, y: 0 })
 
   if (!value || !viewBox) return null
-  const cx = viewBox.x + viewBox.width / 2
+  const cx = viewBox.x + viewBox.width / 2 + dx
   const cy = viewBox.y + viewBox.height / 2 + dy
 
   const handleMouseDown = (e: React.MouseEvent<SVGTextElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    lastClientY.current = e.clientY
+    lastClient.current = { x: e.clientX, y: e.clientY }
     const onMove = (ev: MouseEvent) => {
-      const delta = ev.clientY - lastClientY.current
-      lastClientY.current = ev.clientY
-      onDrag(delta)
+      const ddx = ev.clientX - lastClient.current.x
+      const ddy = ev.clientY - lastClient.current.y
+      lastClient.current = { x: ev.clientX, y: ev.clientY }
+      onDrag(ddx, ddy)
     }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
@@ -158,9 +160,13 @@ export default function ChartPreview({
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
+  const xLabelDxRef = useRef(styleOverrides.xLabelDx ?? 0)
   const xLabelDyRef = useRef(styleOverrides.xLabelDy ?? 0)
+  const yLabelDxRef = useRef(styleOverrides.yLabelDx ?? 0)
   const yLabelDyRef = useRef(styleOverrides.yLabelDy ?? 0)
+  useEffect(() => { xLabelDxRef.current = styleOverrides.xLabelDx ?? 0 }, [styleOverrides.xLabelDx])
   useEffect(() => { xLabelDyRef.current = styleOverrides.xLabelDy ?? 0 }, [styleOverrides.xLabelDy])
+  useEffect(() => { yLabelDxRef.current = styleOverrides.yLabelDx ?? 0 }, [styleOverrides.yLabelDx])
   useEffect(() => { yLabelDyRef.current = styleOverrides.yLabelDy ?? 0 }, [styleOverrides.yLabelDy])
 
   // editingId: which text annotation is in text-edit mode
@@ -336,9 +342,13 @@ export default function ChartPreview({
       <DraggableAxisLabel
         viewBox={props.viewBox as DraggableLabelProps['viewBox']}
         value={xLabelText}
+        dx={styleOverrides.xLabelDx ?? 0}
         dy={styleOverrides.xLabelDy ?? 0}
         style={xLabelStyle}
-        onDrag={(d) => { xLabelDyRef.current += d; onStyleChange?.({ xLabelDy: xLabelDyRef.current }) }}
+        onDrag={(ddx, ddy) => {
+          xLabelDxRef.current += ddx; xLabelDyRef.current += ddy
+          onStyleChange?.({ xLabelDx: xLabelDxRef.current, xLabelDy: xLabelDyRef.current })
+        }}
       />
     ),
   }
@@ -349,9 +359,13 @@ export default function ChartPreview({
         viewBox={props.viewBox as DraggableLabelProps['viewBox']}
         value={yLabelText}
         angle={-90}
+        dx={styleOverrides.yLabelDx ?? 0}
         dy={styleOverrides.yLabelDy ?? 0}
         style={yLabelStyle}
-        onDrag={(d) => { yLabelDyRef.current += d; onStyleChange?.({ yLabelDy: yLabelDyRef.current }) }}
+        onDrag={(ddx, ddy) => {
+          yLabelDxRef.current += ddx; yLabelDyRef.current += ddy
+          onStyleChange?.({ yLabelDx: yLabelDxRef.current, yLabelDy: yLabelDyRef.current })
+        }}
       />
     ),
   } : undefined
