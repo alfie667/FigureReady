@@ -10,7 +10,8 @@ export interface JournalPreset {
   fontFamily: string    // matches a value in chartStyles.fontOptions
   labelSize: number     // axis title px
   tickSize: number      // tick label px
-  dpi: string
+  dpiValue: number      // target export DPI (300 / 600 / 1000 / 1200)
+  dpi: string           // human-readable string
   panelLabels?: string  // e.g. 'lowercase' | 'UPPERCASE'
 }
 
@@ -25,6 +26,7 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
     fontFamily: 'Arial, Helvetica, sans-serif',
     labelSize: 8,
     tickSize: 7,
+    dpiValue: 300,
     dpi: '300 DPI',
     panelLabels: 'lowercase',
   },
@@ -38,6 +40,7 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
     fontFamily: 'Times New Roman, Times, serif',
     labelSize: 9,
     tickSize: 8,
+    dpiValue: 300,
     dpi: '300 DPI',
   },
   {
@@ -50,6 +53,7 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
     fontFamily: 'Arial, Helvetica, sans-serif',
     labelSize: 8,
     tickSize: 7,
+    dpiValue: 1000,
     dpi: '1000 DPI (line art)',
     panelLabels: 'UPPERCASE',
   },
@@ -63,6 +67,7 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
     fontFamily: 'Arial, Helvetica, sans-serif',
     labelSize: 9,
     tickSize: 8,
+    dpiValue: 600,
     dpi: '300–600 DPI',
   },
   {
@@ -75,6 +80,7 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
     fontFamily: 'Arial, Helvetica, sans-serif',
     labelSize: 8,
     tickSize: 7,
+    dpiValue: 1200,
     dpi: '1200 DPI (line art)',
   },
   {
@@ -87,23 +93,44 @@ export const JOURNAL_PRESETS: JournalPreset[] = [
     fontFamily: 'Arial, Helvetica, sans-serif',
     labelSize: 8,
     tickSize: 7,
+    dpiValue: 1200,
     dpi: '1200 DPI (line art)',
   },
 ]
 
+// Keys of StyleOverrides that a journal preset controls.
+// figureWidth is intentionally excluded — journal dimensions only apply at export.
 export type JournalOverrideKeys =
-  'figureWidth' | 'fontFamily' | 'xTitleSize' | 'yTitleSize' | 'xTickSize' | 'yTickSize'
+  'fontFamily' | 'xTitleSize' | 'yTitleSize' | 'xTickSize' | 'yTickSize'
 
 export function getJournalOverrides(
   preset: JournalPreset,
-  column: 'single' | 'double',
 ): Pick<StyleOverrides, JournalOverrideKeys> {
   return {
-    figureWidth:  column === 'single' ? preset.singleWidth : preset.doubleWidth,
-    fontFamily:   preset.fontFamily,
-    xTitleSize:   preset.labelSize,
-    yTitleSize:   preset.labelSize,
-    xTickSize:    preset.tickSize,
-    yTickSize:    preset.tickSize,
+    fontFamily:  preset.fontFamily,
+    xTitleSize:  preset.labelSize,
+    yTitleSize:  preset.labelSize,
+    xTickSize:   preset.tickSize,
+    yTickSize:   preset.tickSize,
   }
+}
+
+/** Pixel width to use at export time (at 96 dpi screen resolution). */
+export function getJournalExportWidth(preset: JournalPreset, column: 'single' | 'double'): number {
+  return column === 'single' ? preset.singleWidth : preset.doubleWidth
+}
+
+/**
+ * Pixel-ratio multiplier for PNG export, derived from the journal's target DPI.
+ * Capped at 5× to avoid impractically large files for high-DPI specs.
+ * (Cell/JACS at 1000–1200 DPI → use SVG export for true vector quality.)
+ */
+export function getJournalExportPixelRatio(preset: JournalPreset): number {
+  return Math.min(preset.dpiValue / 96, 5)
+}
+
+export interface JournalApplyArgs {
+  overrides: Pick<StyleOverrides, JournalOverrideKeys>
+  exportWidth: number
+  exportPixelRatio: number
 }

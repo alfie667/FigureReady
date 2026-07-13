@@ -97,6 +97,8 @@ interface Props {
   styleOverrides: StyleOverrides
   annotations: ChartAnnotation[]
   onAnnotationsChange: (annotations: ChartAnnotation[]) => void
+  exportWidth?: number
+  exportPixelRatio?: number
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -105,6 +107,7 @@ export default function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange,
+  exportWidth, exportPixelRatio,
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
@@ -555,19 +558,38 @@ export default function ChartPreview({
     if (!chartRef.current) return
     trackExport()
     const { toPng } = await import('html-to-image')
+    const el = chartRef.current
+    const prevWidth = el.style.width
+    if (exportWidth) {
+      el.style.width = `${exportWidth}px`
+      await new Promise(r => setTimeout(r, 200))
+    }
     try {
-      const dataUrl = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 3 })
+      const dataUrl = await toPng(el, {
+        backgroundColor: 'white',
+        pixelRatio: exportPixelRatio ?? 3,
+      })
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
-    } catch (err) { console.error('PNG export failed:', err) }
+    } catch (err) {
+      console.error('PNG export failed:', err)
+    } finally {
+      if (exportWidth) el.style.width = prevWidth
+    }
   }
 
-  const doExportSVG = () => {
+  const doExportSVG = async () => {
     if (!chartRef.current) return
     trackExport()
-    const svg = chartRef.current.querySelector('svg')
-    if (!svg) return
-    const containerRect = chartRef.current.getBoundingClientRect()
+    const el = chartRef.current
+    const prevWidth = el.style.width
+    if (exportWidth) {
+      el.style.width = `${exportWidth}px`
+      await new Promise(r => setTimeout(r, 200))
+    }
+    const svg = el.querySelector('svg')
+    if (!svg) { if (exportWidth) el.style.width = prevWidth; return }
+    const containerRect = el.getBoundingClientRect()
     const svgRect = svg.getBoundingClientRect()
     const clone = svg.cloneNode(true) as SVGSVGElement
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
@@ -653,6 +675,7 @@ export default function ChartPreview({
     const a = document.createElement('a')
     a.href = url; a.download = 'figureready.svg'; a.click()
     URL.revokeObjectURL(url)
+    if (exportWidth) el.style.width = prevWidth
   }
 
   // ─── Handle panel ────────────────────────────────────────────────────────────

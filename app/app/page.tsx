@@ -17,7 +17,7 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
 import JournalSelector from '@/components/JournalSelector'
-import type { JournalOverrideKeys } from '@/lib/journalPresets'
+import type { JournalApplyArgs, JournalOverrideKeys } from '@/lib/journalPresets'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -36,6 +36,8 @@ export default function AppPage() {
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [journalExportWidth, setJournalExportWidth] = useState<number | undefined>(undefined)
+  const [journalExportPixelRatio, setJournalExportPixelRatio] = useState<number>(3)
 
   useEffect(() => {
     const saved = loadDefaultStyle()
@@ -80,17 +82,21 @@ export default function AppPage() {
     setAnnotations([])
   }
 
-  const handleJournalApply = (overrides: Pick<StyleOverrides, JournalOverrideKeys>) => {
+  const handleJournalApply = ({ overrides, exportWidth, exportPixelRatio }: JournalApplyArgs) => {
     setStyleOverrides(prev => ({ ...prev, ...overrides }))
+    setJournalExportWidth(exportWidth)
+    setJournalExportPixelRatio(exportPixelRatio)
   }
 
   const handleJournalClear = () => {
     setStyleOverrides(prev => {
       const next = { ...prev }
-      const keys: JournalOverrideKeys[] = ['figureWidth', 'fontFamily', 'xTitleSize', 'yTitleSize', 'xTickSize', 'yTickSize']
+      const keys: JournalOverrideKeys[] = ['fontFamily', 'xTitleSize', 'yTitleSize', 'xTickSize', 'yTickSize']
       keys.forEach(k => { delete next[k] })
       return next
     })
+    setJournalExportWidth(undefined)
+    setJournalExportPixelRatio(3)
   }
 
   const focusUpload = () => {
@@ -205,6 +211,8 @@ export default function AppPage() {
               styleOverrides={styleOverrides}
               annotations={annotations}
               onAnnotationsChange={setAnnotations}
+              exportWidth={journalExportWidth}
+              exportPixelRatio={journalExportPixelRatio}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-slate-50">

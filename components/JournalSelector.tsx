@@ -1,10 +1,15 @@
 'use client'
 import { useState } from 'react'
-import { JOURNAL_PRESETS, getJournalOverrides, type JournalOverrideKeys } from '@/lib/journalPresets'
-import type { StyleOverrides } from '@/lib/chartStyles'
+import {
+  JOURNAL_PRESETS,
+  getJournalOverrides,
+  getJournalExportWidth,
+  getJournalExportPixelRatio,
+  type JournalApplyArgs,
+} from '@/lib/journalPresets'
 
 interface Props {
-  onApply: (overrides: Pick<StyleOverrides, JournalOverrideKeys>) => void
+  onApply: (args: JournalApplyArgs) => void
   onClear: () => void
 }
 
@@ -14,16 +19,25 @@ export default function JournalSelector({ onApply, onClear }: Props) {
 
   const preset = JOURNAL_PRESETS.find(p => p.id === journalId) ?? null
 
+  function applyPreset(p: typeof preset, col: 'single' | 'double') {
+    if (!p) return
+    onApply({
+      overrides: getJournalOverrides(p),
+      exportWidth: getJournalExportWidth(p, col),
+      exportPixelRatio: getJournalExportPixelRatio(p),
+    })
+  }
+
   function handleJournalChange(id: string) {
     setJournalId(id)
     if (!id) { onClear(); return }
     const p = JOURNAL_PRESETS.find(j => j.id === id)
-    if (p) onApply(getJournalOverrides(p, column))
+    applyPreset(p ?? null, column)
   }
 
   function handleColumnChange(col: 'single' | 'double') {
     setColumn(col)
-    if (preset) onApply(getJournalOverrides(preset, col))
+    applyPreset(preset, col)
   }
 
   return (
@@ -98,6 +112,11 @@ export default function JournalSelector({ onApply, onClear }: Props) {
               )}
             </div>
           </div>
+
+          {/* Export-only note */}
+          <p className="text-[10px] text-slate-400 italic leading-snug">
+            Specs applied at export — display size is for preview only
+          </p>
         </>
       )}
     </div>
