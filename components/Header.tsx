@@ -24,7 +24,7 @@ export default function Header({ hasData, onReset, onUpgrade }: Props) {
     <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b border-slate-100 bg-white shrink-0">
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-teal-700 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
             <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M3 3v18h18M7 16l4-5 3 3 5-7" />
@@ -58,7 +58,7 @@ export default function Header({ hasData, onReset, onUpgrade }: Props) {
             </span>
             <button
               onClick={onUpgrade}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-teal-700 hover:bg-teal-800 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors shadow-sm"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />

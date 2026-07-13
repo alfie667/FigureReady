@@ -90,7 +90,7 @@ function ToolBtn({
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 rounded-lg transition-all duration-150 select-none min-w-[52px] ${
         active
-          ? 'bg-teal-700 text-white shadow-sm'
+          ? 'bg-blue-600 text-white shadow-sm'
           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
       }`}
     >
@@ -193,7 +193,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
           onClick={() => setShowSymbols(v => !v)}
           className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 min-w-[52px] rounded-lg transition-all duration-150 select-none ${
             showSymbols
-              ? 'bg-teal-700 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
