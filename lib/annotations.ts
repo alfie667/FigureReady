@@ -1,8 +1,27 @@
-export interface ChartAnnotation {
+export interface TextAnnotation {
   id: string
+  type: 'text'
   text: string
-  // Position as a percentage of the chart container, so it stays
-  // aligned with the figure across different sizes/exports.
   xPct: number
   yPct: number
 }
+
+export interface ArrowAnnotation {
+  id: string
+  type: 'arrow'
+  x1Pct: number
+  y1Pct: number
+  x2Pct: number
+  y2Pct: number
+}
+
+export interface RectAnnotation {
+  id: string
+  type: 'rect'
+  xPct: number
+  yPct: number
+  widthPct: number
+  heightPct: number
+}
+
+export type ChartAnnotation = TextAnnotation | ArrowAnnotation | RectAnnotation

@@ -12,10 +12,12 @@ import {
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
-import type { ChartAnnotation } from '@/lib/annotations'
+import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, RectAnnotation } from '@/lib/annotations'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks, buildStepTicks } from '@/lib/niceTicks'
 import { renderMarker, type MarkerShape } from '@/lib/markerShapes'
+
+// ─── Icons ───────────────────────────────────────────────────────────────────
 
 function DownloadIcon() {
   return (
@@ -25,15 +27,29 @@ function DownloadIcon() {
     </svg>
   )
 }
-
 function TextIcon() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-        d="M4.5 6.75h15M5.25 12h13.5M6 17.25h12" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.5 6.75h15M5.25 12h13.5M6 17.25h12" />
     </svg>
   )
 }
+function ArrowAnnotIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+    </svg>
+  )
+}
+function RectAnnotIcon() {
+  return (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <rect x="3" y="6" width="18" height="13" rx="1" strokeWidth={2} />
+    </svg>
+  )
+}
+
+// ─── Tooltip content components ───────────────────────────────────────────────
 
 function ScatterTooltipContent({ active, payload }: {
   active?: boolean
@@ -72,6 +88,17 @@ function BarTooltipContent({ active, payload, label }: {
   )
 }
 
+// ─── Drag state ───────────────────────────────────────────────────────────────
+
+type DragState =
+  | { kind: 'text'; id: string; offsetXPct: number; offsetYPct: number }
+  | { kind: 'arrow-body'; id: string; dx1: number; dy1: number; dx2: number; dy2: number }
+  | { kind: 'arrow-end'; id: string; endpoint: 1 | 2 }
+  | { kind: 'rect-body'; id: string; offsetXPct: number; offsetYPct: number }
+  | { kind: 'rect-corner'; id: string; anchorXPct: number; anchorYPct: number }
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
 interface ChartMouseEvent {
@@ -93,17 +120,57 @@ interface Props {
   onAnnotationsChange: (annotations: ChartAnnotation[]) => void
 }
 
-export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides, annotations, onAnnotationsChange }: Props) {
+// ─── Main component ───────────────────────────────────────────────────────────
+
+export default function ChartPreview({
+  data, xCol, yCols, seriesNames, errorCols,
+  xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
+  annotations, onAnnotationsChange,
+}: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
+  const draggingRef = useRef<DragState | null>(null)
+
+  // editingId: which text annotation is in text-edit mode
   const [editingId, _setEditingId] = useState<string | null>(null)
   const editingIdRef = useRef<string | null>(null)
   const setEditingId = (id: string | null) => { editingIdRef.current = id; _setEditingId(id) }
+
+  // selectedId: which annotation is selected (shows handles)
+  const [selectedId, _setSelectedId] = useState<string | null>(null)
+  const selectedIdRef = useRef<string | null>(null)
+  const setSelectedId = (id: string | null) => { selectedIdRef.current = id; _setSelectedId(id) }
+
   const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
-  const draggingRef = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null)
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
   } | null>(null)
+
+  // Keep stable refs for the keydown handler (avoids re-registering on every render)
+  const annotationsRef = useRef(annotations)
+  const onAnnotationsChangeRef = useRef(onAnnotationsChange)
+  useEffect(() => { annotationsRef.current = annotations }, [annotations])
+  useEffect(() => { onAnnotationsChangeRef.current = onAnnotationsChange }, [onAnnotationsChange])
+
+  // Delete / Escape keyboard shortcuts for selected annotation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const selId = selectedIdRef.current
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selId && !editingIdRef.current) {
+        onAnnotationsChangeRef.current(annotationsRef.current.filter(a => a.id !== selId))
+        selectedIdRef.current = null; _setSelectedId(null)
+      }
+      if (e.key === 'Escape') {
+        selectedIdRef.current = null; _setSelectedId(null)
+        editingIdRef.current = null; _setEditingId(null)
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
+  // ─── Zoom state ─────────────────────────────────────────────────────────────
+
   const s = chartStyles[styleName]
   const axisColor = styleOverrides.axisColor ?? s.axisColor
   const axisWidth = styleOverrides.axisWidth ?? s.axisWidth
@@ -118,38 +185,6 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const seriesMarkerSize = (col: string) => styleOverrides.seriesMarkerSizes?.[col] ?? s.dotRadius
   const seriesMarkerShape = (col: string) => styleOverrides.seriesMarkerShapes?.[col] ?? 'circle'
 
-  // Builds a Recharts dot/shape render-prop for a given marker shape/size/color.
-  // Recharts types this prop as (props: unknown) => Element, so we narrow inside.
-  const markerRenderer = (shape: MarkerShape, size: number, color: string) => (props: unknown) => {
-    const { cx, cy, key } = props as { cx?: number; cy?: number; key?: Key }
-    if (cx === undefined || cy === undefined) return <g key={key} />
-    return renderMarker(cx, cy, shape, size, color, key) ?? <g key={key} />
-  }
-
-  // Line chart dot renderer: visible marker + transparent hit area for precise hover tooltip.
-  const makeLineDot = (col: string, color: string, shape: MarkerShape, size: number) =>
-    (props: unknown) => {
-      const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Record<string, unknown> }
-      if (cx === undefined || cy === undefined || !payload) return <g />
-      const hitR = Math.max(size + 5, 9)
-      return (
-        <g key={`ldot-${col}-${cx}-${cy}`}>
-          {renderMarker(cx, cy, shape, size, color) ?? <circle cx={cx} cy={cy} r={size} fill={color} />}
-          <circle
-            cx={cx}
-            cy={cy}
-            r={hitR}
-            fill="transparent"
-            onMouseEnter={() => {
-              if (draggingRef.current) return
-              setPointTooltip({ x: payload.x, y: payload[col] as number, name: seriesLabel(col), color, svgX: cx, svgY: cy })
-            }}
-            onMouseLeave={() => setPointTooltip(null)}
-          />
-        </g>
-      )
-    }
-
   const isNumericX = data.length > 0 && typeof data[0][xCol] === 'number'
   const zoomEnabled = isNumericX && chartType !== 'bar'
 
@@ -158,27 +193,21 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const [zoomDomain, setZoomDomain] = useState<[number, number] | null>(null)
 
   useEffect(() => {
-    setZoomDomain(null)
-    setRefLeft(null)
-    setRefRight(null)
-    setPointTooltip(null)
+    setZoomDomain(null); setRefLeft(null); setRefRight(null); setPointTooltip(null)
   }, [xCol, yCols.join(','), chartType, data.length])
 
   const handleMouseDown = (e: ChartMouseEvent) => {
     if (!zoomEnabled || e.activeLabel === undefined) return
-    setRefLeft(Number(e.activeLabel))
-    setRefRight(null)
+    setRefLeft(Number(e.activeLabel)); setRefRight(null)
   }
   const handleMouseMove = (e: ChartMouseEvent) => {
     if (!zoomEnabled || refLeft === null || e.activeLabel === undefined) return
     setRefRight(Number(e.activeLabel))
   }
   const handleMouseUp = () => {
-    if (refLeft !== null && refRight !== null && refLeft !== refRight) {
+    if (refLeft !== null && refRight !== null && refLeft !== refRight)
       setZoomDomain([Math.min(refLeft, refRight), Math.max(refLeft, refRight)])
-    }
-    setRefLeft(null)
-    setRefRight(null)
+    setRefLeft(null); setRefRight(null)
   }
   const resetZoom = () => setZoomDomain(null)
 
@@ -187,7 +216,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
 
   const hasError = (col: string) => !!errorCols[col]
 
-  // {x, Y1, Y2, ...} rows for line/bar charts (one shared dataset for all series)
+  // ─── Data processing ─────────────────────────────────────────────────────────
+
   const processedData = data
     .map(row => {
       const point: Record<string, unknown> = { x: row[xCol] }
@@ -203,7 +233,6 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     })
     .filter(point => inZoomRange(point.x))
 
-  // Independent {x, y} pairs per series for scatter charts
   const scatterSeries = yCols.map((col, i) => ({
     key: col,
     color: seriesColor(col, i),
@@ -219,8 +248,6 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
       .filter(d => !isNaN(d.y as number) && inZoomRange(d.x)),
   }))
 
-  // Evenly-spaced ticks for numeric X axes, overriding Recharts' default
-  // tick generation which can produce uneven steps (e.g. 1,2,3...10,12,14)
   const xValues = isNumericX
     ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v))
     : []
@@ -232,10 +259,6 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     : undefined
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
 
-  // Manual Y axis range; only override Recharts' default domain/overflow
-  // behavior when the user actually sets a bound or a fixed step, otherwise
-  // leave it alone (passing allowDataOverflow unconditionally turns the
-  // default [0, 'auto'] domain into a hard floor at 0, clipping negative values).
   const yMin = styleOverrides.yMin
   const yMax = styleOverrides.yMax
   const yStep = styleOverrides.yStep
@@ -251,6 +274,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           ...(yTicks ? { ticks: yTicks } : {}),
         }
       : {}
+
+  // ─── Style derivation ────────────────────────────────────────────────────────
 
   const annotationFontSize = styleOverrides.annotationFontSize ?? 12
   const fontFamily = styleOverrides.fontFamily ?? s.fontFamily
@@ -270,72 +295,202 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
   const legendLayoutProps = legendPosition === 'left' || legendPosition === 'right'
     ? { layout: 'vertical' as const, verticalAlign: 'middle' as const, align: legendPosition }
     : { layout: 'horizontal' as const, verticalAlign: legendPosition, align: 'center' as const, height: 36 }
-
-  // Figure size: width drives the container/export width (undefined = fill available
-  // width), height drives both the ResponsiveContainer and the exported image height.
   const figureWidth = styleOverrides.figureWidth
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
-
   const xLabel = { value: xAxisLabel.trim() || formatAxisLabel(xCol), position: 'bottom' as const, offset: s.labelOffset, style: xLabelStyle }
   const yLabelText = yAxisLabel.trim() || (yCols.length === 1 ? formatAxisLabel(yCols[0]) : '')
   const yLabel = yLabelText
     ? { value: yLabelText, angle: -90, position: 'left' as const, offset: s.labelOffset, style: yLabelStyle }
     : undefined
   const grid = showGrid ? <CartesianGrid strokeDasharray="3 3" stroke={s.gridColor} /> : null
-  const legend = legendEnabled
-    ? <Legend {...legendLayoutProps} wrapperStyle={legendStyle} />
-    : null
+  const legend = legendEnabled ? <Legend {...legendLayoutProps} wrapperStyle={legendStyle} /> : null
   const zoomArea = refLeft !== null && refRight !== null
     ? <ReferenceArea x1={refLeft} x2={refRight} strokeOpacity={0.3} fill={s.colors[0]} fillOpacity={0.12} />
     : null
 
+  // ─── Marker renderers ────────────────────────────────────────────────────────
+
+  const markerRenderer = (shape: MarkerShape, size: number, color: string) => (props: unknown) => {
+    const { cx, cy, key } = props as { cx?: number; cy?: number; key?: Key }
+    if (cx === undefined || cy === undefined) return <g key={key} />
+    return renderMarker(cx, cy, shape, size, color, key) ?? <g key={key} />
+  }
+
+  // Dot with transparent hit-area for point tooltip on line charts
+  const makeLineDot = (col: string, color: string, shape: MarkerShape, size: number) =>
+    (props: unknown) => {
+      const { cx, cy, payload } = props as { cx?: number; cy?: number; payload?: Record<string, unknown> }
+      if (cx === undefined || cy === undefined || !payload) return <g />
+      const hitR = Math.max(size + 5, 9)
+      return (
+        <g key={`ldot-${col}-${cx}-${cy}`}>
+          {renderMarker(cx, cy, shape, size, color) ?? <circle cx={cx} cy={cy} r={size} fill={color} />}
+          <circle
+            cx={cx} cy={cy} r={hitR} fill="transparent"
+            onMouseEnter={() => {
+              if (draggingRef.current) return
+              setPointTooltip({ x: payload.x, y: payload[col] as number, name: seriesLabel(col), color, svgX: cx, svgY: cy })
+            }}
+            onMouseLeave={() => setPointTooltip(null)}
+          />
+        </g>
+      )
+    }
+
+  // ─── Annotation helpers ──────────────────────────────────────────────────────
+
+  const updateAnnotation = (id: string, changes: Record<string, unknown>) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onAnnotationsChange(annotations.map(a => a.id === id ? { ...(a as any), ...changes } as ChartAnnotation : a))
+  }
+
+  const removeAnnotation = (id: string) => {
+    onAnnotationsChange(annotations.filter(a => a.id !== id))
+    if (selectedIdRef.current === id) { selectedIdRef.current = null; _setSelectedId(null) }
+    if (editingIdRef.current === id) { editingIdRef.current = null; _setEditingId(null) }
+  }
+
+  const addAnnotation = (type: 'text' | 'arrow' | 'rect') => {
+    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ann-${Date.now()}`
+    if (type === 'text') {
+      onAnnotationsChange([...annotations, { id, type: 'text', text: 'Texte', xPct: 50, yPct: 50 }])
+    } else if (type === 'arrow') {
+      onAnnotationsChange([...annotations, { id, type: 'arrow', x1Pct: 28, y1Pct: 65, x2Pct: 58, y2Pct: 35 }])
+    } else {
+      onAnnotationsChange([...annotations, { id, type: 'rect', xPct: 28, yPct: 28, widthPct: 30, heightPct: 20 }])
+    }
+    setSelectedId(id)
+  }
+
+  // ─── Drag start helpers ──────────────────────────────────────────────────────
+
+  const getPct = (e: React.PointerEvent) => {
+    const rect = chartRef.current?.getBoundingClientRect()
+    if (!rect) return { xPct: 0, yPct: 0 }
+    return {
+      xPct: ((e.clientX - rect.left) / rect.width) * 100,
+      yPct: ((e.clientY - rect.top) / rect.height) * 100,
+    }
+  }
+
+  const startTextDrag = (e: React.PointerEvent, ann: TextAnnotation) => {
+    if (editingIdRef.current === ann.id) return
+    e.stopPropagation()
+    setSelectedId(ann.id)
+    setPointTooltip(null)
+    if (!chartRef.current) return
+    const { xPct, yPct } = getPct(e)
+    draggingRef.current = { kind: 'text', id: ann.id, offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct }
+    setIsDraggingAnnotation(true)
+  }
+
+  const startArrowBodyDrag = (e: React.PointerEvent, ann: ArrowAnnotation) => {
+    e.stopPropagation()
+    setSelectedId(ann.id)
+    setPointTooltip(null)
+    if (!chartRef.current) return
+    const { xPct, yPct } = getPct(e)
+    draggingRef.current = {
+      kind: 'arrow-body', id: ann.id,
+      dx1: xPct - ann.x1Pct, dy1: yPct - ann.y1Pct,
+      dx2: xPct - ann.x2Pct, dy2: yPct - ann.y2Pct,
+    }
+    setIsDraggingAnnotation(true)
+  }
+
+  const startArrowEndDrag = (e: React.PointerEvent, id: string, endpoint: 1 | 2) => {
+    e.stopPropagation()
+    setPointTooltip(null)
+    draggingRef.current = { kind: 'arrow-end', id, endpoint }
+    setIsDraggingAnnotation(true)
+  }
+
+  const startRectBodyDrag = (e: React.PointerEvent, ann: RectAnnotation) => {
+    e.stopPropagation()
+    setSelectedId(ann.id)
+    setPointTooltip(null)
+    if (!chartRef.current) return
+    const { xPct, yPct } = getPct(e)
+    draggingRef.current = {
+      kind: 'rect-body', id: ann.id,
+      offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct,
+    }
+    setIsDraggingAnnotation(true)
+  }
+
+  const startRectCornerDrag = (e: React.PointerEvent, ann: RectAnnotation, corner: 'nw' | 'ne' | 'sw' | 'se') => {
+    e.stopPropagation()
+    const anchor = {
+      nw: { xPct: ann.xPct + ann.widthPct, yPct: ann.yPct + ann.heightPct },
+      ne: { xPct: ann.xPct,                yPct: ann.yPct + ann.heightPct },
+      sw: { xPct: ann.xPct + ann.widthPct, yPct: ann.yPct },
+      se: { xPct: ann.xPct,                yPct: ann.yPct },
+    }[corner]
+    draggingRef.current = { kind: 'rect-corner', id: ann.id, anchorXPct: anchor.xPct, anchorYPct: anchor.yPct }
+    setIsDraggingAnnotation(true)
+  }
+
+  // ─── Container pointer handlers ──────────────────────────────────────────────
+
+  const handleContainerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = draggingRef.current
+    const container = chartRef.current
+    if (!drag || !container) return
+    e.preventDefault()
+    const rect = container.getBoundingClientRect()
+    const xPct = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100))
+    const yPct = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100))
+    if (drag.kind === 'text') {
+      updateAnnotation(drag.id, { xPct: xPct - drag.offsetXPct, yPct: yPct - drag.offsetYPct })
+    } else if (drag.kind === 'arrow-body') {
+      updateAnnotation(drag.id, {
+        x1Pct: xPct - drag.dx1, y1Pct: yPct - drag.dy1,
+        x2Pct: xPct - drag.dx2, y2Pct: yPct - drag.dy2,
+      })
+    } else if (drag.kind === 'arrow-end') {
+      if (drag.endpoint === 1) updateAnnotation(drag.id, { x1Pct: xPct, y1Pct: yPct })
+      else updateAnnotation(drag.id, { x2Pct: xPct, y2Pct: yPct })
+    } else if (drag.kind === 'rect-body') {
+      updateAnnotation(drag.id, { xPct: xPct - drag.offsetXPct, yPct: yPct - drag.offsetYPct })
+    } else if (drag.kind === 'rect-corner') {
+      const newXPct = Math.min(xPct, drag.anchorXPct)
+      const newYPct = Math.min(yPct, drag.anchorYPct)
+      updateAnnotation(drag.id, {
+        xPct: newXPct, yPct: newYPct,
+        widthPct: Math.abs(xPct - drag.anchorXPct),
+        heightPct: Math.abs(yPct - drag.anchorYPct),
+      })
+    }
+  }
+
+  const handleContainerPointerUp = () => {
+    draggingRef.current = null
+    setIsDraggingAnnotation(false)
+  }
+
+  // Deselect when clicking the chart background (not on an annotation)
+  const handleContainerClick = () => {
+    setSelectedId(null)
+    if (editingIdRef.current) setEditingId(null)
+  }
+
+  // ─── Chart rendering ─────────────────────────────────────────────────────────
+
   const renderChart = () => {
     if (chartType === 'scatter') {
       return (
-        <ScatterChart
-          margin={margin}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onDoubleClick={resetZoom}
-        >
+        <ScatterChart margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
           {grid}
-          <XAxis
-            dataKey="x"
-            type={isNumericX ? 'number' : 'category'}
-            domain={xDomain}
-            ticks={xTicks}
-            tick={xTickStyle}
-            axisLine={axisLine}
-            tickLine={axisLine}
-            label={xLabel}
-            allowDataOverflow
-          />
-          <YAxis
-            dataKey="y"
-            type="number"
-            {...yDomainProps}
-            tick={yTickStyle}
-            axisLine={axisLine}
-            tickLine={axisLine}
-            label={yLabel}
-          />
+          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow />
+          <YAxis dataKey="y" type="number" {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
           <Tooltip content={<ScatterTooltipContent />} cursor={false} />
           {legend}
           {scatterSeries.map(series => {
             const markerSize = seriesMarkerSize(series.key)
             const markerShape = seriesMarkerShape(series.key)
             return (
-              <Scatter
-                key={series.key}
-                data={series.data}
-                name={seriesLabel(series.key)}
-                fill={series.color}
-                shape={markerRenderer(markerShape, markerSize, series.color)}
-              >
-                {hasError(series.key) && (
-                  <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />
-                )}
+              <Scatter key={series.key} data={series.data} name={seriesLabel(series.key)} fill={series.color} shape={markerRenderer(markerShape, markerSize, series.color)}>
+                {hasError(series.key) && <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
               </Scatter>
             )
           })}
@@ -353,16 +508,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           <Tooltip content={<BarTooltipContent />} cursor={false} />
           {legend}
           {yCols.map((col, i) => (
-            <Bar
-              key={col}
-              dataKey={col}
-              name={seriesLabel(col)}
-              fill={seriesColor(col, i)}
-              radius={[s.barRadius, s.barRadius, 0, 0]}
-            >
-              {hasError(col) && (
-                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />
-              )}
+            <Bar key={col} dataKey={col} name={seriesLabel(col)} fill={seriesColor(col, i)} radius={[s.barRadius, s.barRadius, 0, 0]}>
+              {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
             </Bar>
           ))}
         </BarChart>
@@ -370,26 +517,9 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     }
 
     return (
-      <LineChart
-        data={processedData}
-        margin={margin}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onDoubleClick={resetZoom}
-      >
+      <LineChart data={processedData} margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
         {grid}
-        <XAxis
-          dataKey="x"
-          type={isNumericX ? 'number' : 'category'}
-          domain={xDomain}
-          ticks={xTicks}
-          tick={xTickStyle}
-          axisLine={axisLine}
-          tickLine={axisLine}
-          label={xLabel}
-          allowDataOverflow
-        />
+        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow />
         <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
         <Tooltip content={() => null} cursor={false} />
         {legend}
@@ -399,20 +529,10 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
           const markerSize = seriesMarkerSize(col)
           const markerShape = seriesMarkerShape(col)
           return (
-            <Line
-              key={col}
-              type="monotone"
-              dataKey={col}
-              name={seriesLabel(col)}
-              stroke={color}
-              strokeWidth={seriesStrokeWidth(col)}
+            <Line key={col} type="monotone" dataKey={col} name={seriesLabel(col)} stroke={color} strokeWidth={seriesStrokeWidth(col)}
               dot={showDots ? makeLineDot(col, color, markerShape, markerSize) : false}
-              activeDot={false}
-              connectNulls
-            >
-              {hasError(col) && (
-                <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />
-              )}
+              activeDot={false} connectNulls>
+              {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
             </Line>
           )
         })}
@@ -421,55 +541,7 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     )
   }
 
-  const addAnnotation = () => {
-    const annotation: ChartAnnotation = {
-      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ann-${Date.now()}`,
-      text: 'Texte',
-      xPct: 50,
-      yPct: 50,
-    }
-    onAnnotationsChange([...annotations, annotation])
-  }
-
-  const updateAnnotation = (id: string, changes: Partial<ChartAnnotation>) => {
-    onAnnotationsChange(annotations.map(a => (a.id === id ? { ...a, ...changes } : a)))
-  }
-
-  const removeAnnotation = (id: string) => {
-    onAnnotationsChange(annotations.filter(a => a.id !== id))
-  }
-
-  const handleAnnotationPointerDown = (e: React.PointerEvent<HTMLDivElement>, id: string) => {
-    if (editingIdRef.current === id) return
-    const container = chartRef.current
-    const annotation = annotations.find(a => a.id === id)
-    if (!container || !annotation) return
-    e.stopPropagation()
-    const rect = container.getBoundingClientRect()
-    draggingRef.current = {
-      id,
-      offsetX: e.clientX - (rect.left + (annotation.xPct / 100) * rect.width),
-      offsetY: e.clientY - (rect.top + (annotation.yPct / 100) * rect.height),
-    }
-    setIsDraggingAnnotation(true)
-  }
-
-  // Attached to the container so fast movements don't lose the event.
-  const handleContainerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = draggingRef.current
-    const container = chartRef.current
-    if (!drag || !container) return
-    e.preventDefault()
-    const rect = container.getBoundingClientRect()
-    const xPct = Math.min(100, Math.max(0, ((e.clientX - drag.offsetX - rect.left) / rect.width) * 100))
-    const yPct = Math.min(100, Math.max(0, ((e.clientY - drag.offsetY - rect.top) / rect.height) * 100))
-    updateAnnotation(drag.id, { xPct, yPct })
-  }
-
-  const handleContainerPointerUp = () => {
-    draggingRef.current = null
-    setIsDraggingAnnotation(false)
-  }
+  // ─── Export ──────────────────────────────────────────────────────────────────
 
   const triggerExport = (type: 'png' | 'svg') => {
     if (getCapturedEmail()) {
@@ -493,12 +565,8 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     try {
       const dataUrl = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 3 })
       const a = document.createElement('a')
-      a.href = dataUrl
-      a.download = 'figureready.png'
-      a.click()
-    } catch (err) {
-      console.error('PNG export failed:', err)
-    }
+      a.href = dataUrl; a.download = 'figureready.png'; a.click()
+    } catch (err) { console.error('PNG export failed:', err) }
   }
 
   const doExportSVG = () => {
@@ -511,172 +579,383 @@ export default function ChartPreview({ data, xCol, yCols, seriesNames, errorCols
     const clone = svg.cloneNode(true) as SVGSVGElement
     clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
     const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-    bg.setAttribute('width', '100%')
-    bg.setAttribute('height', '100%')
-    bg.setAttribute('fill', 'white')
+    bg.setAttribute('width', '100%'); bg.setAttribute('height', '100%'); bg.setAttribute('fill', 'white')
     clone.insertBefore(bg, clone.firstChild)
 
+    const toSVGX = (pct: number) => (pct / 100) * containerRect.width - (svgRect.left - containerRect.left)
+    const toSVGY = (pct: number) => (pct / 100) * containerRect.height - (svgRect.top - containerRect.top)
+
+    // Add arrowhead marker once if needed
+    const hasArrows = annotations.some(a => a.type === 'arrow')
+    if (hasArrows) {
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs')
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker')
+      marker.setAttribute('id', 'fr-exp-arrow')
+      marker.setAttribute('markerWidth', '8'); marker.setAttribute('markerHeight', '6')
+      marker.setAttribute('refX', '7'); marker.setAttribute('refY', '3'); marker.setAttribute('orient', 'auto')
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon')
+      poly.setAttribute('points', '0 0, 8 3, 0 6'); poly.setAttribute('fill', axisColor)
+      marker.appendChild(poly); defs.appendChild(marker)
+      clone.insertBefore(defs, clone.firstChild)
+    }
+
     annotations.forEach(ann => {
-      const xPx = (ann.xPct / 100) * containerRect.width - (svgRect.left - containerRect.left)
-      const yPx = (ann.yPct / 100) * containerRect.height - (svgRect.top - containerRect.top)
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-      text.setAttribute('x', String(xPx))
-      text.setAttribute('y', String(yPx))
-      text.setAttribute('text-anchor', 'middle')
-      text.setAttribute('dominant-baseline', 'middle')
-      text.setAttribute('font-family', fontFamily)
-      text.setAttribute('font-size', String(annotationFontSize))
-      text.setAttribute('fill', axisColor)
-      if (boldLabels) text.setAttribute('font-weight', 'bold')
-      text.textContent = ann.text
-      clone.appendChild(text)
+      if (ann.type === 'text') {
+        const xPx = toSVGX(ann.xPct); const yPx = toSVGY(ann.yPct)
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+        text.setAttribute('x', String(xPx)); text.setAttribute('y', String(yPx))
+        text.setAttribute('text-anchor', 'middle'); text.setAttribute('dominant-baseline', 'middle')
+        text.setAttribute('font-family', fontFamily); text.setAttribute('font-size', String(annotationFontSize))
+        text.setAttribute('fill', axisColor)
+        if (boldLabels) text.setAttribute('font-weight', 'bold')
+        text.textContent = ann.text
+        clone.appendChild(text)
+      } else if (ann.type === 'arrow') {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+        line.setAttribute('x1', String(toSVGX(ann.x1Pct))); line.setAttribute('y1', String(toSVGY(ann.y1Pct)))
+        line.setAttribute('x2', String(toSVGX(ann.x2Pct))); line.setAttribute('y2', String(toSVGY(ann.y2Pct)))
+        line.setAttribute('stroke', axisColor); line.setAttribute('stroke-width', '1.5')
+        line.setAttribute('marker-end', 'url(#fr-exp-arrow)')
+        clone.appendChild(line)
+      } else if (ann.type === 'rect') {
+        const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+        r.setAttribute('x', String(toSVGX(ann.xPct))); r.setAttribute('y', String(toSVGY(ann.yPct)))
+        r.setAttribute('width', String((ann.widthPct / 100) * containerRect.width))
+        r.setAttribute('height', String((ann.heightPct / 100) * containerRect.height))
+        r.setAttribute('fill', 'none'); r.setAttribute('stroke', axisColor); r.setAttribute('stroke-width', '1.5')
+        clone.appendChild(r)
+      }
     })
 
     const svgStr = new XMLSerializer().serializeToString(clone)
     const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
-    a.download = 'figureready.svg'
-    a.click()
+    a.href = url; a.download = 'figureready.svg'; a.click()
     URL.revokeObjectURL(url)
   }
 
+  // ─── Handle panel ────────────────────────────────────────────────────────────
+
+  const HANDLE_SIZE = 10
+  const cornerHandleStyle = (cursor: string): React.CSSProperties => ({
+    position: 'absolute',
+    width: HANDLE_SIZE,
+    height: HANDLE_SIZE,
+    background: 'white',
+    border: '1.5px solid #3b82f6',
+    borderRadius: 2,
+    cursor,
+    zIndex: 20,
+    transform: 'translate(-50%, -50%)',
+    touchAction: 'none',
+  })
+
+  const DeleteBtn = ({ onDelete }: { onDelete: () => void }) => (
+    <button
+      onClick={e => { e.stopPropagation(); onDelete() }}
+      style={{
+        position: 'absolute', top: -8, right: -8,
+        width: 16, height: 16, background: '#ef4444', color: 'white',
+        border: 'none', borderRadius: '50%', fontSize: 11, lineHeight: '1',
+        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 25,
+      }}
+    >×</button>
+  )
+
+  // ─── Partition annotations by type ───────────────────────────────────────────
+
+  const textAnnotations = annotations.filter((a): a is TextAnnotation => a.type === 'text')
+  const arrowAnnotations = annotations.filter((a): a is ArrowAnnotation => a.type === 'arrow')
+  const rectAnnotations = annotations.filter((a): a is RectAnnotation => a.type === 'rect')
+
+  // ─── JSX ─────────────────────────────────────────────────────────────────────
+
   return (
     <>
-    {emailGate && (
-      <EmailGateModal
-        onConfirm={handleEmailConfirm}
-        onClose={() => setEmailGate(null)}
-      />
-    )}
-    <div className="space-y-4">
-      <div className="overflow-x-auto">
-      <div
-        ref={chartRef}
-        className="relative bg-white p-6 rounded-lg"
-        style={{
-          fontFamily,
-          cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
-          width: figureWidth ? `${figureWidth}px` : '100%',
-          userSelect: isDraggingAnnotation ? 'none' : undefined,
-        }}
-        onPointerMove={handleContainerPointerMove}
-        onPointerUp={handleContainerPointerUp}
-      >
-        <ResponsiveContainer width="100%" height={figureHeight}>
-          {renderChart() as React.ReactElement}
-        </ResponsiveContainer>
-        {pointTooltip && (
+      {emailGate && <EmailGateModal onConfirm={handleEmailConfirm} onClose={() => setEmailGate(null)} />}
+      <div className="space-y-4">
+        <div className="overflow-x-auto">
           <div
+            ref={chartRef}
+            className="relative bg-white p-6 rounded-lg"
             style={{
-              position: 'absolute',
-              left: 24 + pointTooltip.svgX,
-              top: Math.max(4, 24 + pointTooltip.svgY - 48),
-              transform: 'translateX(-50%)',
-              pointerEvents: 'none',
-              zIndex: 10,
               fontFamily,
+              cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
+              width: figureWidth ? `${figureWidth}px` : '100%',
+              userSelect: isDraggingAnnotation ? 'none' : undefined,
             }}
-            className="bg-white border border-slate-200 rounded-lg shadow-md px-3 py-1.5 text-xs whitespace-nowrap"
+            onPointerMove={handleContainerPointerMove}
+            onPointerUp={handleContainerPointerUp}
+            onClick={handleContainerClick}
           >
-            <span className="text-slate-500">x = </span>
-            <span className="font-mono text-slate-800">
-              {typeof pointTooltip.x === 'number'
-                ? (Number.isInteger(pointTooltip.x) ? String(pointTooltip.x) : (pointTooltip.x as number).toPrecision(4))
-                : String(pointTooltip.x)}
-            </span>
-            <span className="mx-2 text-slate-300">·</span>
-            <span className="text-slate-500">{pointTooltip.name} = </span>
-            <span className="font-mono" style={{ color: pointTooltip.color }}>
-              {Number.isInteger(pointTooltip.y) ? String(pointTooltip.y) : pointTooltip.y.toPrecision(4)}
-            </span>
-          </div>
-        )}
-        {annotations.map(ann => (
-          <div
-            key={ann.id}
-            className="absolute group select-none"
-            style={{
-              left: `${ann.xPct}%`,
-              top: `${ann.yPct}%`,
-              transform: 'translate(-50%, -50%)',
-              cursor: editingId === ann.id ? 'text' : 'grab',
-              touchAction: 'none',
-            }}
-            onPointerDown={(e) => handleAnnotationPointerDown(e, ann.id)}
-            onDoubleClick={() => setEditingId(ann.id)}
-          >
-            <div
-              contentEditable={editingId === ann.id}
-              suppressContentEditableWarning
-              onBlur={(e) => {
-                const text = e.currentTarget.textContent?.trim() || 'Texte'
-                updateAnnotation(ann.id, { text })
-                setEditingId(null)
-              }}
-              className={`px-1 whitespace-nowrap outline-none ${editingId === ann.id ? 'ring-1 ring-blue-400 rounded' : ''}`}
+            {/* Chart */}
+            <ResponsiveContainer width="100%" height={figureHeight}>
+              {renderChart() as React.ReactElement}
+            </ResponsiveContainer>
+
+            {/* SVG overlay for arrows */}
+            <svg
               style={{
-                fontFamily,
-                fontSize: annotationFontSize,
-                color: axisColor,
-                fontWeight: boldLabels ? 'bold' : 'normal',
+                position: 'absolute', top: 0, left: 0,
+                width: '100%', height: '100%',
+                pointerEvents: 'none', overflow: 'visible',
               }}
             >
-              {ann.text}
-            </div>
+              <defs>
+                <marker id="fr-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill={axisColor} />
+                </marker>
+                <marker id="fr-arrow-sel" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                  <polygon points="0 0, 8 3, 0 6" fill="#3b82f6" />
+                </marker>
+              </defs>
+              {arrowAnnotations.map(ann => {
+                const isSel = selectedId === ann.id
+                return (
+                  <g key={ann.id}>
+                    {/* Wide transparent hit zone */}
+                    <line
+                      x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
+                      x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
+                      stroke="transparent" strokeWidth={14}
+                      style={{ pointerEvents: 'all', cursor: 'move' }}
+                      onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
+                      onPointerDown={e => startArrowBodyDrag(e, ann)}
+                    />
+                    {/* Visible arrow */}
+                    <line
+                      x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
+                      x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
+                      stroke={isSel ? '#3b82f6' : axisColor}
+                      strokeWidth={1.5}
+                      markerEnd={isSel ? 'url(#fr-arrow-sel)' : 'url(#fr-arrow)'}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                    {/* Endpoint handles when selected */}
+                    {isSel && (
+                      <>
+                        <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
+                          fill="white" stroke="#3b82f6" strokeWidth={1.5}
+                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          onClick={e => e.stopPropagation()}
+                          onPointerDown={e => startArrowEndDrag(e, ann.id, 1)}
+                        />
+                        <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
+                          fill="white" stroke="#3b82f6" strokeWidth={1.5}
+                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          onClick={e => e.stopPropagation()}
+                          onPointerDown={e => startArrowEndDrag(e, ann.id, 2)}
+                        />
+                      </>
+                    )}
+                  </g>
+                )
+              })}
+            </svg>
+
+            {/* Arrow delete buttons (DOM overlay for selected arrow) */}
+            {arrowAnnotations.filter(a => a.id === selectedId).map(ann => (
+              <div
+                key={`del-arrow-${ann.id}`}
+                style={{
+                  position: 'absolute',
+                  left: `${(ann.x1Pct + ann.x2Pct) / 2}%`,
+                  top: `${(ann.y1Pct + ann.y2Pct) / 2}%`,
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 25, pointerEvents: 'none',
+                }}
+              >
+                <button
+                  onClick={e => { e.stopPropagation(); removeAnnotation(ann.id) }}
+                  style={{
+                    width: 16, height: 16, background: '#ef4444', color: 'white',
+                    border: 'none', borderRadius: '50%', fontSize: 11,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    pointerEvents: 'all',
+                  }}
+                >×</button>
+              </div>
+            ))}
+
+            {/* Rectangle annotations */}
+            {rectAnnotations.map(ann => {
+              const isSel = selectedId === ann.id
+              return (
+                <div
+                  key={ann.id}
+                  style={{
+                    position: 'absolute',
+                    left: `${ann.xPct}%`, top: `${ann.yPct}%`,
+                    width: `${ann.widthPct}%`, height: `${ann.heightPct}%`,
+                    border: `1.5px solid ${isSel ? '#3b82f6' : axisColor}`,
+                    boxSizing: 'border-box',
+                    cursor: 'move',
+                    touchAction: 'none',
+                    zIndex: 5,
+                  }}
+                  onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
+                  onPointerDown={e => startRectBodyDrag(e, ann)}
+                >
+                  {isSel && (
+                    <>
+                      {/* Corner resize handles */}
+                      {(['nw', 'ne', 'sw', 'se'] as const).map(corner => (
+                        <div
+                          key={corner}
+                          style={{
+                            ...cornerHandleStyle(corner === 'nw' || corner === 'se' ? 'nwse-resize' : 'nesw-resize'),
+                            left: corner.includes('e') ? '100%' : '0%',
+                            top: corner.includes('s') ? '100%' : '0%',
+                          }}
+                          onClick={e => e.stopPropagation()}
+                          onPointerDown={e => startRectCornerDrag(e, ann, corner)}
+                        />
+                      ))}
+                      <DeleteBtn onDelete={() => removeAnnotation(ann.id)} />
+                    </>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Text annotations */}
+            {textAnnotations.map(ann => {
+              const isSel = selectedId === ann.id
+              const isEdit = editingId === ann.id
+              return (
+                <div
+                  key={ann.id}
+                  className="absolute group select-none"
+                  style={{
+                    left: `${ann.xPct}%`, top: `${ann.yPct}%`,
+                    transform: 'translate(-50%, -50%)',
+                    cursor: isEdit ? 'text' : 'grab',
+                    touchAction: 'none',
+                    zIndex: 6,
+                  }}
+                  onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
+                  onPointerDown={e => startTextDrag(e, ann)}
+                  onDoubleClick={e => { e.stopPropagation(); setEditingId(ann.id) }}
+                >
+                  <div
+                    contentEditable={isEdit}
+                    suppressContentEditableWarning
+                    onBlur={e => {
+                      const text = e.currentTarget.textContent?.trim() || 'Texte'
+                      updateAnnotation(ann.id, { text })
+                      setEditingId(null)
+                    }}
+                    className="px-1 whitespace-nowrap outline-none"
+                    style={{
+                      fontFamily,
+                      fontSize: annotationFontSize,
+                      color: axisColor,
+                      fontWeight: boldLabels ? 'bold' : 'normal',
+                      borderRadius: 3,
+                      outline: isSel ? '1.5px solid #3b82f6' : isEdit ? '1px solid #93c5fd' : 'none',
+                      outlineOffset: 3,
+                    }}
+                  >
+                    {ann.text}
+                  </div>
+                  {isSel && !isEdit && <DeleteBtn onDelete={() => removeAnnotation(ann.id)} />}
+                </div>
+              )
+            })}
+
+            {/* Point tooltip (line chart hover) */}
+            {pointTooltip && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 24 + pointTooltip.svgX,
+                  top: Math.max(4, 24 + pointTooltip.svgY - 48),
+                  transform: 'translateX(-50%)',
+                  pointerEvents: 'none',
+                  zIndex: 10,
+                  fontFamily,
+                }}
+                className="bg-white border border-slate-200 rounded-lg shadow-md px-3 py-1.5 text-xs whitespace-nowrap"
+              >
+                <span className="text-slate-500">x = </span>
+                <span className="font-mono text-slate-800">
+                  {typeof pointTooltip.x === 'number'
+                    ? (Number.isInteger(pointTooltip.x) ? String(pointTooltip.x) : (pointTooltip.x as number).toPrecision(4))
+                    : String(pointTooltip.x)}
+                </span>
+                <span className="mx-2 text-slate-300">·</span>
+                <span className="text-slate-500">{pointTooltip.name} = </span>
+                <span className="font-mono" style={{ color: pointTooltip.color }}>
+                  {Number.isInteger(pointTooltip.y) ? String(pointTooltip.y) : pointTooltip.y.toPrecision(4)}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            {zoomEnabled && (
+              <p className="text-xs text-slate-400">
+                Glissez sur le graphique pour zoomer · double-clic pour réinitialiser
+              </p>
+            )}
+            {selectedId && (
+              <p className="text-xs text-slate-400">
+                Élément sélectionné · <kbd className="font-mono bg-slate-100 px-1 rounded">Delete</kbd> pour supprimer · clic ailleurs pour désélectionner
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => removeAnnotation(ann.id)}
-              className="absolute -top-2 -right-2 hidden group-hover:flex items-center justify-center w-4 h-4 bg-red-500 text-white rounded-full text-[10px] leading-none"
-              title="Supprimer"
+              onClick={() => addAnnotation('text')}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
             >
-              ×
+              <TextIcon />
+              Texte
+            </button>
+            <button
+              onClick={() => addAnnotation('arrow')}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <ArrowAnnotIcon />
+              Flèche
+            </button>
+            <button
+              onClick={() => addAnnotation('rect')}
+              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <RectAnnotIcon />
+              Rectangle
+            </button>
+            {zoomDomain && (
+              <button
+                onClick={resetZoom}
+                className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+              >
+                Réinitialiser le zoom
+              </button>
+            )}
+            <button
+              onClick={() => triggerExport('svg')}
+              className="flex items-center gap-2 px-5 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              <DownloadIcon />
+              Export SVG
+            </button>
+            <button
+              onClick={() => triggerExport('png')}
+              className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <DownloadIcon />
+              Export PNG (3×)
             </button>
           </div>
-        ))}
-      </div>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          {zoomEnabled && (
-            <p className="text-xs text-slate-400">
-              Glissez sur le graphique pour zoomer · double-clic pour réinitialiser
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={addAnnotation}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <TextIcon />
-            Ajouter un texte
-          </button>
-          {zoomDomain && (
-            <button
-              onClick={resetZoom}
-              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-500 hover:bg-slate-50 transition-colors"
-            >
-              Réinitialiser le zoom
-            </button>
-          )}
-          <button
-            onClick={() => triggerExport('svg')}
-            className="flex items-center gap-2 px-5 py-2 border border-slate-200 rounded-full text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <DownloadIcon />
-            Export SVG
-          </button>
-          <button
-            onClick={() => triggerExport('png')}
-            className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white rounded-full text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            <DownloadIcon />
-            Export PNG (3×)
-          </button>
         </div>
       </div>
-    </div>
     </>
   )
 }
