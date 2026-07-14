@@ -8,15 +8,6 @@ export const metadata: Metadata = {
 
 const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
 
-const freeFeatures = [
-  '3 figures per month',
-  'Excel upload (.xlsx)',
-  'Line, scatter, bar charts',
-  'PNG & SVG export (300 DPI)',
-  'Error bars',
-  'Basic style options',
-]
-
 const proFeatures = [
   'Unlimited figures',
   'Excel upload (.xlsx)',
@@ -64,51 +55,51 @@ export default function PricingPage() {
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 pt-16 pb-12 text-center">
         <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Simple, transparent pricing</h1>
-        <p className="text-slate-500 text-lg">Start free. Upgrade when you need more.</p>
+        <p className="text-slate-500 text-lg">Build and preview for free. Pay only when you download.</p>
       </section>
 
       {/* Plans */}
       <section className="max-w-3xl mx-auto px-6 pb-20">
         <div className="grid md:grid-cols-2 gap-6">
 
-          {/* Free */}
+          {/* Monthly */}
           <div className="bg-white border border-slate-200 rounded-2xl p-7 flex flex-col">
             <div className="mb-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Free</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Monthly</p>
               <div className="flex items-end gap-1 mb-1">
-                <span className="text-4xl font-extrabold text-slate-900">0€</span>
+                <span className="text-4xl font-extrabold text-slate-900">12€</span>
                 <span className="text-slate-400 text-sm mb-1.5">/month</span>
               </div>
-              <p className="text-xs text-slate-400">No credit card needed</p>
+              <p className="text-xs text-slate-400">Cancel anytime</p>
             </div>
             <ul className="space-y-2.5 flex-1 mb-6">
-              {freeFeatures.map(f => (
+              {proFeatures.map(f => (
                 <li key={f} className="flex items-start gap-2 text-sm text-slate-600">
                   <CheckIcon />
                   {f}
                 </li>
               ))}
             </ul>
-            <Link
-              href="/app"
+            <a
+              href={CHECKOUT_URL}
               className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
-              Get started free
-            </Link>
+              Get started →
+            </a>
           </div>
 
-          {/* Pro */}
+          {/* Yearly */}
           <div className="bg-blue-600 border border-blue-600 rounded-2xl p-7 flex flex-col relative">
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wide whitespace-nowrap">
               Most popular
             </div>
             <div className="mb-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Pro</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Yearly</p>
               <div className="flex items-end gap-1 mb-1">
-                <span className="text-4xl font-extrabold text-white">12€</span>
-                <span className="text-blue-200 text-sm mb-1.5">/month</span>
+                <span className="text-4xl font-extrabold text-white">99€</span>
+                <span className="text-blue-200 text-sm mb-1.5">/year</span>
               </div>
-              <p className="text-xs text-blue-200">or 99€/year (save 31%) · Cancel anytime</p>
+              <p className="text-xs text-blue-200">~8.25€/month · Save 31% · Cancel anytime</p>
             </div>
             <ul className="space-y-2.5 flex-1 mb-6">
               {proFeatures.map(f => (

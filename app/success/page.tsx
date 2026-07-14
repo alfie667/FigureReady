@@ -58,7 +58,7 @@ export default function SuccessPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-6">
         <div className="max-w-6xl mx-auto px-6 text-center text-xs text-slate-400">
-          FigureReady — free beta, 2026
+          FigureReady — 2026
         </div>
       </footer>
 

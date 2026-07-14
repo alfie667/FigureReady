@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useRef, useState, type Key } from 'react'
 import { trackExport } from '@/lib/analytics'
-import { getCapturedEmail } from '@/lib/emailGate'
-import EmailGateModal from '@/components/EmailGateModal'
+import { isProUser } from '@/lib/usageLimit'
+import PaywallModal from '@/components/PaywallModal'
 import {
   LineChart, Line,
   ScatterChart, Scatter,
@@ -297,7 +297,8 @@ export default function ChartPreview({
   const selectedIdRef = useRef<string | null>(null)
   const setSelectedId = (id: string | null) => { selectedIdRef.current = id; _setSelectedId(id) }
 
-  const [emailGate, setEmailGate] = useState<null | 'png' | 'svg'>(null)
+  const [paywallOpen, setPaywallOpen] = useState(false)
+  const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
@@ -750,19 +751,22 @@ export default function ChartPreview({
 
   // ─── Export ──────────────────────────────────────────────────────────────────
 
-  const triggerExport = (type: 'png' | 'svg') => {
-    if (getCapturedEmail()) {
+  const triggerExport = async (type: 'png' | 'svg') => {
+    if (isProUser()) {
       if (type === 'png') doExportPNG()
       else doExportSVG()
-    } else {
-      setEmailGate(type)
+      return
     }
-  }
-
-  const handleEmailConfirm = () => {
-    setEmailGate(null)
-    if (emailGate === 'png') doExportPNG()
-    else if (emailGate === 'svg') doExportSVG()
+    // Capture low-res preview for paywall background
+    let preview: string | null = null
+    if (chartRef.current) {
+      try {
+        const { toPng } = await import('html-to-image')
+        preview = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 0.4 })
+      } catch { /* ignore */ }
+    }
+    setPreviewDataUrl(preview)
+    setPaywallOpen(true)
   }
 
   const doExportPNG = async () => {
@@ -965,7 +969,7 @@ export default function ChartPreview({
 
   return (
     <>
-      {emailGate && <EmailGateModal onConfirm={handleEmailConfirm} onClose={() => setEmailGate(null)} />}
+      {paywallOpen && <PaywallModal previewDataUrl={previewDataUrl} onClose={() => setPaywallOpen(false)} />}
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 
@@ -1010,8 +1014,9 @@ export default function ChartPreview({
                   fontFamily,
                   cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
-                  userSelect: isDraggingAnnotation ? 'none' : undefined,
+                  userSelect: 'none',
                 }}
+                onContextMenu={e => e.preventDefault()}
                 onPointerMove={handleContainerPointerMove}
                 onPointerUp={handleContainerPointerUp}
                 onClick={handleContainerClick}

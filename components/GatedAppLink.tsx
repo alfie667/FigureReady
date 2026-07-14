@@ -1,8 +1,4 @@
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { getCapturedEmail, saveEmail } from '@/lib/emailGate'
-import EmailGateModal from '@/components/EmailGateModal'
+import Link from 'next/link'
 
 interface Props {
   children: React.ReactNode
@@ -10,31 +6,9 @@ interface Props {
 }
 
 export default function GatedAppLink({ children, className }: Props) {
-  const [showModal, setShowModal] = useState(false)
-  const router = useRouter()
-
-  const handleClick = () => {
-    if (getCapturedEmail()) {
-      router.push('/app')
-      return
-    }
-    setShowModal(true)
-  }
-
   return (
-    <>
-      <button onClick={handleClick} className={className}>
-        {children}
-      </button>
-      {showModal && (
-        <EmailGateModal
-          title="Get free access"
-          description="Enter your email to access FigureReady. No account needed."
-          cta="Start for free →"
-          onConfirm={() => router.push('/app')}
-          onClose={() => setShowModal(false)}
-        />
-      )}
-    </>
+    <Link href="/app" className={className}>
+      {children}
+    </Link>
   )
 }

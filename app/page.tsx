@@ -76,7 +76,7 @@ export default function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 pt-16 pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-xs font-medium text-blue-700">Free — no account needed</span>
+          <span className="text-xs font-medium text-blue-700">No account needed · pay only to download</span>
         </div>
 
         <h1
@@ -169,7 +169,7 @@ export default function LandingPage() {
         {/* CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Start for free →
+            Create your figure free — pay only to download →
           </GatedAppLink>
           <SampleDataButton className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-base font-semibold rounded-xl transition-colors cursor-pointer" />
         </div>
@@ -222,39 +222,40 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto px-6">
           <p className="text-center mb-3" style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#2563eb' }}>Pricing</p>
           <h2 className="text-2xl font-bold text-center text-slate-900 mb-3">Simple, transparent pricing</h2>
-          <p className="text-center text-slate-500 text-sm mb-12">Start free. Upgrade when you need more.</p>
+          <p className="text-center text-slate-500 text-sm mb-12">Build and preview for free. Pay only when you download.</p>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Free */}
+          <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            {/* Monthly */}
             <div className="border border-slate-200 rounded-2xl p-7 flex flex-col">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Free</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Monthly</p>
               <div className="flex items-end gap-1 mb-4">
-                <span className="text-4xl font-extrabold text-slate-900">0€</span>
+                <span className="text-4xl font-extrabold text-slate-900">12€</span>
                 <span className="text-slate-400 text-sm mb-1.5">/month</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
-                {['3 figures per month', 'Excel upload (.xlsx)', 'PNG & SVG export', 'Error bars', 'Basic style options'].map(f => (
+                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2">
                     <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                     {f}
                   </li>
                 ))}
               </ul>
-              <GatedAppLink className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors w-full">
-                Get started free
-              </GatedAppLink>
+              <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                Get started →
+              </a>
             </div>
 
-            {/* Pro Monthly */}
+            {/* Yearly */}
             <div className="bg-blue-600 rounded-2xl p-7 flex flex-col relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wide whitespace-nowrap">
-                Most popular
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wide whitespace-nowrap">
+                Save 31%
               </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Pro Monthly</p>
-              <div className="flex items-end gap-1 mb-4">
-                <span className="text-4xl font-extrabold text-white">12€</span>
-                <span className="text-blue-200 text-sm mb-1.5">/month</span>
+              <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Yearly</p>
+              <div className="flex items-end gap-1 mb-1">
+                <span className="text-4xl font-extrabold text-white">99€</span>
+                <span className="text-blue-200 text-sm mb-1.5">/year</span>
               </div>
+              <p className="text-xs text-blue-300 mb-4">~8.25€/month</p>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-white">
                 {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2">
@@ -264,31 +265,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
-                Get Pro →
-              </a>
-            </div>
-
-            {/* Pro Yearly */}
-            <div className="border border-slate-200 rounded-2xl p-7 flex flex-col relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-[11px] font-bold rounded-full uppercase tracking-wide whitespace-nowrap">
-                Save 31%
-              </div>
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Pro Yearly</p>
-              <div className="flex items-end gap-1 mb-1">
-                <span className="text-4xl font-extrabold text-slate-900">99€</span>
-                <span className="text-slate-400 text-sm mb-1.5">/year</span>
-              </div>
-              <p className="text-xs text-slate-400 mb-4">~8.25€/month</p>
-              <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
-                {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
-                  <li key={f} className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold transition-colors">
-                Get Pro →
+                Get started →
               </a>
             </div>
           </div>

@@ -10,7 +10,6 @@ import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
 import WelcomeModal from '@/components/WelcomeModal'
 import FeedbackButton from '@/components/FeedbackButton'
-import UpgradeModal from '@/components/UpgradeModal'
 import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
@@ -33,7 +32,6 @@ export default function AppPage() {
   const [yAxisLabel, setYAxisLabel] = useState('')
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   useEffect(() => {
     const saved = loadDefaultStyle()
@@ -87,8 +85,7 @@ export default function AppPage() {
   return (
     <div className="min-h-screen lg:h-screen bg-white flex flex-col overflow-hidden">
       <WelcomeModal />
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
-      <Header hasData={columns.length > 0} onReset={reset} onUpgrade={() => setShowUpgradeModal(true)} />
+      <Header hasData={columns.length > 0} onReset={reset} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
         <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-100 lg:overflow-y-auto bg-white">
