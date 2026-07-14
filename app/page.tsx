@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import BetaSignupForm from '@/components/BetaSignupForm'
 import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
@@ -37,6 +38,7 @@ const steps = [
   { n: '2', title: 'Configure your figure', desc: 'Select X and Y axes, chart type, series names, and error bars.' },
   { n: '3', title: 'Export publication-ready graphics', desc: 'Download PNG at 300 DPI or SVG with separate editable layers.' },
 ]
+
 
 const tableRows = [
   ['0', '0.12', '0.06'],
@@ -147,93 +149,20 @@ export default function LandingPage() {
             <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">FigureReady</span>
           </div>
 
-          {/* Publication-ready figure */}
+          {/* Publication-ready figure — real screenshot */}
           <div className="rounded-xl border border-slate-200 overflow-hidden shadow-lg bg-white w-full max-w-sm shrink-0">
             <div className="bg-slate-50 border-b border-slate-200 px-3 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400" />
               <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Publication-ready figure</span>
             </div>
-            <div className="p-4 bg-white">
-              {/* ACS / OriginLab style — full box, inward ticks, no grid, mixed markers */}
-              <svg viewBox="0 0 480 308" className="w-full" xmlns="http://www.w3.org/2000/svg" style={{ fontFamily: 'Helvetica Neue, Arial, sans-serif' }}>
-
-                {/* Plot box */}
-                <rect x="65" y="20" width="380" height="240" fill="none" stroke="#111" strokeWidth="1.5" />
-
-                {/* X ticks bottom (inward) + top mirror */}
-                {[0,1,2,3,4].map(i => (
-                  <g key={i}>
-                    <line x1={65+i*95} y1={260} x2={65+i*95} y2={253} stroke="#111" strokeWidth="1.5" />
-                    <line x1={65+i*95} y1={20}  x2={65+i*95} y2={27}  stroke="#111" strokeWidth="1.5" />
-                  </g>
-                ))}
-
-                {/* Y ticks left (inward) + right mirror */}
-                {[0,1,2,3,4].map(i => (
-                  <g key={i}>
-                    <line x1={65}  y1={260-i*60} x2={72}  y2={260-i*60} stroke="#111" strokeWidth="1.5" />
-                    <line x1={445} y1={260-i*60} x2={438} y2={260-i*60} stroke="#111" strokeWidth="1.5" />
-                  </g>
-                ))}
-
-                {/* X tick labels */}
-                {[0,1,2,3,4].map((v,i) => (
-                  <text key={v} x={65+i*95} y={277} textAnchor="middle" fontSize="11" fill="#1a1a1a">{v}</text>
-                ))}
-
-                {/* Y tick labels */}
-                {[0,0.25,0.50,0.75,1.00].map((v,i) => (
-                  <text key={v} x={57} y={260-i*60+4} textAnchor="end" fontSize="11" fill="#1a1a1a">{v.toFixed(2)}</text>
-                ))}
-
-                {/* Axis titles */}
-                <text x={255} y={297} textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a">Concentration (mM)</text>
-                <text x={14} y={140} textAnchor="middle" fontSize="12" fontWeight="bold" fill="#0f172a" transform="rotate(-90 14 140)">Absorbance (a.u.)</text>
-
-                {/* Sample A error bars (black) — data: 0.12, 0.31, 0.48, 0.69, 0.86 */}
-                {([[65,231,7],[160,186,10],[255,145,10],[350,94,12],[445,54,10]] as [number,number,number][]).map(([x,y,e],i) => (
-                  <g key={i} stroke="#111" strokeWidth="1.1">
-                    <line x1={x} y1={y-e} x2={x} y2={y+e} />
-                    <line x1={x-4} y1={y-e} x2={x+4} y2={y-e} />
-                    <line x1={x-4} y1={y+e} x2={x+4} y2={y+e} />
-                  </g>
-                ))}
-
-                {/* Sample B error bars (red) — data: 0.06, 0.14, 0.25, 0.38, 0.47 */}
-                {([[65,246,5],[160,226,7],[255,200,7],[350,169,7],[445,147,10]] as [number,number,number][]).map(([x,y,e],i) => (
-                  <g key={i} stroke="#c0392b" strokeWidth="1.1">
-                    <line x1={x} y1={y-e} x2={x} y2={y+e} />
-                    <line x1={x-4} y1={y-e} x2={x+4} y2={y-e} />
-                    <line x1={x-4} y1={y+e} x2={x+4} y2={y+e} />
-                  </g>
-                ))}
-
-                {/* Sample A line */}
-                <polyline points="65,231 160,186 255,145 350,94 445,54" fill="none" stroke="#111" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-
-                {/* Sample B line */}
-                <polyline points="65,246 160,226 255,200 350,169 445,147" fill="none" stroke="#c0392b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-
-                {/* Sample A markers: filled circles */}
-                {[[65,231],[160,186],[255,145],[350,94],[445,54]].map(([x,y],i) => (
-                  <circle key={i} cx={x} cy={y} r="5" fill="#111" />
-                ))}
-
-                {/* Sample B markers: filled squares */}
-                {[[65,246],[160,226],[255,200],[350,169],[445,147]].map(([x,y],i) => (
-                  <rect key={i} x={x-4.5} y={y-4.5} width="9" height="9" fill="#c0392b" />
-                ))}
-
-                {/* Legend */}
-                <rect x="73" y="28" width="132" height="52" fill="white" stroke="#d1d5db" strokeWidth="0.8" rx="2" />
-                <line x1="81" y1="46" x2="103" y2="46" stroke="#111" strokeWidth="1.8" />
-                <circle cx="92" cy="46" r="4.5" fill="#111" />
-                <text x="109" y="50" fontSize="11" fill="#1a1a1a">Sample A</text>
-                <line x1="81" y1="68" x2="103" y2="68" stroke="#c0392b" strokeWidth="1.8" />
-                <rect x="87.5" y="63.5" width="9" height="9" fill="#c0392b" />
-                <text x="109" y="72" fontSize="11" fill="#1a1a1a">Sample B</text>
-              </svg>
-            </div>
+            <Image
+              src="/demo-figure.png"
+              alt="Publication-ready figure: Absorbance vs Concentration (mM) — Sample A and Sample B, exported from FigureReady"
+              width={700}
+              height={527}
+              className="w-full h-auto"
+              priority
+            />
           </div>
         </div>
 
