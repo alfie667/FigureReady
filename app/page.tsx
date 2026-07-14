@@ -169,7 +169,7 @@ export default function LandingPage() {
         {/* CTA */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Create your figure free — pay only to download →
+            Upload your Excel. Download your figure →
           </GatedAppLink>
           <SampleDataButton className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-base font-semibold rounded-xl transition-colors cursor-pointer" />
         </div>
