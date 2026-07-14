@@ -10,13 +10,13 @@ import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
 import WelcomeModal from '@/components/WelcomeModal'
 import FeedbackButton from '@/components/FeedbackButton'
+import SaveTemplateModal from '@/components/SaveTemplateModal'
 import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
+import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
-
-type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
 export default function AppPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -32,6 +32,7 @@ export default function AppPage() {
   const [yAxisLabel, setYAxisLabel] = useState('')
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
 
   useEffect(() => {
     const saved = loadDefaultStyle()
@@ -80,11 +81,32 @@ export default function AppPage() {
     document.getElementById('file-upload')?.click()
   }
 
+  const handleSaveTemplate = (name: string) => {
+    saveUserTemplate({ name, chartType, overrides: styleOverrides })
+  }
+
+  const handleApplyTemplate = (template: ChartTemplate) => {
+    setChartType(template.chartType)
+    setStyleOverrides(prev => ({
+      ...template.overrides,
+      seriesColors: prev.seriesColors,
+      seriesStrokeWidths: prev.seriesStrokeWidths,
+      seriesMarkerSizes: prev.seriesMarkerSizes,
+      seriesMarkerShapes: prev.seriesMarkerShapes,
+    }))
+  }
+
   const ready = xCol && yCols.length > 0 && data.length > 0
 
   return (
     <div className="min-h-screen lg:h-screen bg-white flex flex-col overflow-hidden">
       <WelcomeModal />
+      {saveTemplateOpen && (
+        <SaveTemplateModal
+          onSave={handleSaveTemplate}
+          onClose={() => setSaveTemplateOpen(false)}
+        />
+      )}
       <Header hasData={columns.length > 0} onReset={reset} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
@@ -164,6 +186,7 @@ export default function AppPage() {
                 overrides={styleOverrides}
                 hasMultipleSeries={yCols.length > 1}
                 onChange={setStyleOverrides}
+                onApplyTemplate={handleApplyTemplate}
               />
             </Panel>
           )}
@@ -185,6 +208,7 @@ export default function AppPage() {
               annotations={annotations}
               onAnnotationsChange={setAnnotations}
               onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
+              onSaveTemplate={() => setSaveTemplateOpen(true)}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-slate-50">

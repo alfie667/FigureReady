@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import { fontOptions, type ChartStyle, type StyleOverrides } from '@/lib/chartStyles'
 import { saveDefaultStyle } from '@/lib/styleStorage'
+import type { ChartTemplate } from '@/lib/templateStorage'
 import {
   ColorSwatchPicker, LineThicknessPicker, TextSizePicker, ToggleSwitch,
   type NumericPreset,
 } from './StyleControls'
+import TemplateSelector from './TemplateSelector'
 
 interface Props {
   baseStyle: ChartStyle
   overrides: StyleOverrides
   hasMultipleSeries: boolean
   onChange: (overrides: StyleOverrides) => void
+  onApplyTemplate?: (template: ChartTemplate) => void
 }
 
 const figurePresets: { label: string; width: number; height: number }[] = [
@@ -177,7 +180,7 @@ function DimensionField({
   )
 }
 
-export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
+export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange, onApplyTemplate }: Props) {
   const [saved, setSaved] = useState(false)
 
   const set = <K extends keyof StyleOverrides>(key: K, value: StyleOverrides[K]) => {
@@ -213,6 +216,10 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
 
   return (
     <div className="space-y-5">
+      {onApplyTemplate && (
+        <TemplateSelector onApply={onApplyTemplate} />
+      )}
+
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold text-slate-600">Style</p>
         <div className="flex items-center gap-3">

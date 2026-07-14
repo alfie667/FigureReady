@@ -267,6 +267,7 @@ interface Props {
   annotations: ChartAnnotation[]
   onAnnotationsChange: (annotations: ChartAnnotation[]) => void
   onStyleChange?: (patch: Partial<StyleOverrides>) => void
+  onSaveTemplate?: () => void
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -274,7 +275,7 @@ interface Props {
 export default function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
-  annotations, onAnnotationsChange, onStyleChange,
+  annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
@@ -983,6 +984,17 @@ export default function ChartPreview({
                 className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
               >
                 Réinitialiser zoom
+              </button>
+            )}
+            {onSaveTemplate && (
+              <button
+                onClick={onSaveTemplate}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                Save as Template
               </button>
             )}
             <button

@@ -1,0 +1,113 @@
+import type { StyleOverrides } from './chartStyles'
+
+export type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
+
+export interface ChartTemplate {
+  id: string
+  name: string
+  builtIn?: boolean
+  chartType: ChartType
+  overrides: StyleOverrides
+}
+
+const STORAGE_KEY = 'figureready-templates'
+
+const PER_SERIES_KEYS: (keyof StyleOverrides)[] = [
+  'seriesColors',
+  'seriesStrokeWidths',
+  'seriesMarkerSizes',
+  'seriesMarkerShapes',
+]
+
+export const BUILTIN_TEMPLATES: ChartTemplate[] = [
+  {
+    id: 'builtin-nature',
+    name: 'Nature style',
+    builtIn: true,
+    chartType: 'line',
+    overrides: {
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      xTitleSize: 8,
+      yTitleSize: 8,
+      xTickSize: 7,
+      yTickSize: 7,
+      boldLabels: false,
+      axisWidth: 1,
+      axisColor: '#000000',
+      showGrid: false,
+    },
+  },
+  {
+    id: 'builtin-jacs',
+    name: 'JACS style',
+    builtIn: true,
+    chartType: 'scatter',
+    overrides: {
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      xTitleSize: 12,
+      yTitleSize: 12,
+      xTickSize: 10,
+      yTickSize: 10,
+      boldLabels: false,
+      axisWidth: 1.5,
+      axisColor: '#000000',
+      showGrid: false,
+    },
+  },
+  {
+    id: 'builtin-acs',
+    name: 'ACS style',
+    builtIn: true,
+    chartType: 'line',
+    overrides: {
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      xTitleSize: 14,
+      yTitleSize: 14,
+      xTickSize: 14,
+      yTickSize: 14,
+      boldLabels: true,
+      axisWidth: 1.5,
+      axisColor: '#000000',
+      showGrid: false,
+    },
+  },
+]
+
+function stripPerSeries(overrides: StyleOverrides): StyleOverrides {
+  const clean = { ...overrides }
+  for (const key of PER_SERIES_KEYS) delete clean[key]
+  return clean
+}
+
+export function loadUserTemplates(): ChartTemplate[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as ChartTemplate[]) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveUserTemplate(template: Omit<ChartTemplate, 'id' | 'builtIn'>): ChartTemplate {
+  const created: ChartTemplate = {
+    id: `user-${Date.now()}`,
+    name: template.name,
+    chartType: template.chartType,
+    overrides: stripPerSeries(template.overrides),
+  }
+  const existing = loadUserTemplates()
+  existing.push(created)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(existing))
+  return created
+}
+
+export function deleteUserTemplate(id: string): void {
+  if (typeof window === 'undefined') return
+  const remaining = loadUserTemplates().filter(t => t.id !== id)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(remaining))
+}
+
+export function getAllTemplates(): ChartTemplate[] {
+  return [...BUILTIN_TEMPLATES, ...loadUserTemplates()]
+}
