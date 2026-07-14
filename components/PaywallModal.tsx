@@ -2,7 +2,7 @@
 import { useState } from 'react'
 
 const CHECKOUT_MONTHLY = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
-const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
+const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1'
 
 interface Props {
   previewDataUrl: string | null
