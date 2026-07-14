@@ -16,6 +16,7 @@ import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
+import type { MarkerShape } from '@/lib/markerShapes'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
 
 export default function AppPage() {
@@ -82,18 +83,51 @@ export default function AppPage() {
   }
 
   const handleSaveTemplate = (name: string) => {
-    saveUserTemplate({ name, chartType, overrides: styleOverrides })
+    const base = chartStyles[styleName]
+    saveUserTemplate({
+      name,
+      chartType,
+      overrides: styleOverrides,
+      seriesColorsList: yCols.map((col, i) =>
+        styleOverrides.seriesColors?.[col] ?? base.colors[i % base.colors.length]
+      ),
+      seriesStrokeWidthsList: yCols.map(col =>
+        styleOverrides.seriesStrokeWidths?.[col] ?? base.strokeWidth
+      ),
+      seriesMarkerSizesList: yCols.map(col =>
+        styleOverrides.seriesMarkerSizes?.[col] ?? base.dotRadius
+      ),
+      seriesMarkerShapesList: yCols.map(col =>
+        (styleOverrides.seriesMarkerShapes?.[col] ?? 'circle') as MarkerShape
+      ),
+    })
   }
 
   const handleApplyTemplate = (template: ChartTemplate) => {
     setChartType(template.chartType)
-    setStyleOverrides(prev => ({
+    const newSeriesColors: Record<string, string> = {}
+    const newSeriesStrokeWidths: Record<string, number> = {}
+    const newSeriesMarkerSizes: Record<string, number> = {}
+    const newSeriesMarkerShapes: Record<string, MarkerShape> = {}
+
+    yCols.forEach((col, i) => {
+      if (template.seriesColorsList?.[i] != null)
+        newSeriesColors[col] = template.seriesColorsList[i]
+      if (template.seriesStrokeWidthsList?.[i] != null)
+        newSeriesStrokeWidths[col] = template.seriesStrokeWidthsList[i]
+      if (template.seriesMarkerSizesList?.[i] != null)
+        newSeriesMarkerSizes[col] = template.seriesMarkerSizesList[i]
+      if (template.seriesMarkerShapesList?.[i] != null)
+        newSeriesMarkerShapes[col] = template.seriesMarkerShapesList[i]
+    })
+
+    setStyleOverrides({
       ...template.overrides,
-      seriesColors: prev.seriesColors,
-      seriesStrokeWidths: prev.seriesStrokeWidths,
-      seriesMarkerSizes: prev.seriesMarkerSizes,
-      seriesMarkerShapes: prev.seriesMarkerShapes,
-    }))
+      ...(Object.keys(newSeriesColors).length && { seriesColors: newSeriesColors }),
+      ...(Object.keys(newSeriesStrokeWidths).length && { seriesStrokeWidths: newSeriesStrokeWidths }),
+      ...(Object.keys(newSeriesMarkerSizes).length && { seriesMarkerSizes: newSeriesMarkerSizes }),
+      ...(Object.keys(newSeriesMarkerShapes).length && { seriesMarkerShapes: newSeriesMarkerShapes }),
+    })
   }
 
   const ready = xCol && yCols.length > 0 && data.length > 0

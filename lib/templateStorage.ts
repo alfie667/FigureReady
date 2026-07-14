@@ -1,4 +1,5 @@
 import type { StyleOverrides } from './chartStyles'
+import type { MarkerShape } from './markerShapes'
 
 export type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
 
@@ -7,7 +8,13 @@ export interface ChartTemplate {
   name: string
   builtIn?: boolean
   chartType: ChartType
+  // Global style overrides (no per-series keys)
   overrides: StyleOverrides
+  // Per-series settings stored by index so they remap to any column names
+  seriesColorsList?: string[]
+  seriesStrokeWidthsList?: number[]
+  seriesMarkerSizesList?: number[]
+  seriesMarkerShapesList?: MarkerShape[]
 }
 
 const STORAGE_KEY = 'figureready-templates'
@@ -95,6 +102,10 @@ export function saveUserTemplate(template: Omit<ChartTemplate, 'id' | 'builtIn'>
     name: template.name,
     chartType: template.chartType,
     overrides: stripPerSeries(template.overrides),
+    seriesColorsList: template.seriesColorsList,
+    seriesStrokeWidthsList: template.seriesStrokeWidthsList,
+    seriesMarkerSizesList: template.seriesMarkerSizesList,
+    seriesMarkerShapesList: template.seriesMarkerShapesList,
   }
   const existing = loadUserTemplates()
   existing.push(created)
