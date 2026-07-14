@@ -26,59 +26,7 @@ const PER_SERIES_KEYS: (keyof StyleOverrides)[] = [
   'seriesMarkerShapes',
 ]
 
-export const BUILTIN_TEMPLATES: ChartTemplate[] = [
-  {
-    id: 'builtin-nature',
-    name: 'Nature style',
-    builtIn: true,
-    chartType: 'line',
-    overrides: {
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      xTitleSize: 8,
-      yTitleSize: 8,
-      xTickSize: 7,
-      yTickSize: 7,
-      boldLabels: false,
-      axisWidth: 1,
-      axisColor: '#000000',
-      showGrid: false,
-    },
-  },
-  {
-    id: 'builtin-jacs',
-    name: 'JACS style',
-    builtIn: true,
-    chartType: 'scatter',
-    overrides: {
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      xTitleSize: 12,
-      yTitleSize: 12,
-      xTickSize: 10,
-      yTickSize: 10,
-      boldLabels: false,
-      axisWidth: 1.5,
-      axisColor: '#000000',
-      showGrid: false,
-    },
-  },
-  {
-    id: 'builtin-acs',
-    name: 'ACS style',
-    builtIn: true,
-    chartType: 'line',
-    overrides: {
-      fontFamily: 'Arial, Helvetica, sans-serif',
-      xTitleSize: 14,
-      yTitleSize: 14,
-      xTickSize: 14,
-      yTickSize: 14,
-      boldLabels: true,
-      axisWidth: 1.5,
-      axisColor: '#000000',
-      showGrid: false,
-    },
-  },
-]
+export const BUILTIN_TEMPLATES: ChartTemplate[] = []
 
 function stripPerSeries(overrides: StyleOverrides): StyleOverrides {
   const clean = { ...overrides }

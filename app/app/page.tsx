@@ -11,6 +11,7 @@ import Header from '@/components/Header'
 import WelcomeModal from '@/components/WelcomeModal'
 import FeedbackButton from '@/components/FeedbackButton'
 import SaveTemplateModal from '@/components/SaveTemplateModal'
+import TemplateSelector from '@/components/TemplateSelector'
 import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
@@ -170,6 +171,7 @@ export default function AppPage() {
               }
             >
               <div className="space-y-5">
+                <TemplateSelector onApply={handleApplyTemplate} />
                 <ColumnSelector
                   columns={columns}
                   xCol={xCol}
@@ -220,7 +222,6 @@ export default function AppPage() {
                 overrides={styleOverrides}
                 hasMultipleSeries={yCols.length > 1}
                 onChange={setStyleOverrides}
-                onApplyTemplate={handleApplyTemplate}
               />
             </Panel>
           )}
