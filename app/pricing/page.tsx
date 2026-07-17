@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { CheckoutButton } from './CheckoutButton'
 
 export const metadata: Metadata = {
   title: 'Pricing — FigureReady',
@@ -80,12 +81,12 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <a
+            <CheckoutButton
               href={CHECKOUT_URL}
               className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Get started →
-            </a>
+            </CheckoutButton>
           </div>
 
           {/* Yearly */}
@@ -109,12 +110,12 @@ export default function PricingPage() {
                 </li>
               ))}
             </ul>
-            <a
+            <CheckoutButton
               href={CHECKOUT_URL}
               className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
             >
               Get Pro →
-            </a>
+            </CheckoutButton>
           </div>
 
         </div>

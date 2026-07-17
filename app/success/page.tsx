@@ -3,9 +3,14 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import { activatePro } from '@/lib/usageLimit'
 
+declare global {
+  interface Window { fbq?: (...args: unknown[]) => void }
+}
+
 export default function SuccessPage() {
   useEffect(() => {
     activatePro()
+    window.fbq?.('track', 'Purchase', { value: 12, currency: 'EUR' })
   }, [])
 
   return (
