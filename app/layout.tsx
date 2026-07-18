@@ -14,11 +14,6 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: 'FigureReady',
     type: 'website',
-    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'FigureReady — Publication-ready figures from Excel' }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    images: ['/opengraph-image'],
   },
 }
 
