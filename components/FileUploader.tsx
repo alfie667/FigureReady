@@ -76,8 +76,8 @@ export default function FileUploader({ onData }: Props) {
           </>
         ) : (
           <>
-            <p className="text-sm font-medium text-slate-600">Déposez votre fichier .xlsx ici</p>
-            <p className="text-xs text-slate-400 mt-1">ou cliquez pour parcourir</p>
+            <p className="text-sm font-medium text-slate-600">Drop your .xlsx file here</p>
+            <p className="text-xs text-slate-400 mt-1">or click to browse</p>
           </>
         )}
       </label>

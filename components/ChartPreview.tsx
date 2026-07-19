@@ -983,7 +983,7 @@ export default function ChartPreview({
                 onClick={resetZoom}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
               >
-                Réinitialiser zoom
+                Reset zoom
               </button>
             )}
             {onSaveTemplate && (

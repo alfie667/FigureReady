@@ -12,7 +12,7 @@ export default function ImageUploader({ onImage }: Props) {
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
-      setError('Seules les images (PNG, JPG) sont supportées')
+      setError('Only images (PNG, JPG) are supported')
       return
     }
     setError(null)
@@ -62,12 +62,12 @@ export default function ImageUploader({ onImage }: Props) {
         {fileName ? (
           <>
             <p className="text-sm font-semibold text-slate-700">{fileName}</p>
-            <p className="text-xs text-slate-400 mt-1">Cliquez pour remplacer</p>
+            <p className="text-xs text-slate-400 mt-1">Click to replace</p>
           </>
         ) : (
           <>
-            <p className="text-sm font-medium text-slate-600">Déposez une image de courbe ici</p>
-            <p className="text-xs text-slate-400 mt-1">ou cliquez pour parcourir (PNG, JPG)</p>
+            <p className="text-sm font-medium text-slate-600">Drop a curve image here</p>
+            <p className="text-xs text-slate-400 mt-1">or click to browse (PNG, JPG)</p>
           </>
         )}
       </label>

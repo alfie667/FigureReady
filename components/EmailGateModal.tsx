@@ -56,10 +56,10 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
         </div>
 
         <h2 className="text-lg font-bold text-slate-900 text-center mb-1">
-          {title ?? 'Télécharger votre figure'}
+          {title ?? 'Download your figure'}
         </h2>
         <p className="text-sm text-slate-500 text-center mb-6 leading-relaxed">
-          {description ?? 'Entrez votre email pour recevoir les mises à jour de FigureReady.'}
+          {description ?? 'Enter your email to receive FigureReady updates.'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,7 +69,7 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
               type="email"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setError('') }}
-              placeholder="votre@email.com"
+              placeholder="your@email.com"
               className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
             />
             {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
@@ -80,12 +80,12 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
             disabled={loading}
             className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-60"
           >
-            {loading ? 'Loading…' : (cta ?? 'Télécharger')}
+            {loading ? 'Loading…' : (cta ?? 'Download')}
           </button>
         </form>
 
         <p className="mt-4 text-[11px] text-slate-400 text-center">
-          Pas de spam. Uniquement les nouveautés de FigureReady.
+          No spam. FigureReady updates only.
         </p>
       </div>
     </div>

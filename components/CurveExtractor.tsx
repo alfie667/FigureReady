@@ -119,13 +119,13 @@ export default function CurveExtractor() {
       {imgEl && (
         <div className="space-y-2">
           <p className="text-xs text-slate-400">
-            Les points rouges sur l&apos;image montrent les données détectées. Si la courbe
-            n&apos;est pas bien suivie, cliquez directement sur la courbe dans l&apos;image
-            pour indiquer sa couleur, puis ajustez la tolérance ci-dessous.
+            Red dots on the image show detected data points. If the curve
+            is not well tracked, click directly on the curve in the image
+            to set its color, then adjust the tolerance below.
           </p>
           {targetColor && (
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <span>Couleur recherchée :</span>
+              <span>Target color:</span>
               <span
                 className="inline-block w-4 h-4 rounded border border-slate-300"
                 style={{ backgroundColor: `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})` }}
@@ -137,7 +137,7 @@ export default function CurveExtractor() {
 
       <div>
         <label className="block text-xs text-slate-500 mb-1.5">
-          Tolérance de couleur ({tolerance})
+          Color tolerance ({tolerance})
         </label>
         <input
           type="range"
@@ -148,15 +148,15 @@ export default function CurveExtractor() {
           className="w-full"
         />
         <p className="text-xs text-slate-400 mt-1">
-          Une tolérance basse ne garde que les pixels très proches de la couleur recherchée
-          (risque de trous dans la courbe). Une tolérance élevée accepte des pixels plus
-          différents (risque de capter du bruit autour de la courbe).
+          A low tolerance keeps only pixels very close to the target color
+          (risk of gaps in the curve). A high tolerance accepts more
+          different pixels (risk of capturing noise around the curve).
         </p>
       </div>
 
       <div className="flex flex-wrap gap-4">
         <div className="flex-1 min-w-[140px]">
-          <label className="block text-xs text-slate-500 mb-1.5">Nom de la colonne X</label>
+          <label className="block text-xs text-slate-500 mb-1.5">X column name</label>
           <input
             type="text"
             value={xLabel}
@@ -165,7 +165,7 @@ export default function CurveExtractor() {
           />
         </div>
         <div className="flex-1 min-w-[140px]">
-          <label className="block text-xs text-slate-500 mb-1.5">Nom de la colonne Y</label>
+          <label className="block text-xs text-slate-500 mb-1.5">Y column name</label>
           <input
             type="text"
             value={yLabel}
@@ -175,7 +175,7 @@ export default function CurveExtractor() {
         </div>
       </div>
 
-      <p className="text-xs text-slate-400">{extractedPoints.length} points extraits</p>
+      <p className="text-xs text-slate-400">{extractedPoints.length} points extracted</p>
 
       {extractedPoints.length > 0 && (
         <div className="bg-white rounded-lg border border-slate-200 p-4">
@@ -196,14 +196,14 @@ export default function CurveExtractor() {
         disabled={extractedPoints.length === 0}
         className="px-5 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        Exporter en Excel
+        Export to Excel
       </button>
 
       <button
         onClick={reset}
         className="block text-xs text-slate-400 hover:text-slate-600 transition-colors"
       >
-        Recommencer avec une autre image
+        Start over with another image
       </button>
     </div>
   )

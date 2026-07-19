@@ -78,7 +78,7 @@ export default function AdminPage() {
 
         {/* Emails */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-900">Emails collectés ({emails.length})</h2>
+          <h2 className="text-lg font-bold text-slate-900">Collected emails ({emails.length})</h2>
           {emails.length > 0 && (
             <button
               onClick={exportEmailsCSV}
@@ -90,7 +90,7 @@ export default function AdminPage() {
         </div>
         {emails.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-400 mb-12">
-            Aucun email collecté pour l&apos;instant.
+            No emails collected yet.
           </div>
         ) : (
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden mb-12">
