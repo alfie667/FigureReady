@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, type Key } from 'react'
 import { trackExport } from '@/lib/analytics'
+import { gtagEvent } from '@/lib/ga'
 import { isProUser } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
 import {
@@ -753,6 +754,7 @@ export default function ChartPreview({
   // ─── Export ──────────────────────────────────────────────────────────────────
 
   const triggerExport = async (type: 'png' | 'svg') => {
+    gtagEvent('download_click', { file_type: type })
     if (isProUser()) {
       if (type === 'png') doExportPNG()
       else doExportSVG()
@@ -767,6 +769,7 @@ export default function ChartPreview({
       } catch { /* ignore */ }
     }
     setPreviewDataUrl(preview)
+    gtagEvent('paywall_shown', { file_type: type })
     setPaywallOpen(true)
   }
 
