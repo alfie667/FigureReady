@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import BetaSignupForm from '@/components/BetaSignupForm'
@@ -6,11 +6,11 @@ import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
 
 export const metadata: Metadata = {
-  title: 'FigureReady â€” Free Scientific Figure Maker from Excel',
+  title: 'FigureReady — Free Scientific Figure Maker from Excel',
   description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. No code, no GraphPad, no Origin. Free for PhD students and researchers.',
   alternates: { canonical: 'https://figureready.com' },
   openGraph: {
-    title: 'FigureReady â€” Free Scientific Figure Maker from Excel',
+    title: 'FigureReady — Free Scientific Figure Maker from Excel',
     description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for PhD students and researchers.',
     url: 'https://figureready.com',
     type: 'website',
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'FigureReady â€” Free Scientific Figure Maker from Excel',
+    title: 'FigureReady — Free Scientific Figure Maker from Excel',
     description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
     images: ['/opengraph-image'],
   },
@@ -29,7 +29,7 @@ const features = [
   { label: 'Excel upload (.xlsx)', desc: 'Drop your file, columns detected automatically.' },
   { label: 'Multiple curves', desc: 'Plot several Y series on the same figure.' },
   { label: 'Error bars', desc: 'Attach standard deviation or standard error columns.' },
-  { label: 'Style customization', desc: 'Font, line width, markers, colors â€” visually.' },
+  { label: 'Style customization', desc: 'Font, line width, markers, colors — visually.' },
   { label: 'PNG & SVG export', desc: 'High-resolution PNG (300 DPI) and scalable SVG with editable layers.' },
 ]
 
@@ -97,7 +97,7 @@ export default function LandingPage() {
           <SampleDataButton className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-base font-semibold rounded-xl transition-colors cursor-pointer" />
         </div>
 
-        {/* Excel â†’ Figure transformation */}
+        {/* Excel → Figure transformation */}
         <div className="flex flex-col lg:flex-row items-center justify-center gap-5 mb-10">
 
           {/* Excel mock */}
@@ -138,7 +138,7 @@ export default function LandingPage() {
             <span className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">FigureReady</span>
           </div>
 
-          {/* Publication-ready figure â€” real screenshot */}
+          {/* Publication-ready figure — real screenshot */}
           <div className="rounded-xl border border-slate-200 overflow-hidden shadow-lg bg-white w-full max-w-sm shrink-0">
             <div className="bg-slate-50 border-b border-slate-200 px-3 py-2 flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-400" />
@@ -146,7 +146,7 @@ export default function LandingPage() {
             </div>
             <Image
               src="/demo-figure.png"
-              alt="Publication-ready figure: Absorbance vs Concentration (mM) â€” Sample A and Sample B, exported from FigureReady"
+              alt="Publication-ready figure: Absorbance vs Concentration (mM) — Sample A and Sample B, exported from FigureReady"
               width={700}
               height={527}
               className="w-full h-auto"
@@ -154,7 +154,8 @@ export default function LandingPage() {
             />
           </div>
         </div>
-        <p className="text-xs text-slate-400 mt-3">â†‘ Downloads a ready-to-use .xlsx file â€” open it in the app to see it become a figure</p>
+
+        <p className="text-xs text-slate-400 mt-3">↑ Downloads a ready-to-use .xlsx file — open it in the app to see it become a figure</p>
 
       </section>
 
@@ -210,7 +211,7 @@ export default function LandingPage() {
             <div className="border border-slate-200 rounded-2xl p-7 flex flex-col">
               <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">Monthly</p>
               <div className="flex items-end gap-1 mb-4">
-                <span className="text-4xl font-extrabold text-slate-900">12â‚¬</span>
+                <span className="text-4xl font-extrabold text-slate-900">12€</span>
                 <span className="text-slate-400 text-sm mb-1.5">/month</span>
               </div>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-slate-600">
@@ -222,7 +223,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
-                Get started â†’
+                Get started →
               </a>
             </div>
 
@@ -233,10 +234,10 @@ export default function LandingPage() {
               </div>
               <p className="text-xs font-bold uppercase tracking-widest text-blue-200 mb-2">Yearly</p>
               <div className="flex items-end gap-1 mb-1">
-                <span className="text-4xl font-extrabold text-white">99â‚¬</span>
+                <span className="text-4xl font-extrabold text-white">99€</span>
                 <span className="text-blue-200 text-sm mb-1.5">/year</span>
               </div>
-              <p className="text-xs text-blue-300 mb-4">~8.25â‚¬/month</p>
+              <p className="text-xs text-blue-300 mb-4">~8.25€/month</p>
               <ul className="space-y-2 flex-1 mb-6 text-sm text-white">
                 {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Style customization', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2">
@@ -246,7 +247,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8" className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors">
-                Get started â†’
+                Get started →
               </a>
             </div>
           </div>
@@ -258,14 +259,14 @@ export default function LandingPage() {
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Try FigureReady now</h2>
         <p className="text-slate-500 text-sm mb-8">No account needed. Works in your browser.</p>
         <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-          Upload your first figure â†’
+          Upload your first figure →
         </GatedAppLink>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady â€” 2026</span>
+          <span>FigureReady — 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
@@ -278,6 +279,3 @@ export default function LandingPage() {
     </div>
   )
 }
-
-
-

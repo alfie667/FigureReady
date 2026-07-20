@@ -1,12 +1,12 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Roadmap â€” FigureReady',
-  description: 'See what has shipped and what is coming next in FigureReady â€” the free scientific figure maker for researchers.',
+  title: 'Roadmap — FigureReady',
+  description: 'See what has shipped and what is coming next in FigureReady — the free scientific figure maker for researchers.',
   alternates: { canonical: 'https://figureready.com/roadmap' },
   openGraph: {
-    title: 'Roadmap â€” FigureReady',
+    title: 'Roadmap — FigureReady',
     description: 'See what has shipped and what is coming next in FigureReady.',
     url: 'https://figureready.com/roadmap',
     type: 'website',
@@ -18,13 +18,13 @@ const released = [
   'Multi-series line, scatter, and bar charts',
   'Error bars (SD / SEM)',
   'Visual style editor (font, color, line width, markers)',
-  'PNG (3Ã—) and SVG export',
+  'PNG (3×) and SVG export',
   'Saved style defaults',
 ]
 
 const planned = [
   { title: 'Journal templates', desc: 'One-click presets matching Nature, Science, ACS, and Elsevier figure guidelines.', status: 'planned' },
-  { title: 'Multi-panel figures', desc: 'Combine several charts into a single labelled figure (A, B, Câ€¦).', status: 'planned' },
+  { title: 'Multi-panel figures', desc: 'Combine several charts into a single labelled figure (A, B, C…).', status: 'planned' },
   { title: 'Figure consistency checker', desc: 'Detect inconsistent fonts, axis ranges, or color palettes across panels.', status: 'planned' },
   { title: 'Advanced annotations', desc: 'Arrows, brackets, significance stars (*, **, ***), and text boxes.', status: 'planned' },
   { title: 'LaTeX axis labels', desc: 'Render mathematical expressions and subscripts in axis titles.', status: 'planned' },
@@ -112,4 +112,3 @@ export default function RoadmapPage() {
     </div>
   )
 }
-
