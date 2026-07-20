@@ -12,7 +12,7 @@ import WelcomeModal from '@/components/WelcomeModal'
 import FeedbackButton from '@/components/FeedbackButton'
 import SaveTemplateModal from '@/components/SaveTemplateModal'
 import TemplateSelector from '@/components/TemplateSelector'
-import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
+import { chartStyles, journalStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
@@ -27,7 +27,7 @@ export default function AppPage() {
   const [xCol, setXCol] = useState('')
   const [yCols, setYCols] = useState<string[]>([])
   const [chartType, setChartType] = useState<ChartType>('line')
-  const styleName: StyleName = 'ACS'
+  const [styleName, setStyleName] = useState<StyleName>('ACS')
   const [seriesNames, setSeriesNames] = useState<Record<string, string>>({})
   const [errorCols, setErrorCols] = useState<Record<string, string>>({})
   const [xAxisLabel, setXAxisLabel] = useState('')
@@ -171,6 +171,30 @@ export default function AppPage() {
               }
             >
               <div className="space-y-5">
+                {/* Journal style selector */}
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Journal Style</p>
+                  <div className="flex gap-2">
+                    {journalStyles.map(js => (
+                      <button
+                        key={js.name}
+                        onClick={() => { setStyleName(js.name); setStyleOverrides({}) }}
+                        className={`flex-1 py-2 px-1 rounded-lg text-xs font-semibold border transition-all flex flex-col items-center gap-1.5 ${
+                          styleName === js.name
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                        }`}
+                      >
+                        <div className="flex gap-0.5">
+                          {js.colors.map(c => (
+                            <span key={c} className="w-3 h-3 rounded-full border border-white/30" style={{ background: c }} />
+                          ))}
+                        </div>
+                        {js.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <TemplateSelector onApply={handleApplyTemplate} />
                 <ColumnSelector
                   columns={columns}
