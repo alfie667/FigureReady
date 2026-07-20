@@ -76,7 +76,7 @@ export default function LandingPage() {
       <section className="max-w-5xl mx-auto px-6 pt-16 pb-16 text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-full mb-6">
           <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          <span className="text-xs font-medium text-blue-700">No account needed Â· pay only to download</span>
+          <span className="text-xs font-medium text-blue-700">Free to use · No account needed</span>
         </div>
 
         <h1
@@ -297,4 +297,5 @@ export default function LandingPage() {
     </div>
   )
 }
+
 
