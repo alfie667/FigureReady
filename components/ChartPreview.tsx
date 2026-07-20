@@ -487,7 +487,7 @@ export default function ChartPreview({
         viewBox={props.viewBox as DraggableLabelProps['viewBox']}
         value={xLabelText}
         dx={styleOverrides.xLabelDx ?? 0}
-        dy={styleOverrides.xLabelDy ?? 0}
+        dy={styleOverrides.xLabelDy ?? 14}
         style={xLabelStyle}
         onDrag={(ddx, ddy) => {
           xLabelDxRef.current += ddx; xLabelDyRef.current += ddy
@@ -503,7 +503,7 @@ export default function ChartPreview({
         viewBox={props.viewBox as DraggableLabelProps['viewBox']}
         value={yLabelText}
         angle={-90}
-        dx={styleOverrides.yLabelDx ?? 0}
+        dx={styleOverrides.yLabelDx ?? -12}
         dy={styleOverrides.yLabelDy ?? 0}
         style={yLabelStyle}
         onDrag={(ddx, ddy) => {
@@ -705,8 +705,8 @@ export default function ChartPreview({
       return (
         <ScatterChart margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
           {grid}
-          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow />
-          <YAxis dataKey="y" type="number" {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
+          <YAxis dataKey="y" type="number" {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
           <Tooltip content={<ScatterTooltipContent />} cursor={false} />
           {legend}
           {scatterSeries.map(series => {
@@ -728,8 +728,8 @@ export default function ChartPreview({
       return (
         <BarChart data={processedData} margin={margin}>
           {grid}
-          <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} />
-          <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+          <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} height={65} />
+          <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
           <Tooltip content={<BarTooltipContent />} cursor={false} />
           {legend}
           {yCols.map((col, i) => (
