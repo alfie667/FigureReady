@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect } from 'react'
 import Link from 'next/link'
 import { activatePro } from '@/lib/usageLimit'
@@ -52,10 +52,10 @@ export default function SuccessPage() {
           </p>
 
           <a
-            href="https://figure-ready.vercel.app/app"
+            href="https://figureready.com/app"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md text-sm"
           >
-            Go back to the app →
+            Go back to the app â†’
           </a>
         </div>
       </div>
@@ -63,10 +63,11 @@ export default function SuccessPage() {
       {/* Footer */}
       <footer className="border-t border-slate-100 py-6">
         <div className="max-w-6xl mx-auto px-6 text-center text-xs text-slate-400">
-          FigureReady — 2026
+          FigureReady â€” 2026
         </div>
       </footer>
 
     </div>
   )
 }
+

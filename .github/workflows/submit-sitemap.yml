@@ -1,14 +1,14 @@
-# Submits sitemap.xml to Google Search Console after every Vercel deployment.
+﻿# Submits sitemap.xml to Google Search Console after every Vercel deployment.
 #
-# Required GitHub secrets (Settings → Secrets and variables → Actions):
+# Required GitHub secrets (Settings â†’ Secrets and variables â†’ Actions):
 #
 #   GOOGLE_SERVICE_ACCOUNT_JSON
 #     Full JSON content of a Google Cloud service account key.
 #     The service account must be added as an Owner of the Search Console
-#     property https://figure-ready.vercel.app/ (Search Console → Settings →
-#     Users and permissions → Add user → Owner).
-#     How to create: console.cloud.google.com → IAM → Service accounts →
-#     Create → Keys → Add key → JSON.
+#     property https://figureready.com/ (Search Console â†’ Settings â†’
+#     Users and permissions â†’ Add user â†’ Owner).
+#     How to create: console.cloud.google.com â†’ IAM â†’ Service accounts â†’
+#     Create â†’ Keys â†’ Add key â†’ JSON.
 #
 #   VERCEL_TOKEN
 #     A personal Vercel API token (vercel.com/account/tokens).
@@ -85,3 +85,4 @@ jobs:
         env:
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: node scripts/submit-sitemap.mjs
+

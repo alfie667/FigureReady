@@ -1,6 +1,6 @@
 import { MetadataRoute } from 'next'
 
-const BASE = 'https://figure-ready.vercel.app'
+const BASE = 'https://figureready.com'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

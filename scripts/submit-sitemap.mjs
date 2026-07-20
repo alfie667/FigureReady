@@ -1,10 +1,10 @@
-/**
- * Submits figure-ready.vercel.app/sitemap.xml to Google Search Console.
+﻿/**
+ * Submits figureready.com/sitemap.xml to Google Search Console.
  *
  * Requires env var:
- *   GOOGLE_SERVICE_ACCOUNT_JSON — the full JSON of a Google service account key
+ *   GOOGLE_SERVICE_ACCOUNT_JSON â€” the full JSON of a Google service account key
  *                                 that has been added as an Owner of the Search
- *                                 Console property https://figure-ready.vercel.app/
+ *                                 Console property https://figureready.com/
  *
  * Uses only Node.js built-ins (crypto, fetch). No npm install needed.
  * Requires Node >= 18.
@@ -12,12 +12,12 @@
 
 import { createSign } from 'crypto'
 
-const SITE_URL    = 'https://figure-ready.vercel.app/'
-const SITEMAP_URL = 'https://figure-ready.vercel.app/sitemap.xml'
+const SITE_URL    = 'https://figureready.com/'
+const SITEMAP_URL = 'https://figureready.com/sitemap.xml'
 const TOKEN_EP    = 'https://oauth2.googleapis.com/token'
 const SCOPE       = 'https://www.googleapis.com/auth/webmasters'
 
-// ── 1. Parse service account key ──────────────────────────────────────────────
+// â”€â”€ 1. Parse service account key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
 if (!raw) {
@@ -33,7 +33,7 @@ try {
   process.exit(1)
 }
 
-// ── 2. Build & sign a JWT ─────────────────────────────────────────────────────
+// â”€â”€ 2. Build & sign a JWT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function b64url(s) {
   return Buffer.from(s).toString('base64url')
@@ -54,7 +54,7 @@ sign.update(`${header}.${payload}`)
 const sig = b64url(sign.sign(key.private_key))
 const jwt = `${header}.${payload}.${sig}`
 
-// ── 3. Exchange JWT for an OAuth2 access token ────────────────────────────────
+// â”€â”€ 3. Exchange JWT for an OAuth2 access token â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const tokenRes = await fetch(TOKEN_EP, {
   method:  'POST',
@@ -73,7 +73,7 @@ if (!tokenBody.access_token) {
 
 const { access_token } = tokenBody
 
-// ── 4. Submit the sitemap via Search Console API ──────────────────────────────
+// â”€â”€ 4. Submit the sitemap via Search Console API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const apiUrl = [
   'https://www.googleapis.com/webmasters/v3/sites',
@@ -88,9 +88,10 @@ const submitRes = await fetch(apiUrl, {
 })
 
 if (submitRes.ok || submitRes.status === 204) {
-  console.log(`✓ Sitemap submitted: ${SITEMAP_URL}`)
+  console.log(`âœ“ Sitemap submitted: ${SITEMAP_URL}`)
 } else {
   const body = await submitRes.text()
-  console.error(`✗ Submission failed (HTTP ${submitRes.status}):`, body)
+  console.error(`âœ— Submission failed (HTTP ${submitRes.status}):`, body)
   process.exit(1)
 }
+

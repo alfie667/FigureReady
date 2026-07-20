@@ -1,60 +1,60 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 
 export const metadata: Metadata = {
-  title: 'Free Scientific Figure Maker — FigureReady',
+  title: 'Free Scientific Figure Maker â€” FigureReady',
   description: 'FigureReady is a free scientific figure maker. Upload your Excel file and get a publication-ready figure in seconds. No code, no installation.',
-  alternates: { canonical: 'https://figure-ready.vercel.app/scientific-figure-maker' },
+  alternates: { canonical: 'https://figureready.com/scientific-figure-maker' },
   openGraph: {
-    title: 'Free Scientific Figure Maker — FigureReady',
+    title: 'Free Scientific Figure Maker â€” FigureReady',
     description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
-    url: 'https://figure-ready.vercel.app/scientific-figure-maker',
+    url: 'https://figureready.com/scientific-figure-maker',
     type: 'website',
     siteName: 'FigureReady',
   },
   twitter: {
     card: 'summary',
-    title: 'Free Scientific Figure Maker — FigureReady',
+    title: 'Free Scientific Figure Maker â€” FigureReady',
     description: 'Upload your Excel file and get a publication-ready scientific figure in seconds. Free for researchers.',
   },
 }
 
 const comparison: { feature: string; others: string; othersBad?: boolean; figureready: string; figurereadyGood?: boolean }[] = [
-  { feature: 'Price',                        others: '$300–$1000 / year',      othersBad: true,  figureready: 'Free beta',              figurereadyGood: true },
-  { feature: 'Installation required',        others: '✗ Yes',                  othersBad: true,  figureready: '✓ No — browser-based',   figurereadyGood: true },
-  { feature: 'Excel (.xlsx) upload',         others: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'Publication-ready figures',    others: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'Nature / ACS / IEEE styles',   others: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'PNG / SVG export',             others: 'Varies',                                   figureready: '✓ Yes (300 dpi)',        figurereadyGood: true },
-  { feature: 'No account required',          others: '✗ Account needed',       othersBad: true,  figureready: '✓ No account',           figurereadyGood: true },
+  { feature: 'Price',                        others: '$300â€“$1000 / year',      othersBad: true,  figureready: 'Free beta',              figurereadyGood: true },
+  { feature: 'Installation required',        others: 'âœ— Yes',                  othersBad: true,  figureready: 'âœ“ No â€” browser-based',   figurereadyGood: true },
+  { feature: 'Excel (.xlsx) upload',         others: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'Publication-ready figures',    others: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'Nature / ACS / IEEE styles',   others: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'PNG / SVG export',             others: 'Varies',                                   figureready: 'âœ“ Yes (300 dpi)',        figurereadyGood: true },
+  { feature: 'No account required',          others: 'âœ— Account needed',       othersBad: true,  figureready: 'âœ“ No account',           figurereadyGood: true },
   { feature: 'Learning curve',               others: 'Hours to days',          othersBad: true,  figureready: '< 5 minutes',            figurereadyGood: true },
-  { feature: 'Time to first figure',         others: '~30–60 min',             othersBad: true,  figureready: '< 30 seconds',           figurereadyGood: true },
+  { feature: 'Time to first figure',         others: '~30â€“60 min',             othersBad: true,  figureready: '< 30 seconds',           figurereadyGood: true },
 ]
 
 const whyCards = [
-  { title: 'Truly free',       desc: 'No subscription, no trial, no credit card. Free during the beta — just upload and export.' },
+  { title: 'Truly free',       desc: 'No subscription, no trial, no credit card. Free during the beta â€” just upload and export.' },
   { title: 'Instant results',  desc: 'Go from raw Excel data to a publication-ready figure in under 60 seconds.' },
-  { title: 'Browser-based',    desc: 'No download, no installation. Works in Chrome, Firefox, Safari — any device.' },
+  { title: 'Browser-based',    desc: 'No download, no installation. Works in Chrome, Firefox, Safari â€” any device.' },
   { title: 'Journal standards',desc: 'Built-in Nature, ACS, and IEEE styles. Correct fonts, axis weights, and margins.' },
-  { title: 'Error bars',       desc: 'SD, SEM or CI — just select the error column and bars appear automatically.' },
+  { title: 'Error bars',       desc: 'SD, SEM or CI â€” just select the error column and bars appear automatically.' },
   { title: 'Private',          desc: 'Your data never leaves your browser. No server, no upload, no account.' },
 ]
 
 const steps = [
   { n: '1', title: 'Upload your Excel file', desc: 'Drag and drop a .xlsx file. Columns are detected automatically.' },
   { n: '2', title: 'Configure your figure',  desc: 'Select X and Y axes, chart type, series names, style, and error bars.' },
-  { n: '3', title: 'Export in one click',    desc: 'Download a high-resolution PNG (3×) or a scalable SVG ready for submission.' },
+  { n: '3', title: 'Export in one click',    desc: 'Download a high-resolution PNG (3Ã—) or a scalable SVG ready for submission.' },
 ]
 
 const faqs = [
   {
     q: 'What is a free scientific figure maker?',
-    a: 'A free scientific figure maker is a tool that converts raw data (from Excel, CSV, or similar) into publication-quality charts — without requiring expensive software like GraphPad Prism or Origin. FigureReady is browser-based, requires no installation, and is completely free during the beta.',
+    a: 'A free scientific figure maker is a tool that converts raw data (from Excel, CSV, or similar) into publication-quality charts â€” without requiring expensive software like GraphPad Prism or Origin. FigureReady is browser-based, requires no installation, and is completely free during the beta.',
   },
   {
     q: 'What types of figures can I create with FigureReady?',
-    a: 'FigureReady supports line charts, scatter plots, and bar charts — the three most common figure types in biology, chemistry, and physics publications. More chart types (box plots, heatmaps) are planned for future releases.',
+    a: 'FigureReady supports line charts, scatter plots, and bar charts â€” the three most common figure types in biology, chemistry, and physics publications. More chart types (box plots, heatmaps) are planned for future releases.',
   },
   {
     q: 'Are the figures suitable for journal submission?',
@@ -62,11 +62,11 @@ const faqs = [
   },
   {
     q: 'Do I need to create an account to use FigureReady?',
-    a: 'No account is required. Open the tool, upload your file, configure your figure, and export. Everything runs in your browser — your data never leaves your computer.',
+    a: 'No account is required. Open the tool, upload your file, configure your figure, and export. Everything runs in your browser â€” your data never leaves your computer.',
   },
   {
     q: 'What export formats does FigureReady support?',
-    a: 'FigureReady exports PNG at 3× screen resolution (suitable for most journal requirements) and SVG for further editing in Illustrator, Inkscape, or Affinity Designer.',
+    a: 'FigureReady exports PNG at 3Ã— screen resolution (suitable for most journal requirements) and SVG for further editing in Illustrator, Inkscape, or Affinity Designer.',
   },
 ]
 
@@ -109,7 +109,7 @@ export default function ScientificFigureMakerPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Create my first figure — free →
+            Create my first figure â€” free â†’
           </GatedAppLink>
         </div>
       </section>
@@ -204,14 +204,14 @@ export default function ScientificFigureMakerPage() {
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Make your first scientific figure for free</h2>
         <p className="text-slate-500 text-sm mb-8">No account needed. Works in your browser. Export PNG or SVG in seconds.</p>
         <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-          Create my first figure — free →
+          Create my first figure â€” free â†’
         </GatedAppLink>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady â€” free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-slate-600 transition-colors">Home</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
@@ -223,3 +223,4 @@ export default function ScientificFigureMakerPage() {
     </div>
   )
 }
+

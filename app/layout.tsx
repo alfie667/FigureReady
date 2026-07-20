@@ -1,8 +1,8 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
 
-const BASE = 'https://figure-ready.vercel.app'
+const BASE = 'https://figureready.com'
 
 export const metadata: Metadata = {
   title: 'FigureReady',
@@ -55,3 +55,4 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
+

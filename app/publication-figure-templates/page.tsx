@@ -1,15 +1,15 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 
 export const metadata: Metadata = {
   title: 'Free Publication Figure Templates for Researchers',
   description: 'Download free publication-ready figure templates for Nature, Science, IEEE. Or upload your Excel and get a custom figure in seconds with FigureReady.',
-  alternates: { canonical: 'https://figure-ready.vercel.app/publication-figure-templates' },
+  alternates: { canonical: 'https://figureready.com/publication-figure-templates' },
   openGraph: {
     title: 'Free Publication Figure Templates for Researchers',
     description: 'Free publication-ready figure templates for Nature, Science, IEEE. Upload your Excel and get a custom figure in seconds.',
-    url: 'https://figure-ready.vercel.app/publication-figure-templates',
+    url: 'https://figureready.com/publication-figure-templates',
     type: 'website',
     siteName: 'FigureReady',
   },
@@ -31,11 +31,11 @@ const templates: { name: string; journal: string; type: string; desc: string }[]
 
 const comparison: { feature: string; manual: string; manualBad?: boolean; figureready: string; figurereadyGood?: boolean }[] = [
   { feature: 'Template source',          manual: 'Download & edit in Excel/PPT',  manualBad: true,  figureready: 'Built-in journal styles',        figurereadyGood: true },
-  { feature: 'Correct journal sizing',   manual: '✗ Manual resizing required',    manualBad: true,  figureready: '✓ Applied automatically',         figurereadyGood: true },
-  { feature: 'Font & line weight',       manual: '✗ Must set manually',           manualBad: true,  figureready: '✓ Pre-configured per journal',    figurereadyGood: true },
+  { feature: 'Correct journal sizing',   manual: 'âœ— Manual resizing required',    manualBad: true,  figureready: 'âœ“ Applied automatically',         figurereadyGood: true },
+  { feature: 'Font & line weight',       manual: 'âœ— Must set manually',           manualBad: true,  figureready: 'âœ“ Pre-configured per journal',    figurereadyGood: true },
   { feature: 'Export quality',           manual: 'Screen resolution (72 dpi)',    manualBad: true,  figureready: 'High-res PNG (300 dpi) + SVG',    figurereadyGood: true },
-  { feature: 'Error bars',              manual: '✗ Complex to add correctly',    manualBad: true,  figureready: '✓ Select column, done',           figurereadyGood: true },
-  { feature: 'Time to export',          manual: '30–90 min per figure',          manualBad: true,  figureready: '< 30 seconds',                   figurereadyGood: true },
+  { feature: 'Error bars',              manual: 'âœ— Complex to add correctly',    manualBad: true,  figureready: 'âœ“ Select column, done',           figurereadyGood: true },
+  { feature: 'Time to export',          manual: '30â€“90 min per figure',          manualBad: true,  figureready: '< 30 seconds',                   figurereadyGood: true },
   { feature: 'Price',                   manual: 'Free but slow',                               figureready: 'Free and fast',                  figurereadyGood: true },
 ]
 
@@ -44,7 +44,7 @@ const whyCards = [
   { title: 'No editing needed', desc: 'Apply the template, upload your data, and export. No PowerPoint, no Illustrator reformatting.' },
   { title: 'Error bars',        desc: 'SD and SEM support included. Select your error column and bars are rendered correctly.' },
   { title: 'SVG export',        desc: 'Export scalable SVG to resize for single- or double-column submission without quality loss.' },
-  { title: 'Instant preview',   desc: 'See the figure update live as you change the style — before you commit to an export.' },
+  { title: 'Instant preview',   desc: 'See the figure update live as you change the style â€” before you commit to an export.' },
   { title: 'Free',              desc: 'No subscription, no account. All templates are free during the beta.' },
 ]
 
@@ -57,15 +57,15 @@ const steps = [
 const faqs = [
   {
     q: 'Where can I find free publication figure templates?',
-    a: 'FigureReady provides built-in publication figure templates for Nature, Science, ACS, IEEE, and Elsevier journals. Upload your Excel data, select the target journal style, and export a correctly-formatted figure in seconds — no design software required.',
+    a: 'FigureReady provides built-in publication figure templates for Nature, Science, ACS, IEEE, and Elsevier journals. Upload your Excel data, select the target journal style, and export a correctly-formatted figure in seconds â€” no design software required.',
   },
   {
     q: 'What makes a good publication figure template?',
-    a: 'A good publication figure template matches the target journal\'s author guidelines: correct column width (typically 88 mm for single-column), minimum 300 dpi resolution, appropriate font (Arial or Helvetica, 7–9 pt for axis labels), clean axes without gridlines, and a legible color palette that also works in grayscale.',
+    a: 'A good publication figure template matches the target journal\'s author guidelines: correct column width (typically 88 mm for single-column), minimum 300 dpi resolution, appropriate font (Arial or Helvetica, 7â€“9 pt for axis labels), clean axes without gridlines, and a legible color palette that also works in grayscale.',
   },
   {
     q: 'Can I use these templates for Nature or ACS journals?',
-    a: 'Yes. FigureReady\'s Nature and ACS styles are designed to match the respective author guidelines — correct axis weight, font size, and figure dimensions. Export as SVG and scale to single- or double-column width before submission.',
+    a: 'Yes. FigureReady\'s Nature and ACS styles are designed to match the respective author guidelines â€” correct axis weight, font size, and figure dimensions. Export as SVG and scale to single- or double-column width before submission.',
   },
   {
     q: 'Do the templates support multiple data series?',
@@ -73,7 +73,7 @@ const faqs = [
   },
   {
     q: 'Can I edit the figure after exporting?',
-    a: 'Yes. Export as SVG and open in Adobe Illustrator, Inkscape, or Affinity Designer for final adjustments. Every element — axes, labels, markers — is a separate SVG object and fully editable.',
+    a: 'Yes. Export as SVG and open in Adobe Illustrator, Inkscape, or Affinity Designer for final adjustments. Every element â€” axes, labels, markers â€” is a separate SVG object and fully editable.',
   },
 ]
 
@@ -116,7 +116,7 @@ export default function PublicationFigureTemplatesPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Apply a template — free →
+            Apply a template â€” free â†’
           </GatedAppLink>
         </div>
       </section>
@@ -229,14 +229,14 @@ export default function PublicationFigureTemplatesPage() {
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Apply a journal template to your data now</h2>
         <p className="text-slate-500 text-sm mb-8">No account, no installation. Nature, ACS, and IEEE templates included. Free.</p>
         <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-          Apply a template — free →
+          Apply a template â€” free â†’
         </GatedAppLink>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady â€” free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-slate-600 transition-colors">Home</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
@@ -248,3 +248,4 @@ export default function PublicationFigureTemplatesPage() {
     </div>
   )
 }
+

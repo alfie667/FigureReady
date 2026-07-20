@@ -1,40 +1,40 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 
 export const metadata: Metadata = {
-  title: 'Convert Excel to Scientific Graph — Publication Ready in Seconds',
+  title: 'Convert Excel to Scientific Graph â€” Publication Ready in Seconds',
   description: 'Convert your Excel data into a publication-ready scientific graph in seconds. No code, no Prism. Free tool for PhD students and researchers.',
-  alternates: { canonical: 'https://figure-ready.vercel.app/excel-to-scientific-graph' },
+  alternates: { canonical: 'https://figureready.com/excel-to-scientific-graph' },
   openGraph: {
-    title: 'Convert Excel to Scientific Graph — Publication Ready in Seconds',
+    title: 'Convert Excel to Scientific Graph â€” Publication Ready in Seconds',
     description: 'Convert your Excel data into a publication-ready scientific graph in seconds. Free for PhD students and researchers.',
-    url: 'https://figure-ready.vercel.app/excel-to-scientific-graph',
+    url: 'https://figureready.com/excel-to-scientific-graph',
     type: 'website',
     siteName: 'FigureReady',
   },
   twitter: {
     card: 'summary',
-    title: 'Convert Excel to Scientific Graph — Free Tool',
+    title: 'Convert Excel to Scientific Graph â€” Free Tool',
     description: 'Convert your Excel data into a publication-ready scientific graph in seconds. No code, no Prism.',
   },
 }
 
 const comparison: { feature: string; excel: string; excelBad?: boolean; figureready: string; figurereadyGood?: boolean }[] = [
-  { feature: 'Scientific figure quality', excel: '✗ Not publication-ready',    excelBad: true,  figureready: '✓ Nature / ACS / IEEE quality',  figurereadyGood: true },
-  { feature: 'Correct font sizes',        excel: '✗ Requires manual setup',    excelBad: true,  figureready: '✓ Pre-configured per journal',    figurereadyGood: true },
-  { feature: 'Axis weight & formatting',  excel: '✗ Default Excel style',      excelBad: true,  figureready: '✓ Publication axes',              figurereadyGood: true },
-  { feature: 'Error bars (SD / SEM)',     excel: 'Complex to add correctly',   excelBad: true,  figureready: '✓ Select column, done',           figurereadyGood: true },
+  { feature: 'Scientific figure quality', excel: 'âœ— Not publication-ready',    excelBad: true,  figureready: 'âœ“ Nature / ACS / IEEE quality',  figurereadyGood: true },
+  { feature: 'Correct font sizes',        excel: 'âœ— Requires manual setup',    excelBad: true,  figureready: 'âœ“ Pre-configured per journal',    figurereadyGood: true },
+  { feature: 'Axis weight & formatting',  excel: 'âœ— Default Excel style',      excelBad: true,  figureready: 'âœ“ Publication axes',              figurereadyGood: true },
+  { feature: 'Error bars (SD / SEM)',     excel: 'Complex to add correctly',   excelBad: true,  figureready: 'âœ“ Select column, done',           figurereadyGood: true },
   { feature: 'High-resolution export',   excel: '72 dpi (screen only)',        excelBad: true,  figureready: '300 dpi PNG + SVG',               figurereadyGood: true },
-  { feature: 'Multiple Y series',         excel: '✓ Yes',                                       figureready: '✓ Yes' },
-  { feature: 'Time to a usable figure',  excel: '30–90 min per figure',        excelBad: true,  figureready: '< 30 seconds',                   figurereadyGood: true },
+  { feature: 'Multiple Y series',         excel: 'âœ“ Yes',                                       figureready: 'âœ“ Yes' },
+  { feature: 'Time to a usable figure',  excel: '30â€“90 min per figure',        excelBad: true,  figureready: '< 30 seconds',                   figurereadyGood: true },
   { feature: 'Price',                    excel: 'Included in Office',                           figureready: 'Free beta',                       figurereadyGood: true },
 ]
 
 const whyCards = [
-  { title: 'Upload any .xlsx',     desc: 'Drag and drop your Excel file. Headers are detected automatically — no reformatting needed.' },
+  { title: 'Upload any .xlsx',     desc: 'Drag and drop your Excel file. Headers are detected automatically â€” no reformatting needed.' },
   { title: 'Journal-ready output', desc: 'Nature, ACS, and IEEE styles applied in one click. Correct fonts, axis weights, and margins.' },
-  { title: 'High-res export',      desc: 'PNG at 3× resolution and scalable SVG — meeting 300 dpi requirements for journal submission.' },
+  { title: 'High-res export',      desc: 'PNG at 3Ã— resolution and scalable SVG â€” meeting 300 dpi requirements for journal submission.' },
   { title: 'Error bars built in',  desc: 'Add SD or SEM in one step. No complex formula, no manual drawing.' },
   { title: 'Browser-based',        desc: 'No installation, no plugin. Works in any browser. Your data stays on your computer.' },
   { title: 'Free',                 desc: 'No subscription, no account, no credit card. Free during the beta.' },
@@ -43,7 +43,7 @@ const whyCards = [
 const steps = [
   { n: '1', title: 'Upload your Excel file', desc: 'Drag and drop a .xlsx file. Columns are detected and listed automatically.' },
   { n: '2', title: 'Configure your graph',   desc: 'Select X and Y axes, chart type (line, scatter, bar), series names, and error bars.' },
-  { n: '3', title: 'Export the graph',       desc: 'Download a high-resolution PNG (3×) or a scalable SVG ready for journal submission.' },
+  { n: '3', title: 'Export the graph',       desc: 'Download a high-resolution PNG (3Ã—) or a scalable SVG ready for journal submission.' },
 ]
 
 const faqs = [
@@ -53,15 +53,15 @@ const faqs = [
   },
   {
     q: 'Why are Excel graphs not suitable for scientific publications?',
-    a: 'Excel\'s default charts use screen-resolution output (72 dpi), incorrect font sizes for print, heavy gridlines, and non-standard axis formatting. Scientific journals require at least 300 dpi, specific font sizes (7–9 pt for axis labels), minimal chart decoration, and clean black axes — none of which Excel applies by default.',
+    a: 'Excel\'s default charts use screen-resolution output (72 dpi), incorrect font sizes for print, heavy gridlines, and non-standard axis formatting. Scientific journals require at least 300 dpi, specific font sizes (7â€“9 pt for axis labels), minimal chart decoration, and clean black axes â€” none of which Excel applies by default.',
   },
   {
     q: 'What types of scientific graphs can I create from Excel with FigureReady?',
-    a: 'FigureReady supports line charts, scatter plots, and bar charts — the three most common figure types in scientific publications. Multiple Y series are supported, and you can add error bars (SD or SEM) by selecting any column as the error source.',
+    a: 'FigureReady supports line charts, scatter plots, and bar charts â€” the three most common figure types in scientific publications. Multiple Y series are supported, and you can add error bars (SD or SEM) by selecting any column as the error source.',
   },
   {
     q: 'Can I use FigureReady if my data is already in Excel?',
-    a: 'Yes — FigureReady is built specifically for Excel users. Upload your .xlsx file directly. Columns are detected automatically, including headers. There is no need to reformat your data or copy-paste it into another tool.',
+    a: 'Yes â€” FigureReady is built specifically for Excel users. Upload your .xlsx file directly. Columns are detected automatically, including headers. There is no need to reformat your data or copy-paste it into another tool.',
   },
   {
     q: 'What is the difference between FigureReady and using Excel or Prism?',
@@ -108,7 +108,7 @@ export default function ExcelToScientificGraphPage() {
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Convert my Excel data — free →
+            Convert my Excel data â€” free â†’
           </GatedAppLink>
         </div>
       </section>
@@ -203,14 +203,14 @@ export default function ExcelToScientificGraphPage() {
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Stop reformatting Excel charts for publication</h2>
         <p className="text-slate-500 text-sm mb-8">Upload your .xlsx and export a publication-ready graph in under 30 seconds. Free.</p>
         <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-          Convert my Excel data — free →
+          Convert my Excel data â€” free â†’
         </GatedAppLink>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady â€” free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-slate-600 transition-colors">Home</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
@@ -222,3 +222,4 @@ export default function ExcelToScientificGraphPage() {
     </div>
   )
 }
+

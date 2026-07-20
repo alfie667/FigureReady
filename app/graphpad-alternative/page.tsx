@@ -1,35 +1,35 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 
 export const metadata: Metadata = {
-  title: 'Free GraphPad Prism Alternative — FigureReady',
+  title: 'Free GraphPad Prism Alternative â€” FigureReady',
   description: 'FigureReady is a free GraphPad Prism alternative. Upload your Excel file and get a publication-ready figure in seconds. No installation, no subscription, no code.',
-  alternates: { canonical: 'https://figure-ready.vercel.app/graphpad-alternative' },
+  alternates: { canonical: 'https://figureready.com/graphpad-alternative' },
   openGraph: {
-    title: 'Free GraphPad Prism Alternative — FigureReady',
+    title: 'Free GraphPad Prism Alternative â€” FigureReady',
     description: 'Get publication-ready figures from Excel in seconds. Free alternative to GraphPad Prism.',
-    url: 'https://figure-ready.vercel.app/graphpad-alternative',
+    url: 'https://figureready.com/graphpad-alternative',
     type: 'website',
     siteName: 'FigureReady',
   },
   twitter: {
     card: 'summary',
-    title: 'Free GraphPad Prism Alternative — FigureReady',
+    title: 'Free GraphPad Prism Alternative â€” FigureReady',
     description: 'Get publication-ready figures from Excel in seconds. Free alternative to GraphPad Prism.',
   },
 }
 
 const comparison: { feature: string; graphpad: string; graphpadBad?: boolean; figureready: string; figurereadyGood?: boolean }[] = [
   { feature: 'Price',                        graphpad: '$840 / year',           graphpadBad: true,  figureready: 'Free beta',              figurereadyGood: true },
-  { feature: 'Installation required',        graphpad: '✗ Yes (Windows/Mac)',   graphpadBad: true,  figureready: '✓ No — browser-based',   figurereadyGood: true },
-  { feature: 'Excel (.xlsx) upload',         graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'Publication-ready figures',    graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'Error bars',                   graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'Multiple Y series',            graphpad: '✓ Yes',                                    figureready: '✓ Yes' },
-  { feature: 'PNG / SVG export',             graphpad: '✓ Yes',                                    figureready: '✓ Yes (300 dpi)',        figurereadyGood: true },
-  { feature: 'Nature / Science / IEEE format',graphpad: '✓ Yes',                                   figureready: '✓ Yes' },
-  { feature: 'Complex statistics (ANOVA…)', graphpad: '✓ Yes',                                     figureready: '✗ Not yet' },
+  { feature: 'Installation required',        graphpad: 'âœ— Yes (Windows/Mac)',   graphpadBad: true,  figureready: 'âœ“ No â€” browser-based',   figurereadyGood: true },
+  { feature: 'Excel (.xlsx) upload',         graphpad: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'Publication-ready figures',    graphpad: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'Error bars',                   graphpad: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'Multiple Y series',            graphpad: 'âœ“ Yes',                                    figureready: 'âœ“ Yes' },
+  { feature: 'PNG / SVG export',             graphpad: 'âœ“ Yes',                                    figureready: 'âœ“ Yes (300 dpi)',        figurereadyGood: true },
+  { feature: 'Nature / Science / IEEE format',graphpad: 'âœ“ Yes',                                   figureready: 'âœ“ Yes' },
+  { feature: 'Complex statistics (ANOVAâ€¦)', graphpad: 'âœ“ Yes',                                     figureready: 'âœ— Not yet' },
   { feature: 'Time to first figure',         graphpad: '~30 min',               graphpadBad: true,  figureready: '< 30 seconds',           figurereadyGood: true },
 ]
 
@@ -38,14 +38,14 @@ const whyCards = [
   { title: 'Browser-based',  desc: 'No download, no installation, no IT tickets. Works on any computer with a browser.' },
   { title: 'Journal-ready',  desc: 'ACS-style figures with correct fonts, line widths and axis formatting for peer review.' },
   { title: 'Error bars',     desc: 'SD and SEM support built in. Select your error column and they appear automatically.' },
-  { title: 'Style control',  desc: 'Font size, line width, markers and colors — all adjustable visually, like Canva.' },
+  { title: 'Style control',  desc: 'Font size, line width, markers and colors â€” all adjustable visually, like Canva.' },
   { title: 'Free',           desc: 'No subscription, no trial, no credit card. Free during the beta.' },
 ]
 
 const steps = [
   { n: '1', title: 'Upload your Excel file', desc: 'Drag and drop a .xlsx file. Columns are detected automatically.' },
   { n: '2', title: 'Configure your figure',  desc: 'Select X and Y axes, chart type, series names, and error bars.' },
-  { n: '3', title: 'Export in one click',    desc: 'Download a high-resolution PNG (3×) or a scalable SVG.' },
+  { n: '3', title: 'Export in one click',    desc: 'Download a high-resolution PNG (3Ã—) or a scalable SVG.' },
 ]
 
 const faqs = [
@@ -55,11 +55,11 @@ const faqs = [
   },
   {
     q: 'Does FigureReady work like GraphPad Prism?',
-    a: 'FigureReady focuses on the most common use case: turning Excel data into a clean, publication-ready figure. You upload a .xlsx file, select your axes, and export. No statistical analysis engine — just fast, beautiful figures.',
+    a: 'FigureReady focuses on the most common use case: turning Excel data into a clean, publication-ready figure. You upload a .xlsx file, select your axes, and export. No statistical analysis engine â€” just fast, beautiful figures.',
   },
   {
     q: 'Can I create the same types of figures as in GraphPad?',
-    a: 'FigureReady supports line charts, scatter plots and bar charts — the most common figure types in biology and chemistry publications. More types are on the roadmap.',
+    a: 'FigureReady supports line charts, scatter plots and bar charts â€” the most common figure types in biology and chemistry publications. More types are on the roadmap.',
   },
   {
     q: 'Does FigureReady support error bars?',
@@ -67,7 +67,7 @@ const faqs = [
   },
   {
     q: 'What file formats does FigureReady export?',
-    a: 'FigureReady exports high-resolution PNG at 3× screen resolution and scalable SVG for further editing in Illustrator or Inkscape.',
+    a: 'FigureReady exports high-resolution PNG at 3Ã— screen resolution and scalable SVG for further editing in Illustrator or Inkscape.',
   },
   {
     q: 'Are FigureReady figures suitable for journal submission?',
@@ -114,11 +114,11 @@ export default function GraphPadAlternativePage() {
           <span className="text-blue-600">$840/year</span> is not.
         </h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          FigureReady is a free alternative to GraphPad Prism. Upload your Excel file and get a publication-ready figure in seconds — no installation, no subscription, no code.
+          FigureReady is a free alternative to GraphPad Prism. Upload your Excel file and get a publication-ready figure in seconds â€” no installation, no subscription, no code.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Create my first figure — free →
+            Create my first figure â€” free â†’
           </GatedAppLink>
         </div>
       </section>
@@ -213,14 +213,14 @@ export default function GraphPadAlternativePage() {
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Stop paying $840/year for figures</h2>
         <p className="text-slate-500 text-sm mb-8">FigureReady is free. No account needed. Works in your browser.</p>
         <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-          Create my first figure — free →
+          Create my first figure â€” free â†’
         </GatedAppLink>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady â€” free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-slate-600 transition-colors">Home</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
@@ -232,3 +232,4 @@ export default function GraphPadAlternativePage() {
     </div>
   )
 }
+

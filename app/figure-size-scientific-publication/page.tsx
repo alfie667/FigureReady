@@ -1,21 +1,21 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 
 export const metadata: Metadata = {
-  title: 'Figure Size Guide for Scientific Publications — Nature, Science, IEEE',
+  title: 'Figure Size Guide for Scientific Publications â€” Nature, Science, IEEE',
   description: 'Complete guide to figure sizes for Nature, Science, Cell, IEEE and other major journals. Plus a free tool to generate correctly-sized figures from Excel.',
-  alternates: { canonical: 'https://figure-ready.vercel.app/figure-size-scientific-publication' },
+  alternates: { canonical: 'https://figureready.com/figure-size-scientific-publication' },
   openGraph: {
-    title: 'Figure Size Guide for Scientific Publications — Nature, Science, IEEE',
+    title: 'Figure Size Guide for Scientific Publications â€” Nature, Science, IEEE',
     description: 'Complete guide to figure sizes for Nature, Science, Cell, IEEE and other major journals.',
-    url: 'https://figure-ready.vercel.app/figure-size-scientific-publication',
+    url: 'https://figureready.com/figure-size-scientific-publication',
     type: 'website',
     siteName: 'FigureReady',
   },
   twitter: {
     card: 'summary',
-    title: 'Figure Size for Scientific Publications — Nature, Science, IEEE',
+    title: 'Figure Size for Scientific Publications â€” Nature, Science, IEEE',
     description: 'Complete guide to figure sizes for major journals. Plus a free tool to generate correctly-sized figures.',
   },
 }
@@ -33,8 +33,8 @@ const journalSizes: { journal: string; singleCol: string; doubleCol: string; max
 
 const whyCards = [
   { title: 'Correct sizing',    desc: 'FigureReady exports figures at the exact pixel dimensions specified by Nature, ACS, and IEEE.' },
-  { title: '300 dpi output',    desc: 'All PNG exports are 3× resolution — meeting the minimum 300 dpi requirement of all major journals.' },
-  { title: 'SVG for scaling',   desc: 'SVG exports are resolution-independent — scale to any journal dimension without quality loss.' },
+  { title: '300 dpi output',    desc: 'All PNG exports are 3Ã— resolution â€” meeting the minimum 300 dpi requirement of all major journals.' },
+  { title: 'SVG for scaling',   desc: 'SVG exports are resolution-independent â€” scale to any journal dimension without quality loss.' },
   { title: 'No reformatting',   desc: 'No more resizing in PowerPoint or Photoshop. Export once, submit directly.' },
   { title: 'Font-size correct', desc: 'Axis labels and tick marks are sized to remain legible at single-column width after printing.' },
   { title: 'Free',              desc: 'No subscription, no trial. Just upload, configure, and export the correctly-sized figure.' },
@@ -49,11 +49,11 @@ const steps = [
 const faqs = [
   {
     q: 'What figure size does Nature require?',
-    a: 'Nature requires single-column figures to be 88 mm wide and double-column figures to be 180 mm wide, with a maximum height of 225 mm. Resolution must be at least 300 dpi for raster images. FigureReady exports PNG at 3× resolution, which meets this requirement.',
+    a: 'Nature requires single-column figures to be 88 mm wide and double-column figures to be 180 mm wide, with a maximum height of 225 mm. Resolution must be at least 300 dpi for raster images. FigureReady exports PNG at 3Ã— resolution, which meets this requirement.',
   },
   {
     q: 'What is the standard figure size for scientific publications?',
-    a: 'Most journals follow similar conventions: single-column figures are roughly 85–90 mm wide and double-column figures are 170–190 mm wide, with a maximum height around 225 mm. The resolution requirement is universally 300 dpi minimum for print quality.',
+    a: 'Most journals follow similar conventions: single-column figures are roughly 85â€“90 mm wide and double-column figures are 170â€“190 mm wide, with a maximum height around 225 mm. The resolution requirement is universally 300 dpi minimum for print quality.',
   },
   {
     q: 'How do I resize a figure for a journal submission?',
@@ -61,7 +61,7 @@ const faqs = [
   },
   {
     q: 'What DPI do I need for a scientific figure?',
-    a: 'Most journals require a minimum of 300 dpi for photographs and combination figures, and 1000 dpi for pure line art. FigureReady exports PNG at 3× screen resolution (typically 288–300 dpi at single-column width), which satisfies the 300 dpi requirement for combined figures.',
+    a: 'Most journals require a minimum of 300 dpi for photographs and combination figures, and 1000 dpi for pure line art. FigureReady exports PNG at 3Ã— screen resolution (typically 288â€“300 dpi at single-column width), which satisfies the 300 dpi requirement for combined figures.',
   },
   {
     q: 'Can FigureReady automatically format figures to the correct journal size?',
@@ -104,11 +104,11 @@ export default function FigureSizeScientificPublicationPage() {
           <span className="text-blue-600">Nature, Science, IEEE & more.</span>
         </h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The complete reference for figure dimensions in major scientific journals — plus a free tool to export correctly-sized, publication-ready figures directly from Excel.
+          The complete reference for figure dimensions in major scientific journals â€” plus a free tool to export correctly-sized, publication-ready figures directly from Excel.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Generate a correctly-sized figure — free →
+            Generate a correctly-sized figure â€” free â†’
           </GatedAppLink>
         </div>
       </section>
@@ -201,14 +201,14 @@ export default function FigureSizeScientificPublicationPage() {
         <h2 className="text-2xl font-bold text-slate-900 mb-3">Export a correctly-sized figure in seconds</h2>
         <p className="text-slate-500 text-sm mb-8">No account needed. Nature, ACS, and IEEE styles built in. Free during the beta.</p>
         <GatedAppLink className="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-md">
-          Generate my figure — free →
+          Generate my figure â€” free â†’
         </GatedAppLink>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-          <span>FigureReady — free beta, 2026</span>
+          <span>FigureReady â€” free beta, 2026</span>
           <div className="flex items-center gap-5">
             <Link href="/" className="hover:text-slate-600 transition-colors">Home</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
@@ -220,3 +220,4 @@ export default function FigureSizeScientificPublicationPage() {
     </div>
   )
 }
+
