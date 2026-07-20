@@ -71,6 +71,7 @@ export interface ChartStyle {
   labelOffset: number
   margin: ChartMargin
   chartHeight: number
+  showFrame: boolean
 }
 
 export const chartStyles: Record<StyleName, ChartStyle> = {
@@ -90,6 +91,7 @@ export const chartStyles: Record<StyleName, ChartStyle> = {
     labelOffset: 10,
     margin: { top: 12, right: 20, bottom: 56, left: 88 },
     chartHeight: 440,
+    showFrame: true,
   },
   Nature: {
     colors: ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9'],
@@ -107,6 +109,7 @@ export const chartStyles: Record<StyleName, ChartStyle> = {
     labelOffset: 10,
     margin: { top: 12, right: 20, bottom: 56, left: 88 },
     chartHeight: 440,
+    showFrame: false,
   },
   Elsevier: {
     colors: ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD'],
@@ -124,6 +127,7 @@ export const chartStyles: Record<StyleName, ChartStyle> = {
     labelOffset: 10,
     margin: { top: 12, right: 20, bottom: 56, left: 88 },
     chartHeight: 440,
+    showFrame: false,
   },
 }
 

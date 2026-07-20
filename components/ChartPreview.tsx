@@ -9,7 +9,7 @@ import {
   ScatterChart, Scatter,
   BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea, ErrorBar,
-  ResponsiveContainer,
+  ResponsiveContainer, Customized,
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
@@ -437,6 +437,20 @@ export default function ChartPreview({
 
   // ─── Style derivation ────────────────────────────────────────────────────────
 
+  const showFrame = s.showFrame
+  const frameLines = showFrame
+    ? <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
+        if (!offset) return null
+        const { top, left, width, height } = offset
+        return (
+          <g>
+            <line x1={left} y1={top} x2={left + width} y2={top} stroke={axisColor} strokeWidth={axisWidth} />
+            <line x1={left + width} y1={top} x2={left + width} y2={top + height} stroke={axisColor} strokeWidth={axisWidth} />
+          </g>
+        )
+      }} />
+    : null
+
   const annotationFontSize = styleOverrides.annotationFontSize ?? 12
   const fontFamily = styleOverrides.fontFamily ?? s.fontFamily
   const boldLabels = styleOverrides.boldLabels ?? false
@@ -705,6 +719,7 @@ export default function ChartPreview({
             )
           })}
           {zoomArea}
+          {frameLines}
         </ScatterChart>
       )
     }
@@ -722,6 +737,7 @@ export default function ChartPreview({
               {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
             </Bar>
           ))}
+          {frameLines}
         </BarChart>
       )
     }
@@ -747,6 +763,7 @@ export default function ChartPreview({
           )
         })}
         {zoomArea}
+        {frameLines}
       </LineChart>
     )
   }
