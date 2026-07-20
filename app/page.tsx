@@ -89,23 +89,12 @@ export default function LandingPage() {
           No Origin. No Prism. Upload your data and get a clean, journal-quality graphic ready to export.
         </p>
 
-        {/* Social proof */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="flex -space-x-2">
-            {['bg-blue-500','bg-violet-500','bg-emerald-500','bg-orange-500','bg-pink-500'].map((c,i) => (
-              <div key={i} className={`w-8 h-8 rounded-full ${c} border-2 border-white flex items-center justify-center text-white text-[10px] font-bold`}>
-                {['P','R','A','S','M'][i]}
-              </div>
-            ))}
-          </div>
-          <p className="text-sm text-slate-600 font-medium">
-            <span className="font-bold text-slate-900">500+</span> researchers already use FigureReady
-          </p>
-        </div>
-
-        {/* Email capture */}
-        <div className="mb-10">
-          <BetaSignupForm />
+        {/* CTA principal */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-10">
+          <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
+            Upload your Excel. Download your figure →
+          </GatedAppLink>
+          <SampleDataButton className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-base font-semibold rounded-xl transition-colors cursor-pointer" />
         </div>
 
         {/* Excel â†’ Figure transformation */}
@@ -164,14 +153,6 @@ export default function LandingPage() {
               priority
             />
           </div>
-        </div>
-
-        {/* CTA */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <GatedAppLink className="px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-xl transition-colors shadow-md">
-            Upload your Excel. Download your figure â†’
-          </GatedAppLink>
-          <SampleDataButton className="inline-flex items-center gap-2 px-8 py-3.5 border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 text-blue-700 text-base font-semibold rounded-xl transition-colors cursor-pointer" />
         </div>
         <p className="text-xs text-slate-400 mt-3">â†‘ Downloads a ready-to-use .xlsx file â€” open it in the app to see it become a figure</p>
 
@@ -289,7 +270,7 @@ export default function LandingPage() {
             <Link href="/pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="hover:text-slate-600 transition-colors">Roadmap</Link>
             <Link href="/graphpad-alternative" className="hover:text-slate-600 transition-colors">Free GraphPad Prism Alternative</Link>
-            <a href="mailto:contact@figure-ready.com" className="hover:text-slate-600 transition-colors">Contact</a>
+            <a href="mailto:contact@figureready.com" className="hover:text-slate-600 transition-colors">Contact</a>
             <Link href="/admin" className="hover:text-slate-600 transition-colors">Admin</Link>
           </div>
         </div>
@@ -297,5 +278,6 @@ export default function LandingPage() {
     </div>
   )
 }
+
 
 
