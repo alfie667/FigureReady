@@ -135,7 +135,14 @@ export default function LandingPage() {
                 style={{ fontSize: 'clamp(44px, 6.5vw, 82px)' }}
               >
                 From <span style={{ color: '#1D6F42' }}>Excel</span> to<br />
-                publication-<span style={{ textDecoration: 'underline', textDecorationColor: '#1D6F42', textDecorationThickness: '3px', textUnderlineOffset: '5px' }}>ready figures</span> in seconds.
+                publication-<span style={{ position: 'relative', display: 'inline-block', paddingBottom: '8px' }}>
+                  ready figures
+                  <svg aria-hidden viewBox="0 0 300 10" preserveAspectRatio="none"
+                    style={{ position: 'absolute', left: 0, bottom: 0, width: '100%', height: '10px' }}>
+                    <path d="M2,7 C25,3 55,9 85,5 C115,2 145,8 175,5 C205,3 235,8 260,5 C278,3 292,7 298,6"
+                      stroke="#1D6F42" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span> in seconds.
               </h1>
             </div>
 
