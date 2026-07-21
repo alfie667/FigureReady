@@ -132,11 +132,11 @@ export default function LandingPage() {
             <div>
               <h1
                 className="font-black text-slate-900 leading-[1.1] tracking-[-0.03em]"
-                style={{ fontSize: 'clamp(36px, 5vw, 64px)' }}
+                style={{ fontSize: 'clamp(44px, 6.5vw, 82px)' }}
               >
                 From <span style={{ color: '#1D6F42' }}>Excel</span> to<br />
-                <span className="text-blue-600">publication-ready</span><br />
-                <span className="text-blue-600">figures</span> in seconds.
+                <span style={{ color: '#4f46e5' }}>publication-ready</span><br />
+                <span style={{ color: '#4f46e5' }}>figures</span> in seconds.
               </h1>
             </div>
 
