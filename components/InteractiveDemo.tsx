@@ -222,17 +222,13 @@ export default function InteractiveDemo() {
             <div className="w-full bg-white rounded-xl border border-slate-100 p-3">
               <PublicationChart animate={animate} />
             </div>
-            <div className="flex gap-3">
-              <button
-                className="px-5 py-2 rounded-full text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
-                style={{ background: '#1D6F42' }}
-              >
-                ⬇ PNG 300 DPI
-              </button>
-              <button className="px-5 py-2 rounded-full border border-slate-200 text-slate-600 text-xs font-semibold hover:border-slate-300 transition-colors">
-                ⬇ SVG
-              </button>
-            </div>
+            <a
+              href="/app"
+              className="px-8 py-3 rounded-full text-white font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
+              style={{ background: '#1D6F42' }}
+            >
+              Try with your own Excel file →
+            </a>
             <button onClick={handleReset} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
               ← Reset demo
             </button>
