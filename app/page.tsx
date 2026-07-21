@@ -149,7 +149,7 @@ export default function LandingPage() {
             {/* Right — description + avatars + CTA */}
             <div className="flex flex-col gap-8">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-4">Scientific Figure Maker</p>
+                <p className="text-sm font-bold uppercase tracking-widest text-slate-900 mb-4">Scientific Figure Maker</p>
                 <p className="text-xl text-slate-900 leading-relaxed mb-6">
                   No Origin. No Prism. Upload your .xlsx and download a journal-quality PNG or SVG in seconds.
                 </p>
