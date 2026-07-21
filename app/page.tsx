@@ -134,9 +134,9 @@ export default function LandingPage() {
                 className="font-black text-slate-900 leading-[1.08] tracking-[-0.03em]"
                 style={{ fontSize: 'clamp(50px, 8vw, 96px)' }}
               >
-                From Excel<br />
+                From <span style={{ color: '#1D6F42' }}>Excel</span><br />
                 to a figure<br />
-                <span className="text-blue-600">that gets</span><br />
+                that gets<br />
                 published.
               </h1>
             </div>
