@@ -1,29 +1,147 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  ResponsiveContainer,
-} from 'recharts'
 
-const SAMPLE_DATA = [
-  { conc: 0.1,  abs: 0.02 },
-  { conc: 0.3,  abs: 0.07 },
-  { conc: 1,    abs: 0.19 },
-  { conc: 3,    abs: 0.50 },
-  { conc: 10,   abs: 0.82 },
-  { conc: 30,   abs: 0.94 },
-  { conc: 100,  abs: 0.99 },
+// ── Chart math (computed once at module level) ───────────────────────────────
+
+const W = 360, H = 248
+const PAD = { top: 16, right: 20, bottom: 50, left: 58 }
+const PW = W - PAD.left - PAD.right   // 282
+const PH = H - PAD.top - PAD.bottom   // 182
+
+const X_LOG_MIN = Math.log10(0.07)
+const X_LOG_MAX = Math.log10(130)
+
+function toX(x: number) {
+  return PAD.left + (Math.log10(x) - X_LOG_MIN) / (X_LOG_MAX - X_LOG_MIN) * PW
+}
+function toY(y: number) {
+  return PAD.top + PH * (1 - y)
+}
+function hill(x: number) { return x / (3 + x) }
+
+const CURVE_PATH = Array.from({ length: 80 }, (_, i) => {
+  const logX = X_LOG_MIN + (X_LOG_MAX - X_LOG_MIN) * i / 79
+  const x = Math.pow(10, logX)
+  return `${i === 0 ? 'M' : 'L'}${toX(x).toFixed(1)},${toY(hill(x)).toFixed(1)}`
+}).join(' ')
+
+const DATA = [
+  { x: 0.1, y: 0.02 }, { x: 0.3, y: 0.07 }, { x: 1, y: 0.19 },
+  { x: 3, y: 0.50 }, { x: 10, y: 0.82 }, { x: 30, y: 0.94 }, { x: 100, y: 0.99 },
+]
+
+const X_MAJOR = [0.1, 1, 10, 100]
+const X_MINOR = [-1, 0, 1, 2].flatMap(d =>
+  [2, 3, 4, 5, 6, 7, 8, 9].map(m => m * Math.pow(10, d))
+).filter(v => v > 0.07 && v < 130 && !X_MAJOR.includes(v))
+
+const Y_MAJOR = [0, 0.25, 0.50, 0.75, 1.00]
+
+// ── Publication-quality SVG chart ────────────────────────────────────────────
+
+function PublicationChart({ animate }: { animate: boolean }) {
+  const cy = PAD.top + PH / 2
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', fontFamily: 'Arial, Helvetica, sans-serif' }}>
+
+      {/* Smooth sigmoid curve — draws itself via strokeDashoffset animation */}
+      <path
+        d={CURVE_PATH}
+        fill="none"
+        stroke="#1D6F42"
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        pathLength={1}
+        strokeDasharray={1}
+        strokeDashoffset={animate ? 0 : 1}
+        style={{ transition: animate ? 'stroke-dashoffset 1.2s ease-out' : 'none' }}
+      />
+
+      {/* Data points — open circles, fade in after curve */}
+      {DATA.map((d, i) => (
+        <circle
+          key={i}
+          cx={toX(d.x)} cy={toY(d.y)} r={4.5}
+          fill="white" stroke="#1D6F42" strokeWidth={2}
+          style={{
+            opacity: animate ? 1 : 0,
+            transition: animate ? `opacity 0.2s ease ${0.85 + i * 0.07}s` : 'none',
+          }}
+        />
+      ))}
+
+      {/* L-shaped axes */}
+      <line x1={PAD.left} y1={PAD.top + PH} x2={PAD.left + PW} y2={PAD.top + PH} stroke="#111" strokeWidth={1.5} />
+      <line x1={PAD.left} y1={PAD.top}       x2={PAD.left}      y2={PAD.top + PH} stroke="#111" strokeWidth={1.5} />
+
+      {/* X major ticks + labels */}
+      {X_MAJOR.map(x => (
+        <g key={x}>
+          <line x1={toX(x)} y1={PAD.top + PH} x2={toX(x)} y2={PAD.top + PH + 6} stroke="#111" strokeWidth={1.3} />
+          <text x={toX(x)} y={PAD.top + PH + 17} textAnchor="middle" fontSize={9} fill="#444">{x}</text>
+        </g>
+      ))}
+
+      {/* X minor ticks (log scale) */}
+      {X_MINOR.map((x, i) => (
+        <line key={i}
+          x1={toX(x)} y1={PAD.top + PH}
+          x2={toX(x)} y2={PAD.top + PH + 3}
+          stroke="#666" strokeWidth={0.8}
+        />
+      ))}
+
+      {/* Y major ticks + labels */}
+      {Y_MAJOR.map(y => (
+        <g key={y}>
+          <line x1={PAD.left - 6} y1={toY(y)} x2={PAD.left} y2={toY(y)} stroke="#111" strokeWidth={1.3} />
+          <text x={PAD.left - 10} y={toY(y) + 3.5} textAnchor="end" fontSize={9} fill="#444">
+            {y.toFixed(2)}
+          </text>
+        </g>
+      ))}
+
+      {/* Axis labels — italic, like Nature/ACS */}
+      <text x={PAD.left + PW / 2} y={H - 4} textAnchor="middle" fontSize={11} fill="#333" fontStyle="italic">
+        Concentration (µM)
+      </text>
+      <text
+        x={13} y={cy}
+        textAnchor="middle" fontSize={11} fill="#333" fontStyle="italic"
+        transform={`rotate(-90, 13, ${cy})`}
+      >
+        Absorbance (AU)
+      </text>
+    </svg>
+  )
+}
+
+// ── Demo component ───────────────────────────────────────────────────────────
+
+const TABLE_DATA = [
+  { x: 0.1, y: '0.02' }, { x: 0.3, y: '0.07' }, { x: 1, y: '0.19' },
+  { x: 3, y: '0.50' }, { x: 10, y: '0.82' }, { x: 30, y: '0.94' }, { x: 100, y: '0.99' },
 ]
 
 type Phase = 'table' | 'loading' | 'chart'
 
 export default function InteractiveDemo() {
   const [phase, setPhase] = useState<Phase>('table')
+  const [animate, setAnimate] = useState(false)
 
   function handleGenerate() {
     setPhase('loading')
-    setTimeout(() => setPhase('chart'), 900)
+    setTimeout(() => {
+      setPhase('chart')
+      requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
+    }, 900)
+  }
+
+  function handleReset() {
+    setAnimate(false)
+    setPhase('table')
   }
 
   return (
@@ -41,16 +159,13 @@ export default function InteractiveDemo() {
         </div>
       </div>
 
-      {/* Content area */}
       <div className="px-6 py-8 min-h-[420px] flex items-center justify-center">
 
-        {/* ── Step 1 : Table ── */}
         {phase === 'table' && (
           <div className="flex flex-col items-center gap-6 w-full">
             <p className="text-sm text-slate-500 font-medium text-center">
-              Colonnes détectées — choisissez X et Y :
+              Your Excel file — select columns X and Y:
             </p>
-
             <div className="rounded-xl overflow-hidden border border-slate-200 w-full max-w-xs shadow-sm">
               <div className="bg-[#1D6F42] px-4 py-2 flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
@@ -72,16 +187,15 @@ export default function InteractiveDemo() {
                   </tr>
                 </thead>
                 <tbody>
-                  {SAMPLE_DATA.map((row, i) => (
+                  {TABLE_DATA.map((row, i) => (
                     <tr key={i} className="border-t border-slate-100">
-                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-blue-50/20">{row.conc}</td>
-                      <td className="px-4 py-1.5 text-right font-mono text-slate-700 bg-emerald-50/20">{row.abs.toFixed(2)}</td>
+                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-blue-50/20">{row.x}</td>
+                      <td className="px-4 py-1.5 text-right font-mono text-slate-700 bg-emerald-50/20">{row.y}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-
             <button
               onClick={handleGenerate}
               className="px-8 py-3 rounded-full text-white font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-md"
@@ -92,7 +206,6 @@ export default function InteractiveDemo() {
           </div>
         )}
 
-        {/* ── Step 2 : Loading ── */}
         {phase === 'loading' && (
           <div className="flex flex-col items-center gap-4">
             <div className="w-10 h-10 border-2 border-slate-100 border-t-slate-800 rounded-full animate-spin" />
@@ -100,41 +213,15 @@ export default function InteractiveDemo() {
           </div>
         )}
 
-        {/* ── Step 3 : Chart ── */}
         {phase === 'chart' && (
           <div className="flex flex-col items-center gap-5 w-full">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Publication-ready figure</span>
             </div>
-
-            <div className="w-full bg-white rounded-xl border border-slate-100 p-4">
-              <ResponsiveContainer width="100%" height={240}>
-                <LineChart data={SAMPLE_DATA} margin={{ top: 8, right: 16, left: 8, bottom: 32 }}>
-                  <CartesianGrid strokeDasharray="4 4" stroke="#f1f5f9" />
-                  <XAxis
-                    dataKey="conc"
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    label={{ value: 'Concentration (µM)', position: 'insideBottom', offset: -18, fontSize: 11, fill: '#475569' }}
-                  />
-                  <YAxis
-                    domain={[0, 1.05]}
-                    tick={{ fontSize: 10, fill: '#64748b' }}
-                    label={{ value: 'Absorbance', angle: -90, position: 'insideLeft', offset: 12, fontSize: 11, fill: '#475569' }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="abs"
-                    stroke="#1D6F42"
-                    strokeWidth={2.5}
-                    dot={{ r: 4, fill: '#1D6F42', strokeWidth: 0 }}
-                    animationDuration={900}
-                    animationEasing="ease-out"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+            <div className="w-full bg-white rounded-xl border border-slate-100 p-3">
+              <PublicationChart animate={animate} />
             </div>
-
             <div className="flex gap-3">
               <button
                 className="px-5 py-2 rounded-full text-white text-xs font-bold shadow-sm hover:opacity-90 transition-opacity"
@@ -146,11 +233,7 @@ export default function InteractiveDemo() {
                 ⬇ SVG
               </button>
             </div>
-
-            <button
-              onClick={() => setPhase('table')}
-              className="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-            >
+            <button onClick={handleReset} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">
               ← Reset demo
             </button>
           </div>
