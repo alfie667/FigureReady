@@ -36,32 +36,18 @@ const AVATARS = [
 
 function AvatarRow({ centered = false }: { centered?: boolean }) {
   return (
-    <div style={{ display: 'flex', gap: 12, marginBottom: 12, justifyContent: centered ? 'center' : 'flex-start' }}>
+    <div className={`flex flex-wrap gap-2 sm:gap-3 mb-3 ${centered ? 'justify-center' : 'justify-start'}`}>
       {AVATARS.map((av, i) => (
         <div
           key={i}
-          style={{
-            width: 72, height: 72,
-            borderRadius: '50%',
-            background: av.bg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
-            flexShrink: 0,
-          }}
+          className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center shrink-0"
+          style={{ background: av.bg, boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={av.src}
             alt=""
-            style={{
-              width: 56, height: 56,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              objectPosition: 'center top',
-              display: 'block',
-            }}
+            className="w-9 h-9 sm:w-12 sm:h-12 rounded-full object-cover object-top block"
           />
         </div>
       ))}
@@ -185,18 +171,18 @@ export default function LandingPage() {
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
       <section className="border-b border-slate-100">
         <div className="max-w-4xl mx-auto px-6 py-10">
-          <div className="grid grid-cols-3 gap-4 sm:gap-8 text-center divide-x divide-slate-100">
-            <div className="px-4">
-              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">30s</p>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1.5">to your first figure</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-8 text-center divide-x divide-slate-100">
+            <div className="px-1 sm:px-4">
+              <p className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">30s</p>
+              <p className="text-[10px] sm:text-sm text-slate-500 mt-1.5">to your first figure</p>
             </div>
-            <div className="px-4">
-              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">300 DPI</p>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1.5">publication-quality export</p>
+            <div className="px-1 sm:px-4">
+              <p className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">300DPI</p>
+              <p className="text-[10px] sm:text-sm text-slate-500 mt-1.5">publication export</p>
             </div>
-            <div className="px-4">
-              <p className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">0</p>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1.5">lines of code required</p>
+            <div className="px-1 sm:px-4">
+              <p className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">0</p>
+              <p className="text-[10px] sm:text-sm text-slate-500 mt-1.5">lines of code</p>
             </div>
           </div>
         </div>
@@ -328,7 +314,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center">
             <h2
-              className="font-black text-slate-900 leading-[0.95] tracking-[-0.04em] mb-8"
+              className="font-black text-slate-900 leading-[1.1] tracking-[-0.04em] mb-8"
               style={{ fontSize: 'clamp(40px, 6vw, 80px)' }}
             >
               Your next figure<br />is
