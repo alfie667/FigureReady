@@ -135,8 +135,8 @@ export default function LandingPage() {
                 style={{ fontSize: 'clamp(44px, 6.5vw, 82px)' }}
               >
                 From <span style={{ color: '#1D6F42' }}>Excel</span> to<br />
-                publication-ready<br />
-                figures in seconds.
+                publication-ready figures in<br />
+                seconds.
               </h1>
             </div>
 
