@@ -50,7 +50,7 @@ function PublicationChart({ animate }: { animate: boolean }) {
       <path
         d={CURVE_PATH}
         fill="none"
-        stroke="#1D6F42"
+        stroke="#111111"
         strokeWidth={2.5}
         strokeLinecap="round"
         pathLength={1}
@@ -64,7 +64,7 @@ function PublicationChart({ animate }: { animate: boolean }) {
         <circle
           key={i}
           cx={toX(d.x)} cy={toY(d.y)} r={4.5}
-          fill="white" stroke="#1D6F42" strokeWidth={2}
+          fill="white" stroke="#e02020" strokeWidth={2}
           style={{
             opacity: animate ? 1 : 0,
             transition: animate ? `opacity 0.2s ease ${0.85 + i * 0.07}s` : 'none',
@@ -104,12 +104,12 @@ function PublicationChart({ animate }: { animate: boolean }) {
       ))}
 
       {/* Axis labels — italic, like Nature/ACS */}
-      <text x={PAD.left + PW / 2} y={H - 4} textAnchor="middle" fontSize={11} fill="#333" fontStyle="italic">
+      <text x={PAD.left + PW / 2} y={H - 4} textAnchor="middle" fontSize={11} fill="#333" fontStyle="normal">
         Concentration (µM)
       </text>
       <text
         x={13} y={cy}
-        textAnchor="middle" fontSize={11} fill="#333" fontStyle="italic"
+        textAnchor="middle" fontSize={11} fill="#333" fontStyle="normal"
         transform={`rotate(-90, 13, ${cy})`}
       >
         Absorbance (AU)
