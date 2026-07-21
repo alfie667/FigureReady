@@ -27,29 +27,39 @@ export const metadata: Metadata = {
 // ── Photo avatars ─────────────────────────────────────────────────────────────
 
 const PHOTO_AVATARS = [
-  '/avatars/p1.jpg',
-  '/avatars/p2.jpg',
-  '/avatars/p3.jpg',
-  '/avatars/p4.jpg',
-  '/avatars/p5.jpg',
+  { src: '/avatars/p1.jpg', bg: '#a7f3d0' },
+  { src: '/avatars/p2.jpg', bg: '#fbcfe8' },
+  { src: '/avatars/p3.jpg', bg: '#bfdbfe' },
+  { src: '/avatars/p4.jpg', bg: '#fde68a' },
+  { src: '/avatars/p5.jpg', bg: '#ddd6fe' },
 ]
 
 function AvatarGroup() {
   return (
     <span className="inline-flex items-center align-middle mx-1.5">
-      {PHOTO_AVATARS.map((src, i) => (
+      {PHOTO_AVATARS.map((av, i) => (
         <span
           key={i}
-          className="inline-block rounded-full border-2 border-white overflow-hidden shrink-0"
           style={{
-            width: 38, height: 38,
-            marginLeft: i === 0 ? 0 : -11,
+            display: 'inline-block',
+            width: 40, height: 40,
+            borderRadius: '50%',
+            border: '2.5px solid white',
+            overflow: 'hidden',
+            background: av.bg,
+            marginLeft: i === 0 ? 0 : -12,
             zIndex: PHOTO_AVATARS.length - i,
             position: 'relative',
-            boxShadow: '0 1px 6px rgba(0,0,0,0.22)',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.20)',
+            flexShrink: 0,
           }}
         >
-          <Image src={src} alt="" width={38} height={38} className="w-full h-full object-cover object-top" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={av.src}
+            alt=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          />
         </span>
       ))}
     </span>
