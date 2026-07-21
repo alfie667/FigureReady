@@ -134,10 +134,9 @@ export default function LandingPage() {
                 className="font-black text-slate-900 leading-[1.08] tracking-[-0.03em]"
                 style={{ fontSize: 'clamp(50px, 8vw, 96px)' }}
               >
-                From <span style={{ color: '#1D6F42' }}>Excel</span><br />
-                to a figure<br />
-                that gets<br />
-                published.
+                From <span style={{ color: '#1D6F42' }}>Excel</span> into<br />
+                <span className="text-blue-600">publication-ready<br />
+                figures</span> in seconds.
               </h1>
             </div>
 
