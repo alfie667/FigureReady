@@ -24,34 +24,30 @@ export const metadata: Metadata = {
   },
 }
 
-// ── Photo avatars with coloured rings ────────────────────────────────────────
+// ── Photo avatars ────────────────────────────────────────────────────────────
 
 const AVATARS = [
-  { src: '/avatars/p1.jpg', ring: '#6ee7b7' },
-  { src: '/avatars/p2.jpg', ring: '#f9a8d4' },
-  { src: '/avatars/p3.jpg', ring: '#7dd3fc' },
-  { src: '/avatars/p4.jpg', ring: '#fcd34d' },
-  { src: '/avatars/p5.jpg', ring: '#c4b5fd' },
+  { src: '/avatars/f1.jpg', bg: '#6ee7b7' },
+  { src: '/avatars/f2.jpg', bg: '#fde68a' },
+  { src: '/avatars/f3.jpg', bg: '#7dd3fc' },
+  { src: '/avatars/f4.jpg', bg: '#f9a8d4' },
+  { src: '/avatars/f5.jpg', bg: '#c4b5fd' },
 ]
 
-function AvatarGroup() {
+function AvatarRow() {
   return (
-    <span className="inline-flex items-center align-middle mx-2">
+    <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
       {AVATARS.map((av, i) => (
-        <span
+        <div
           key={i}
           style={{
-            display: 'inline-flex',
+            width: 72, height: 72,
+            borderRadius: '50%',
+            background: av.bg,
+            display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            width: 52, height: 52,
-            borderRadius: '50%',
-            background: av.ring,
-            border: '3px solid white',
-            marginLeft: i === 0 ? 0 : -16,
-            zIndex: AVATARS.length - i,
-            position: 'relative',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
             flexShrink: 0,
           }}
         >
@@ -60,16 +56,16 @@ function AvatarGroup() {
             src={av.src}
             alt=""
             style={{
-              width: 42, height: 42,
+              width: 56, height: 56,
               borderRadius: '50%',
               objectFit: 'cover',
               objectPosition: 'center top',
               display: 'block',
             }}
           />
-        </span>
+        </div>
       ))}
-    </span>
+    </div>
   )
 }
 
@@ -152,11 +148,10 @@ export default function LandingPage() {
                 <p className="text-xl text-slate-900 leading-relaxed mb-6">
                   No Origin. No Prism. Upload your .xlsx and download a journal-quality PNG or SVG in seconds.
                 </p>
-                {/* Inline avatars */}
-                <p className="text-lg font-medium text-slate-900 leading-relaxed">
-                  Trusted by
-                  <AvatarGroup />
-                  PhD students, postdocs, and researchers worldwide.
+                {/* Avatars + social proof */}
+                <AvatarRow />
+                <p className="text-lg font-medium text-slate-900">
+                  Trusted by PhD students, postdocs, and researchers worldwide.
                 </p>
               </div>
 
@@ -395,11 +390,12 @@ export default function LandingPage() {
               {' '}<span className="text-blue-600">30 seconds</span><br />
               away.
             </h2>
-            <p className="text-xl text-slate-500 mb-4 leading-relaxed">
-              Trusted by
-              <AvatarGroup />
-              researchers worldwide.
-            </p>
+            <div className="mb-4">
+              <AvatarRow />
+              <p className="text-xl text-slate-500 leading-relaxed">
+                Trusted by PhD students, postdocs, and researchers worldwide.
+              </p>
+            </div>
             <p className="text-sm text-slate-400 mb-10">No setup. No account. Works in your browser.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <GatedAppLink className="w-full sm:w-auto px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
