@@ -24,29 +24,31 @@ export const metadata: Metadata = {
   },
 }
 
-// ── Illustrated avatars (DiceBear Adventurer, solid coloured backgrounds) ────
+// ── Photo avatars with coloured rings ────────────────────────────────────────
 
 const AVATARS = [
-  '/avatars/a1.svg',
-  '/avatars/a2.svg',
-  '/avatars/a3.svg',
-  '/avatars/a4.svg',
-  '/avatars/a5.svg',
+  { src: '/avatars/p1.jpg', ring: '#6ee7b7' },
+  { src: '/avatars/p2.jpg', ring: '#f9a8d4' },
+  { src: '/avatars/p3.jpg', ring: '#7dd3fc' },
+  { src: '/avatars/p4.jpg', ring: '#fcd34d' },
+  { src: '/avatars/p5.jpg', ring: '#c4b5fd' },
 ]
 
 function AvatarGroup() {
   return (
     <span className="inline-flex items-center align-middle mx-2">
-      {AVATARS.map((src, i) => (
+      {AVATARS.map((av, i) => (
         <span
           key={i}
           style={{
-            display: 'inline-block',
-            width: 44, height: 44,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 52, height: 52,
             borderRadius: '50%',
+            background: av.ring,
             border: '3px solid white',
-            overflow: 'hidden',
-            marginLeft: i === 0 ? 0 : -14,
+            marginLeft: i === 0 ? 0 : -16,
             zIndex: AVATARS.length - i,
             position: 'relative',
             boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
@@ -54,7 +56,17 @@ function AvatarGroup() {
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt="" style={{ width: '100%', height: '100%', display: 'block' }} />
+          <img
+            src={av.src}
+            alt=""
+            style={{
+              width: 42, height: 42,
+              borderRadius: '50%',
+              objectFit: 'cover',
+              objectPosition: 'center top',
+              display: 'block',
+            }}
+          />
         </span>
       ))}
     </span>
