@@ -24,79 +24,32 @@ export const metadata: Metadata = {
   },
 }
 
-// ── Illustrated face avatars ─────────────────────────────────────────────────
+// ── Photo avatars ─────────────────────────────────────────────────────────────
 
-interface AvatarConfig {
-  bg: string; shoulders: string; skin: string; hair: string
-  hairPath: string; afro?: boolean; glasses?: boolean; beard?: boolean
-}
-
-const FACE_AVATARS: AvatarConfig[] = [
-  // 1 – light skin, silver hair (senior researcher)
-  { bg: '#DBEAFE', shoulders: '#93C5FD', skin: '#F2C49E', hair: '#9CA3AF',
-    hairPath: 'M11 20 Q11 10 20 10 Q29 10 29 20' },
-  // 2 – dark skin, natural afro (woman)
-  { bg: '#FCE7F3', shoulders: '#F9A8D4', skin: '#7C4524', hair: '#111',
-    hairPath: '', afro: true },
-  // 3 – medium skin, straight dark hair (woman)
-  { bg: '#D1FAE5', shoulders: '#6EE7B7', skin: '#D4A574', hair: '#1a1a1a',
-    hairPath: 'M12 21 Q11 10 20 10 Q29 10 28 21 L29 22 Q30 10 20 9 Q10 9 11 22 Z' },
-  // 4 – light skin, dark hair, glasses (PhD student)
-  { bg: '#FEF3C7', shoulders: '#FDE68A', skin: '#F2C49E', hair: '#2D1B00',
-    hairPath: 'M12 20 Q12 10 20 10 Q28 10 28 20', glasses: true },
-  // 5 – medium-dark skin, short hair, beard (postdoc)
-  { bg: '#EDE9FE', shoulders: '#C4B5FD', skin: '#C68642', hair: '#1a1a1a',
-    hairPath: 'M13 20 Q13 11 20 11 Q27 11 27 20', beard: true },
+const PHOTO_AVATARS = [
+  '/avatars/p1.jpg',
+  '/avatars/p2.jpg',
+  '/avatars/p3.jpg',
+  '/avatars/p4.jpg',
+  '/avatars/p5.jpg',
 ]
-
-function FaceAvatarSVG({ av }: { av: AvatarConfig }) {
-  return (
-    <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" width="36" height="36">
-      <circle cx="20" cy="20" r="20" fill={av.bg}/>
-      {/* Shoulders */}
-      <ellipse cx="20" cy="44" rx="14" ry="10" fill={av.shoulders}/>
-      {/* Neck */}
-      <rect x="17" y="29" width="6" height="5" rx="2.5" fill={av.skin}/>
-      {/* Head */}
-      <ellipse cx="20" cy="22" rx="8.5" ry="9.5" fill={av.skin}/>
-      {/* Hair */}
-      {av.afro
-        ? <ellipse cx="20" cy="14" rx="11" ry="8.5" fill={av.hair}/>
-        : <path d={av.hairPath} fill={av.hair}/>
-      }
-      {/* Eyes */}
-      <circle cx="16.5" cy="21.5" r="1.1" fill="#2D1B00"/>
-      <circle cx="23.5" cy="21.5" r="1.1" fill="#2D1B00"/>
-      {/* Glasses */}
-      {av.glasses && <>
-        <rect x="13.5" y="19.5" width="5.5" height="3.5" rx="1.5" stroke="#555" strokeWidth="0.9" fill="none"/>
-        <rect x="21" y="19.5" width="5.5" height="3.5" rx="1.5" stroke="#555" strokeWidth="0.9" fill="none"/>
-        <line x1="19" y1="21.2" x2="21" y2="21.2" stroke="#555" strokeWidth="0.9"/>
-      </>}
-      {/* Beard */}
-      {av.beard &&
-        <path d="M13 27 Q16 31 20 31 Q24 31 27 27 Q25 33 20 33.5 Q15 33 13 27 Z" fill={av.hair}/>
-      }
-    </svg>
-  )
-}
 
 function AvatarGroup() {
   return (
     <span className="inline-flex items-center align-middle mx-1.5">
-      {FACE_AVATARS.map((av, i) => (
+      {PHOTO_AVATARS.map((src, i) => (
         <span
           key={i}
           className="inline-block rounded-full border-2 border-white overflow-hidden shrink-0"
           style={{
-            width: 36, height: 36,
-            marginLeft: i === 0 ? 0 : -10,
-            zIndex: FACE_AVATARS.length - i,
+            width: 38, height: 38,
+            marginLeft: i === 0 ? 0 : -11,
+            zIndex: PHOTO_AVATARS.length - i,
             position: 'relative',
-            boxShadow: '0 1px 5px rgba(0,0,0,0.18)',
+            boxShadow: '0 1px 6px rgba(0,0,0,0.22)',
           }}
         >
-          <FaceAvatarSVG av={av}/>
+          <Image src={src} alt="" width={38} height={38} className="w-full h-full object-cover object-top" />
         </span>
       ))}
     </span>
