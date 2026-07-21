@@ -1,5 +1,6 @@
 'use client'
 import * as XLSX from 'xlsx'
+import { gtagEvent } from '@/lib/ga'
 
 const rows = [
   { 'X (Concentration mM)': 0,   'Sample A (Absorbance)': 0.02, 'Sample B (Absorbance)': 0.01 },
@@ -16,6 +17,7 @@ const rows = [
 
 export default function SampleDataButton({ className }: { className?: string }) {
   function download() {
+    gtagEvent('sample_file_click')
     const ws = XLSX.utils.json_to_sheet(rows)
     ws['!cols'] = [{ wch: 24 }, { wch: 24 }, { wch: 24 }]
     const wb = XLSX.utils.book_new()

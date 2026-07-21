@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { gtagEvent } from '@/lib/ga'
 
 // ── Chart math (computed once at module level) ───────────────────────────────
 
@@ -132,6 +133,7 @@ export default function InteractiveDemo() {
   const [animate, setAnimate] = useState(false)
 
   function handleGenerate() {
+    gtagEvent('demo_generate')
     setPhase('loading')
     setTimeout(() => {
       setPhase('chart')
@@ -226,6 +228,7 @@ export default function InteractiveDemo() {
               href="/app"
               className="px-8 py-3 rounded-full text-white font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
               style={{ background: '#1D6F42' }}
+              onClick={() => gtagEvent('cta_click', { location: 'demo' })}
             >
               Try with your own Excel file →
             </a>

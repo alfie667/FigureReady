@@ -95,7 +95,7 @@ export default function LandingPage() {
             <Link href="/pricing" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Roadmap</Link>
           </div>
-          <GatedAppLink className="px-5 py-2.5 bg-slate-900 hover:bg-slate-700 text-white text-sm font-bold rounded-full transition-colors">
+          <GatedAppLink location="nav" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-700 text-white text-sm font-bold rounded-full transition-colors">
             Try it free →
           </GatedAppLink>
         </div>
@@ -140,7 +140,7 @@ export default function LandingPage() {
 
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <GatedAppLink className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
+                <GatedAppLink location="hero" className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
                   Upload your Excel →
                 </GatedAppLink>
                 <SampleDataButton className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 text-base font-semibold rounded-full transition-colors cursor-pointer" />
@@ -329,7 +329,7 @@ export default function LandingPage() {
             </div>
             <p className="text-sm text-slate-400 mb-10">No setup. No account. Works in your browser.</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <GatedAppLink className="w-full sm:w-auto px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
+              <GatedAppLink location="final_cta" className="w-full sm:w-auto px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
                 Upload your Excel →
               </GatedAppLink>
               <Link href="/pricing"
