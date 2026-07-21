@@ -4,10 +4,10 @@ import { useState } from 'react'
 
 // ── Chart math (computed once at module level) ───────────────────────────────
 
-const W = 360, H = 248
-const PAD = { top: 16, right: 20, bottom: 50, left: 58 }
-const PW = W - PAD.left - PAD.right   // 282
-const PH = H - PAD.top - PAD.bottom   // 182
+const W = 520, H = 340
+const PAD = { top: 20, right: 24, bottom: 56, left: 66 }
+const PW = W - PAD.left - PAD.right   // 430
+const PH = H - PAD.top - PAD.bottom   // 264
 
 const X_LOG_MIN = Math.log10(0.07)
 const X_LOG_MAX = Math.log10(130)
@@ -145,7 +145,7 @@ export default function InteractiveDemo() {
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto rounded-2xl border border-slate-200 overflow-hidden shadow-2xl bg-white">
+    <div className="w-full max-w-2xl mx-auto rounded-2xl border border-slate-200 overflow-hidden shadow-2xl bg-white">
 
       {/* Browser chrome */}
       <div className="bg-[#efefef] border-b border-slate-200 px-4 py-2.5 flex items-center gap-3">
