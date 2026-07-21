@@ -3,6 +3,7 @@ import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
 import InteractiveDemo from '@/components/InteractiveDemo'
+import BeforeAfter from '@/components/BeforeAfter'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Free Scientific Figure Maker from Excel',
@@ -58,12 +59,12 @@ function AvatarRow({ centered = false }: { centered?: boolean }) {
 // ── Page data ────────────────────────────────────────────────────────────────
 
 const features = [
-  { icon: '📊', label: 'Excel upload',               desc: 'Drop your .xlsx file — columns detected automatically, zero configuration.' },
-  { icon: '📈', label: 'Multiple curves & dual Y axis', desc: 'Plot several series on the same chart. Assign each to Y1 or Y2 independently.' },
-  { icon: '±',  label: 'Error bars',                 desc: 'Attach standard deviation or standard error columns in one click.' },
-  { icon: '🔢', label: 'Logarithmic scale',           desc: 'Switch X or Y axis to log scale instantly — handles any range of data.' },
-  { icon: '🎨', label: 'Full style control',          desc: 'Font, line weight, marker shape, colors, grid — all visual, no code.' },
-  { icon: '⬇️', label: 'PNG 300 DPI & SVG',          desc: 'High-resolution PNG ready for submission and editable SVG with separate layers.' },
+  { icon: '📊', label: 'Your .xlsx as-is',               desc: 'No conversion, no export. Drop your file exactly as it is — columns detected in seconds.' },
+  { icon: '📈', label: 'Compare samples on one chart',   desc: 'Multiple series, dual Y axes, one figure. No copy-pasting between worksheets.' },
+  { icon: '±',  label: '±SD and ±SEM in one click',     desc: 'Select your error column — bars appear instantly, formatted to journal standards.' },
+  { icon: '🔢', label: 'Dose-response curves done right', desc: 'One click to log scale. Your sigmoid looks exactly like it should in a Nature paper.' },
+  { icon: '🎨', label: 'Nature, ACS, Cell presets',      desc: 'Pick a journal style or tweak font, line weight and colors — all visual, zero Illustrator.' },
+  { icon: '⬇️', label: 'Ready for submission',           desc: '300 DPI PNG for upload portals. Editable SVG when reviewers ask for changes.' },
 ]
 
 const steps = [
@@ -168,6 +169,8 @@ export default function LandingPage() {
         </div>
       </section>
 
+      <BeforeAfter />
+
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
       <section className="border-b border-slate-100">
         <div className="max-w-4xl mx-auto px-6 py-10">
@@ -220,10 +223,10 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>Features</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
-              Everything you need,<br className="hidden sm:block" /> nothing you don&apos;t
+              Built for researchers<br className="hidden sm:block" /> who hate formatting
             </h2>
             <p className="text-slate-500 text-lg max-w-xl mx-auto">
-              Built specifically for researchers. No bloat, no learning curve.
+              Spend your time on science, not on making charts look acceptable.
             </p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
