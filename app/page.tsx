@@ -34,9 +34,9 @@ const AVATARS = [
   { src: '/avatars/f5.jpg', bg: '#c4b5fd' },
 ]
 
-function AvatarRow() {
+function AvatarRow({ centered = false }: { centered?: boolean }) {
   return (
-    <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+    <div style={{ display: 'flex', gap: 12, marginBottom: 12, justifyContent: centered ? 'center' : 'flex-start' }}>
       {AVATARS.map((av, i) => (
         <div
           key={i}
@@ -266,7 +266,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-28 bg-white">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">How it works</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>How it works</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Three steps. That&apos;s it.
             </h2>
@@ -292,7 +292,7 @@ export default function LandingPage() {
       <section id="features" className="py-28 bg-slate-50/70">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Features</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>Features</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
               Everything you need,<br className="hidden sm:block" /> nothing you don&apos;t
             </h2>
@@ -323,7 +323,7 @@ export default function LandingPage() {
       <section className="py-28 bg-white" id="pricing">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-3">Pricing</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>Pricing</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
               Simple, transparent pricing
             </h2>
@@ -341,7 +341,7 @@ export default function LandingPage() {
               <ul className="space-y-3 flex-1 mb-8">
                 {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Log scale & dual Y axis', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2.5 text-sm text-slate-600">
-                    <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 shrink-0" style={{ color: '#1D6F42' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                     {f}
@@ -392,11 +392,11 @@ export default function LandingPage() {
               style={{ fontSize: 'clamp(40px, 6vw, 80px)' }}
             >
               Your next figure<br />is
-              {' '}<span className="text-blue-600">30 seconds</span><br />
+              {' '}<span style={{ color: '#1D6F42' }}>30 seconds</span><br />
               away.
             </h2>
             <div className="mb-4">
-              <AvatarRow />
+              <AvatarRow centered />
               <p className="text-xl text-slate-500 leading-relaxed">
                 Trusted by PhD students, postdocs, and researchers worldwide.
               </p>
