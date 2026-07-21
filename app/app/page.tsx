@@ -13,7 +13,6 @@ import FeedbackButton from '@/components/FeedbackButton'
 import SaveTemplateModal from '@/components/SaveTemplateModal'
 import TemplateSelector from '@/components/TemplateSelector'
 import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartStyles'
-import JournalStyleSelector from '@/components/JournalStyleSelector'
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
@@ -28,7 +27,7 @@ export default function AppPage() {
   const [xCol, setXCol] = useState('')
   const [yCols, setYCols] = useState<string[]>([])
   const [chartType, setChartType] = useState<ChartType>('line')
-  const [styleName, setStyleName] = useState<StyleName>('ACS')
+  const styleName: StyleName = 'ACS'
   const [seriesNames, setSeriesNames] = useState<Record<string, string>>({})
   const [errorCols, setErrorCols] = useState<Record<string, string>>({})
   const [xAxisLabel, setXAxisLabel] = useState('')
@@ -147,10 +146,6 @@ export default function AppPage() {
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
         <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-100 lg:overflow-y-auto bg-white">
-          <JournalStyleSelector
-            value={styleName}
-            onChange={(name) => { setStyleName(name); setStyleOverrides({}) }}
-          />
           <Panel
             id="data"
             title="Data"
@@ -190,6 +185,7 @@ export default function AppPage() {
                   seriesStrokeWidths={styleOverrides.seriesStrokeWidths ?? {}}
                   seriesMarkerSizes={styleOverrides.seriesMarkerSizes ?? {}}
                   seriesMarkerShapes={styleOverrides.seriesMarkerShapes ?? {}}
+                  yAxisAssignment={styleOverrides.yAxisAssignment ?? {}}
                   defaultColors={chartStyles[styleName].colors}
                   defaultStrokeWidth={chartStyles[styleName].strokeWidth}
                   defaultMarkerSize={chartStyles[styleName].dotRadius}
@@ -202,9 +198,40 @@ export default function AppPage() {
                   onSeriesStrokeWidthsChange={(widths) => setStyleOverrides({ ...styleOverrides, seriesStrokeWidths: widths })}
                   onSeriesMarkerSizesChange={(sizes) => setStyleOverrides({ ...styleOverrides, seriesMarkerSizes: sizes })}
                   onSeriesMarkerShapesChange={(shapes) => setStyleOverrides({ ...styleOverrides, seriesMarkerShapes: shapes })}
+                  onYAxisAssignmentChange={(assignment) => setStyleOverrides({ ...styleOverrides, yAxisAssignment: assignment })}
                 />
                 <div className="flex flex-wrap gap-6">
                   <ChartTypeSelector value={chartType} onChange={setChartType} />
+                </div>
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
+                    <div className="flex gap-1.5">
+                      {(['linear', 'log'] as const).map(sc => {
+                        const active = (styleOverrides.xScale ?? 'linear') === sc
+                        return (
+                          <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, xScale: sc })}
+                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            {sc === 'linear' ? 'Linear' : 'Log'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
+                    <div className="flex gap-1.5">
+                      {(['linear', 'log'] as const).map(sc => {
+                        const active = (styleOverrides.yScale ?? 'linear') === sc
+                        return (
+                          <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, yScale: sc })}
+                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            {sc === 'linear' ? 'Linear' : 'Log'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </Panel>

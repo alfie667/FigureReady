@@ -32,6 +32,7 @@ interface Props {
   seriesStrokeWidths: Record<string, number>
   seriesMarkerSizes: Record<string, number>
   seriesMarkerShapes: Record<string, MarkerShape>
+  yAxisAssignment: Record<string, 'left' | 'right'>
   defaultColors: string[]
   defaultStrokeWidth: number
   defaultMarkerSize: number
@@ -44,14 +45,16 @@ interface Props {
   onSeriesStrokeWidthsChange: (widths: Record<string, number>) => void
   onSeriesMarkerSizesChange: (sizes: Record<string, number>) => void
   onSeriesMarkerShapesChange: (shapes: Record<string, MarkerShape>) => void
+  onYAxisAssignmentChange: (assignment: Record<string, 'left' | 'right'>) => void
 }
 
 export default function ColumnSelector({
   columns, xCol, yCols, seriesNames, errorCols, xAxisLabel, yAxisLabel, chartType,
-  seriesColors, seriesStrokeWidths, seriesMarkerSizes, seriesMarkerShapes,
+  seriesColors, seriesStrokeWidths, seriesMarkerSizes, seriesMarkerShapes, yAxisAssignment,
   defaultColors, defaultStrokeWidth, defaultMarkerSize,
   onChange, onSeriesNamesChange, onErrorColsChange, onXAxisLabelChange, onYAxisLabelChange,
   onSeriesColorsChange, onSeriesStrokeWidthsChange, onSeriesMarkerSizesChange, onSeriesMarkerShapesChange,
+  onYAxisAssignmentChange,
 }: Props) {
   // Columns are partitioned by name so the Y axis list and the error column
   // list never overlap: error-like columns ("Error", "SD"...) only show up
@@ -156,6 +159,23 @@ export default function ColumnSelector({
                       />
                     ) : (
                       <p className="flex-1 min-w-[120px] text-sm font-medium text-slate-700">{col}</p>
+                    )}
+                    {yCols.length >= 2 && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-xs text-slate-400">Axis</span>
+                        {(['left', 'right'] as const).map(side => {
+                          const active = (yAxisAssignment[col] ?? 'left') === side
+                          return (
+                            <button
+                              key={side}
+                              onClick={() => onYAxisAssignmentChange({ ...yAxisAssignment, [col]: side })}
+                              className={`px-2 py-0.5 text-xs rounded-md border transition-colors ${active ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-500 hover:bg-slate-50'}`}
+                            >
+                              {side === 'left' ? 'Y1' : 'Y2'}
+                            </button>
+                          )
+                        })}
+                      </div>
                     )}
                     {errorCandidates.length > 0 && (
                       <div className="flex items-center gap-1.5">

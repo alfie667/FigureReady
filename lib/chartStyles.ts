@@ -1,6 +1,6 @@
 import type { MarkerShape } from './markerShapes'
 
-export type StyleName = 'ACS' | 'Nature' | 'Elsevier'
+export type StyleName = 'ACS'
 export type LegendPosition = 'top' | 'bottom' | 'left' | 'right'
 
 export interface StyleOverrides {
@@ -37,6 +37,10 @@ export interface StyleOverrides {
   legendYPct?: number
   legendOrientation?: 'h' | 'v'
   legendBg?: boolean
+  xScale?: 'linear' | 'log'
+  yScale?: 'linear' | 'log'
+  yAxisAssignment?: Record<string, 'left' | 'right'>
+  y2AxisLabel?: string
 }
 
 export const fontOptions: { value: string; label: string }[] = [
@@ -93,46 +97,4 @@ export const chartStyles: Record<StyleName, ChartStyle> = {
     chartHeight: 440,
     showFrame: true,
   },
-  Nature: {
-    colors: ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9'],
-    fontFamily: 'Arial, Helvetica, sans-serif',
-    fontSize: 18,
-    tickFontSize: 16,
-    gridColor: '#eeeeee',
-    showGrid: false,
-    axisColor: '#000000',
-    axisWidth: 1,
-    strokeWidth: 1.5,
-    dotRadius: 4,
-    barRadius: 0,
-    labelFontWeight: 'normal',
-    labelOffset: 10,
-    margin: { top: 16, right: 24, bottom: 10, left: 16 },
-    chartHeight: 440,
-    showFrame: false,
-  },
-  Elsevier: {
-    colors: ['#1F77B4', '#FF7F0E', '#2CA02C', '#D62728', '#9467BD'],
-    fontFamily: 'Arial, Helvetica, sans-serif',
-    fontSize: 18,
-    tickFontSize: 16,
-    gridColor: '#e0e0e0',
-    showGrid: true,
-    axisColor: '#333333',
-    axisWidth: 1,
-    strokeWidth: 1.5,
-    dotRadius: 4,
-    barRadius: 2,
-    labelFontWeight: 'normal',
-    labelOffset: 10,
-    margin: { top: 16, right: 24, bottom: 10, left: 16 },
-    chartHeight: 440,
-    showFrame: false,
-  },
 }
-
-export const journalStyles: { name: StyleName; label: string; colors: string[] }[] = [
-  { name: 'ACS',      label: 'ACS',      colors: ['#000000', '#E2211C', '#1F4FA8'] },
-  { name: 'Nature',   label: 'Nature',   colors: ['#0072B2', '#E69F00', '#009E73'] },
-  { name: 'Elsevier', label: 'Elsevier', colors: ['#1F77B4', '#FF7F0E', '#2CA02C'] },
-]

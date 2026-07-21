@@ -408,13 +408,21 @@ export default function ChartPreview({
       .filter(d => !isNaN(d.y as number) && inZoomRange(d.x)),
   }))
 
+  const xScale = styleOverrides.xScale ?? 'linear'
+  const yScale = styleOverrides.yScale ?? 'linear'
+  const isLogX = xScale === 'log'
+  const isLogY = yScale === 'log'
+  const yAxisAssignment = styleOverrides.yAxisAssignment ?? {}
+  const hasRightAxis = yCols.some(col => yAxisAssignment[col] === 'right')
+  const y2AxisLabel = styleOverrides.y2AxisLabel ?? ''
+
   const xValues = isNumericX
     ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v))
     : []
   const xRangeMin = styleOverrides.xMin ?? (xValues.length > 0 ? Math.min(...xValues) : undefined)
   const xRangeMax = styleOverrides.xMax ?? (xValues.length > 0 ? Math.max(...xValues) : undefined)
   const xStep = styleOverrides.xStep
-  const xTicks = xRangeMin !== undefined && xRangeMax !== undefined
+  const xTicks = !isLogX && xRangeMin !== undefined && xRangeMax !== undefined
     ? (xStep ? buildStepTicks(xRangeMin, xRangeMax, xStep) : getNiceTicks(xRangeMin, xRangeMax))
     : undefined
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
@@ -422,12 +430,14 @@ export default function ChartPreview({
   const yMin = styleOverrides.yMin
   const yMax = styleOverrides.yMax
   const yStep = styleOverrides.yStep
-  const allYValues = yCols.flatMap(col => data.map(row => Number(row[col]))).filter(v => !isNaN(v))
+  // When dual axis: left domain uses only left-axis series
+  const leftCols = hasRightAxis ? yCols.filter(col => yAxisAssignment[col] !== 'right') : yCols
+  const allYValues = leftCols.flatMap(col => data.map(row => Number(row[col]))).filter(v => !isNaN(v))
   const autoYMin = allYValues.length > 0 ? Math.min(...allYValues) : 0
   const autoYMax = allYValues.length > 0 ? Math.max(...allYValues) : 1
-  const yTicks = yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined
+  const yTicks = !isLogY && yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined
   const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean; ticks?: number[] } =
-    yMin !== undefined || yMax !== undefined || yTicks
+    !isLogY && (yMin !== undefined || yMax !== undefined || yTicks)
       ? {
           domain: [yTicks ? yTicks[0] : (yMin ?? 'auto'), yTicks ? yTicks[yTicks.length - 1] : (yMax ?? 'auto')],
           allowDataOverflow: true,
@@ -705,8 +715,8 @@ export default function ChartPreview({
       return (
         <ScatterChart margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
           {grid}
-          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
-          <YAxis dataKey="y" type="number" {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? xScale : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
+          <YAxis dataKey="y" type="number" scale={yScale} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
           <Tooltip content={<ScatterTooltipContent />} cursor={false} />
           {legend}
           {scatterSeries.map(series => {
@@ -729,24 +739,53 @@ export default function ChartPreview({
         <BarChart data={processedData} margin={margin}>
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} height={65} />
-          <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          <YAxis yAxisId="left" scale={yScale} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          {hasRightAxis && (
+            <YAxis yAxisId="right" orientation="right" scale={yScale} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine}
+              label={y2AxisLabel ? { value: y2AxisLabel, angle: 90, position: 'insideRight', style: yLabelStyle } : undefined}
+              width={80} />
+          )}
           <Tooltip content={<BarTooltipContent />} cursor={false} />
           {legend}
-          {yCols.map((col, i) => (
-            <Bar key={col} dataKey={col} name={seriesLabel(col)} fill={seriesColor(col, i)} radius={[s.barRadius, s.barRadius, 0, 0]}>
-              {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
-            </Bar>
-          ))}
+          {yCols.map((col, i) => {
+            const axisId = hasRightAxis ? (yAxisAssignment[col] === 'right' ? 'right' : 'left') : 'left'
+            return (
+              <Bar key={col} dataKey={col} yAxisId={axisId} name={seriesLabel(col)} fill={seriesColor(col, i)} radius={[s.barRadius, s.barRadius, 0, 0]}>
+                {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
+              </Bar>
+            )
+          })}
           {frameLines}
         </BarChart>
       )
     }
 
+    // Build right-axis label config
+    const y2Label = y2AxisLabel ? {
+      content: (props: Record<string, unknown>) => (
+        <DraggableAxisLabel
+          viewBox={props.viewBox as DraggableLabelProps['viewBox']}
+          value={y2AxisLabel}
+          angle={90}
+          dx={styleOverrides.yLabelDx ?? 12}
+          dy={styleOverrides.yLabelDy ?? 0}
+          style={yLabelStyle}
+          onDrag={(ddx, ddy) => {
+            yLabelDxRef.current += ddx; yLabelDyRef.current += ddy
+            onStyleChange?.({ yLabelDx: yLabelDxRef.current, yLabelDy: yLabelDyRef.current })
+          }}
+        />
+      ),
+    } : undefined
+
     return (
-      <LineChart data={processedData} margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+      <LineChart data={processedData} margin={hasRightAxis ? { ...margin, right: 90 } : margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
         {grid}
-        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow />
-        <YAxis {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} />
+        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? xScale : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
+        <YAxis yAxisId="left" scale={yScale} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+        {hasRightAxis && (
+          <YAxis yAxisId="right" orientation="right" scale={yScale} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={y2Label} width={80} />
+        )}
         <Tooltip content={() => null} cursor={false} />
         {legend}
         {yCols.map((col, i) => {
@@ -754,8 +793,9 @@ export default function ChartPreview({
           const showDots = chartType !== 'lineOnly'
           const markerSize = seriesMarkerSize(col)
           const markerShape = seriesMarkerShape(col)
+          const axisId = hasRightAxis ? (yAxisAssignment[col] === 'right' ? 'right' : 'left') : 'left'
           return (
-            <Line key={col} type="monotone" dataKey={col} name={seriesLabel(col)} stroke={color} strokeWidth={seriesStrokeWidth(col)}
+            <Line key={col} type="monotone" dataKey={col} yAxisId={axisId} name={seriesLabel(col)} stroke={color} strokeWidth={seriesStrokeWidth(col)}
               dot={showDots ? makeLineDot(col, color, markerShape, markerSize) : false}
               activeDot={false} connectNulls>
               {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
