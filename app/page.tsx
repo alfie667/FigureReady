@@ -24,42 +24,37 @@ export const metadata: Metadata = {
   },
 }
 
-// ── Photo avatars ─────────────────────────────────────────────────────────────
+// ── Illustrated avatars (DiceBear Adventurer, solid coloured backgrounds) ────
 
-const PHOTO_AVATARS = [
-  { src: '/avatars/p1.jpg', bg: '#a7f3d0' },
-  { src: '/avatars/p2.jpg', bg: '#fbcfe8' },
-  { src: '/avatars/p3.jpg', bg: '#bfdbfe' },
-  { src: '/avatars/p4.jpg', bg: '#fde68a' },
-  { src: '/avatars/p5.jpg', bg: '#ddd6fe' },
+const AVATARS = [
+  '/avatars/a1.svg',
+  '/avatars/a2.svg',
+  '/avatars/a3.svg',
+  '/avatars/a4.svg',
+  '/avatars/a5.svg',
 ]
 
 function AvatarGroup() {
   return (
-    <span className="inline-flex items-center align-middle mx-1.5">
-      {PHOTO_AVATARS.map((av, i) => (
+    <span className="inline-flex items-center align-middle mx-2">
+      {AVATARS.map((src, i) => (
         <span
           key={i}
           style={{
             display: 'inline-block',
-            width: 40, height: 40,
+            width: 44, height: 44,
             borderRadius: '50%',
-            border: '2.5px solid white',
+            border: '3px solid white',
             overflow: 'hidden',
-            background: av.bg,
-            marginLeft: i === 0 ? 0 : -12,
-            zIndex: PHOTO_AVATARS.length - i,
+            marginLeft: i === 0 ? 0 : -14,
+            zIndex: AVATARS.length - i,
             position: 'relative',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.20)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
             flexShrink: 0,
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={av.src}
-            alt=""
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
-          />
+          <img src={src} alt="" style={{ width: '100%', height: '100%', display: 'block' }} />
         </span>
       ))}
     </span>
@@ -146,7 +141,7 @@ export default function LandingPage() {
                   No Origin. No Prism. Upload your .xlsx and download a journal-quality PNG or SVG in seconds.
                 </p>
                 {/* Inline avatars */}
-                <p className="text-base text-slate-900 leading-relaxed">
+                <p className="text-lg font-medium text-slate-900 leading-relaxed">
                   Trusted by
                   <AvatarGroup />
                   PhD students, postdocs, and researchers worldwide.
