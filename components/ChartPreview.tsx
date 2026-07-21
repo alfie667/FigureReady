@@ -376,6 +376,16 @@ export default function ChartPreview({
 
   const hasError = (col: string) => !!errorCols[col]
 
+  // ─── Scale / axis flags (must come before data processing) ──────────────────
+
+  const xScale = styleOverrides.xScale ?? 'linear'
+  const yScale = styleOverrides.yScale ?? 'linear'
+  const isLogX = xScale === 'log'
+  const isLogY = yScale === 'log'
+  const yAxisAssignment = styleOverrides.yAxisAssignment ?? {}
+  const hasRightAxis = yCols.some(col => yAxisAssignment[col] === 'right')
+  const y2AxisLabel = styleOverrides.y2AxisLabel ?? ''
+
   // ─── Data processing ─────────────────────────────────────────────────────────
 
   const processedData = data
@@ -383,7 +393,8 @@ export default function ChartPreview({
       const point: Record<string, unknown> = { x: row[xCol] }
       yCols.forEach(col => {
         const v = Number(row[col])
-        point[col] = isNaN(v) ? null : v
+        // null out non-positive values so log scale doesn't break
+        point[col] = isNaN(v) ? null : (isLogY && v <= 0 ? null : v)
         if (hasError(col)) {
           const e = Number(row[errorCols[col]])
           point[`error_${col}`] = isNaN(e) ? null : e
@@ -391,7 +402,11 @@ export default function ChartPreview({
       })
       return point
     })
-    .filter(point => inZoomRange(point.x))
+    .filter(point => {
+      if (!inZoomRange(point.x)) return false
+      if (isLogX && isNumericX && typeof point.x === 'number' && point.x <= 0) return false
+      return true
+    })
 
   const scatterSeries = yCols.map((col, i) => ({
     key: col,
@@ -405,19 +420,17 @@ export default function ChartPreview({
         }
         return point
       })
-      .filter(d => !isNaN(d.y as number) && inZoomRange(d.x)),
+      .filter(d => {
+        if (isNaN(d.y as number)) return false
+        if (!inZoomRange(d.x)) return false
+        if (isLogY && (d.y as number) <= 0) return false
+        if (isLogX && isNumericX && typeof d.x === 'number' && d.x <= 0) return false
+        return true
+      }),
   }))
 
-  const xScale = styleOverrides.xScale ?? 'linear'
-  const yScale = styleOverrides.yScale ?? 'linear'
-  const isLogX = xScale === 'log'
-  const isLogY = yScale === 'log'
-  const yAxisAssignment = styleOverrides.yAxisAssignment ?? {}
-  const hasRightAxis = yCols.some(col => yAxisAssignment[col] === 'right')
-  const y2AxisLabel = styleOverrides.y2AxisLabel ?? ''
-
   const xValues = isNumericX
-    ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v))
+    ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v) && (!isLogX || v > 0))
     : []
   const xRangeMin = styleOverrides.xMin ?? (xValues.length > 0 ? Math.min(...xValues) : undefined)
   const xRangeMax = styleOverrides.xMax ?? (xValues.length > 0 ? Math.max(...xValues) : undefined)
@@ -432,18 +445,22 @@ export default function ChartPreview({
   const yStep = styleOverrides.yStep
   // When dual axis: left domain uses only left-axis series
   const leftCols = hasRightAxis ? yCols.filter(col => yAxisAssignment[col] !== 'right') : yCols
-  const allYValues = leftCols.flatMap(col => data.map(row => Number(row[col]))).filter(v => !isNaN(v))
-  const autoYMin = allYValues.length > 0 ? Math.min(...allYValues) : 0
-  const autoYMax = allYValues.length > 0 ? Math.max(...allYValues) : 1
+  const allYValues = leftCols
+    .flatMap(col => data.map(row => Number(row[col])))
+    .filter(v => !isNaN(v) && (!isLogY || v > 0))
+  const autoYMin = allYValues.length > 0 ? Math.min(...allYValues) : (isLogY ? 1 : 0)
+  const autoYMax = allYValues.length > 0 ? Math.max(...allYValues) : (isLogY ? 10 : 1)
   const yTicks = !isLogY && yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined
   const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean; ticks?: number[] } =
-    !isLogY && (yMin !== undefined || yMax !== undefined || yTicks)
-      ? {
-          domain: [yTicks ? yTicks[0] : (yMin ?? 'auto'), yTicks ? yTicks[yTicks.length - 1] : (yMax ?? 'auto')],
-          allowDataOverflow: true,
-          ...(yTicks ? { ticks: yTicks } : {}),
-        }
-      : {}
+    isLogY
+      ? { domain: [autoYMin / 2, autoYMax * 2] }
+      : (yMin !== undefined || yMax !== undefined || yTicks)
+        ? {
+            domain: [yTicks ? yTicks[0] : (yMin ?? 'auto'), yTicks ? yTicks[yTicks.length - 1] : (yMax ?? 'auto')],
+            allowDataOverflow: true,
+            ...(yTicks ? { ticks: yTicks } : {}),
+          }
+        : {}
 
   // ─── Style derivation ────────────────────────────────────────────────────────
 
