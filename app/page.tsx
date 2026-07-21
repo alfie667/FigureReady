@@ -3,7 +3,6 @@ import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
 import InteractiveDemo from '@/components/InteractiveDemo'
-import BeforeAfter from '@/components/BeforeAfter'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Free Scientific Figure Maker from Excel',
@@ -168,8 +167,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      <BeforeAfter />
 
       {/* ── Stats bar ────────────────────────────────────────────────────── */}
       <section className="border-b border-slate-100">
