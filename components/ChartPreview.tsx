@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useRef, useState, type Key } from 'react'
 import { trackExport } from '@/lib/analytics'
 import { gtagEvent } from '@/lib/ga'
@@ -1119,7 +1119,7 @@ export default function ChartPreview({
             </button>
             <button
               onClick={() => triggerExport('png')}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1D6F42] text-white text-xs font-bold hover:bg-[#155d35] transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#7c3aed] text-white text-xs font-bold hover:bg-[#5b21b6] transition-colors shadow-sm"
             >
               <DownloadIcon />
               PNG · 300 DPI
@@ -1128,7 +1128,7 @@ export default function ChartPreview({
         </div>
 
         {/* Light workspace */}
-        <div className="flex-1 overflow-auto bg-[#fef9c3]">
+        <div className="flex-1 overflow-auto bg-[#f5f3ff]">
           <div className="min-h-full flex items-center justify-center p-6 lg:p-10">
             <div className="overflow-x-auto">
               <div
@@ -1480,7 +1480,7 @@ export default function ChartPreview({
                     <button
                       title="No fill"
                       onClick={() => updateAnnotation(selShape.id, { fillColor: undefined })}
-                      className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-[#1D6F42] ring-1 ring-[#8fcdb0]' : 'border-slate-200'}`}
+                      className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-[#7c3aed] ring-1 ring-[#c4b5fd]' : 'border-slate-200'}`}
                       style={{
                         background: 'repeating-conic-gradient(#e2e8f0 0% 25%, white 0% 50%) 0 0 / 6px 6px',
                       }}
@@ -1490,7 +1490,7 @@ export default function ChartPreview({
                         key={c}
                         title={c}
                         onClick={() => updateAnnotation(selShape.id, { fillColor: c, fillOpacity: selShape.fillOpacity ?? 0.3 })}
-                        className={`w-5 h-5 rounded transition-all ${selShape.fillColor === c ? 'ring-2 ring-[#1D6F42] ring-offset-1' : 'ring-1 ring-slate-200'}`}
+                        className={`w-5 h-5 rounded transition-all ${selShape.fillColor === c ? 'ring-2 ring-[#7c3aed] ring-offset-1' : 'ring-1 ring-slate-200'}`}
                         style={{ background: c }}
                       />
                     ))}
@@ -1502,7 +1502,7 @@ export default function ChartPreview({
                         type="range" min={0} max={100}
                         value={Math.round((selShape.fillOpacity ?? 0.3) * 100)}
                         onChange={e => updateAnnotation(selShape.id, { fillOpacity: Number(e.target.value) / 100 })}
-                        className="w-24 accent-[#1D6F42] h-1.5 cursor-pointer"
+                        className="w-24 accent-[#7c3aed] h-1.5 cursor-pointer"
                       />
                       <span className="text-xs text-slate-600 tabular-nums w-8">
                         {Math.round((selShape.fillOpacity ?? 0.3) * 100)}%

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
@@ -67,7 +67,7 @@ const features = [
 ]
 
 const steps = [
-  { n: '1', title: 'Upload your Excel file',  desc: 'Drag and drop a .xlsx file. Columns detected automatically.', accent: '#1D6F42' },
+  { n: '1', title: 'Upload your Excel file',  desc: 'Drag and drop a .xlsx file. Columns detected automatically.', accent: '#7c3aed' },
   { n: '2', title: 'Configure your figure',   desc: 'Select axes, chart type, error bars, log scale — all visual, all instant.', accent: '#7c3aed' },
   { n: '3', title: 'Export and submit',        desc: 'PNG 300 DPI or SVG with editable layers. Ready for any journal.', accent: '#059669' },
 ]
@@ -82,7 +82,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#1D6F42' }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#7c3aed' }}>
               <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 16l4-5 3 3 5-7" />
               </svg>
@@ -112,13 +112,13 @@ export default function LandingPage() {
                 className="font-black text-slate-900 leading-[1.1] tracking-[-0.03em]"
                 style={{ fontSize: 'clamp(44px, 6.5vw, 82px)' }}
               >
-                From <span style={{ color: '#1D6F42' }}>Excel</span> to<br />
+                From <span style={{ color: '#7c3aed' }}>Excel</span> to<br />
                 publication-<span style={{ position: 'relative', display: 'inline-block', paddingBottom: '8px' }}>
                   ready figures
                   <svg aria-hidden viewBox="0 0 300 10" preserveAspectRatio="none"
                     style={{ position: 'absolute', left: 0, bottom: 0, width: '100%', height: '10px' }}>
                     <path d="M2,7 C25,3 55,9 85,5 C115,2 145,8 175,5 C205,3 235,8 260,5 C278,3 292,7 298,6"
-                      stroke="#1D6F42" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                      stroke="#7c3aed" strokeWidth="7" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </span> in seconds.
               </h1>
@@ -157,7 +157,7 @@ export default function LandingPage() {
         {/* Interactive demo */}
         <div className="border-t border-slate-100 bg-slate-50">
           <div className="max-w-4xl mx-auto px-6 py-12">
-            <p className="text-center text-xs font-bold uppercase tracking-widest mb-8" style={{ color: '#1D6F42' }}>
+            <p className="text-center text-xs font-bold uppercase tracking-widest mb-8" style={{ color: '#7c3aed' }}>
               Try it now — no account needed
             </p>
             <InteractiveDemo />
@@ -192,7 +192,7 @@ export default function LandingPage() {
       <section id="how-it-works" className="py-28 bg-white">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>How it works</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7c3aed' }}>How it works</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
               Three steps. That&apos;s it.
             </h2>
@@ -218,7 +218,7 @@ export default function LandingPage() {
       <section id="features" className="py-28 bg-slate-50/70">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>Features</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7c3aed' }}>Features</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
               Built for researchers<br className="hidden sm:block" /> who hate formatting
             </h2>
@@ -249,7 +249,7 @@ export default function LandingPage() {
       <section className="py-28 bg-white" id="pricing">
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#1D6F42' }}>Pricing</p>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7c3aed' }}>Pricing</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
               Simple, transparent pricing
             </h2>
@@ -267,7 +267,7 @@ export default function LandingPage() {
               <ul className="space-y-3 flex-1 mb-8">
                 {['Unlimited figures', 'Excel upload (.xlsx)', 'PNG & SVG export (300 DPI)', 'Error bars', 'Log scale & dual Y axis', 'Priority support'].map(f => (
                   <li key={f} className="flex items-center gap-2.5 text-sm text-slate-600">
-                    <svg className="w-4 h-4 shrink-0" style={{ color: '#1D6F42' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 shrink-0" style={{ color: '#7c3aed' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                     {f}
@@ -318,7 +318,7 @@ export default function LandingPage() {
               style={{ fontSize: 'clamp(40px, 6vw, 80px)' }}
             >
               Your next figure<br />is
-              {' '}<span style={{ color: '#1D6F42' }}>30 seconds</span><br />
+              {' '}<span style={{ color: '#7c3aed' }}>30 seconds</span><br />
               away.
             </h2>
             <div className="mb-4">
@@ -345,7 +345,7 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-slate-100 py-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#1D6F42' }}>
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#7c3aed' }}>
               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 16l4-5 3 3 5-7" />
               </svg>

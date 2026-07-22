@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 
 interface Props {
@@ -30,7 +30,7 @@ export default function SaveTemplateModal({ onSave, onClose }: Props) {
           onKeyDown={(e) => e.key === 'Enter' && handleSave()}
           autoFocus
           placeholder='e.g. "My Lab Style"'
-          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
         />
         <div className="flex justify-end gap-2">
           <button
@@ -42,7 +42,7 @@ export default function SaveTemplateModal({ onSave, onClose }: Props) {
           <button
             onClick={handleSave}
             disabled={!name.trim()}
-            className="px-4 py-2 bg-[#1D6F42] hover:bg-[#155d35] disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-colors"
+            className="px-4 py-2 bg-[#7c3aed] hover:bg-[#5b21b6] disabled:opacity-40 text-white text-xs font-semibold rounded-lg transition-colors"
           >
             Save
           </button>

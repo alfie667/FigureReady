@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
 
 interface Props {
@@ -90,13 +90,13 @@ function ToolBtn({
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 rounded-lg transition-all duration-150 select-none min-w-[52px] ${
         active
-          ? 'bg-[#1D6F42] text-white shadow-sm'
+          ? 'bg-[#7c3aed] text-white shadow-sm'
           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
       }`}
     >
       <span className="flex items-center justify-center">{icon}</span>
       <span className={`text-[10px] font-light tracking-wide leading-none whitespace-nowrap ${
-        active ? 'text-[#c6e6d5]' : 'text-slate-400'
+        active ? 'text-[#ddd6fe]' : 'text-slate-400'
       }`}>
         {shortLabel}
       </span>
@@ -193,7 +193,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
           onClick={() => setShowSymbols(v => !v)}
           className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 min-w-[52px] rounded-lg transition-all duration-150 select-none ${
             showSymbols
-              ? 'bg-[#1D6F42] text-white shadow-sm'
+              ? 'bg-[#7c3aed] text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -202,7 +202,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
             <ChevronDown />
           </span>
           <span className={`text-[10px] font-light tracking-wide leading-none ${
-            showSymbols ? 'text-[#c6e6d5]' : 'text-slate-400'
+            showSymbols ? 'text-[#ddd6fe]' : 'text-slate-400'
           }`}>
             Symb.
           </span>
@@ -219,7 +219,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
                   key={sym}
                   title={sym}
                   onClick={() => { onInsertSymbol(sym); setShowSymbols(false) }}
-                  className="w-7 h-7 flex items-center justify-center text-sm text-slate-600 rounded-lg hover:bg-[#e8f5ee] hover:text-[#155d35] transition-colors"
+                  className="w-7 h-7 flex items-center justify-center text-sm text-slate-600 rounded-lg hover:bg-[#ede9fe] hover:text-[#5b21b6] transition-colors"
                 >
                   {sym}
                 </button>

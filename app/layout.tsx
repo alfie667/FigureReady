@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { Inter } from 'next/font/google'
 import './globals.css'
+
+const inter = Inter({ subsets: ['latin'] })
 
 const BASE = 'https://figureready.com'
 
@@ -20,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" style={{ colorScheme: 'light' }}>
-      <body className="font-sans antialiased bg-slate-50">
+      <body className={`${inter.className} antialiased bg-white`}>
         {children}
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-D5DQ01SFSW" strategy="afterInteractive" />
         <Script id="ga4-init" strategy="afterInteractive">{`

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useRef, useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -161,7 +161,7 @@ export default function CurveExtractor() {
             type="text"
             value={xLabel}
             onChange={e => setXLabel(e.target.value)}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           />
         </div>
         <div className="flex-1 min-w-[140px]">
@@ -170,7 +170,7 @@ export default function CurveExtractor() {
             type="text"
             value={yLabel}
             onChange={e => setYLabel(e.target.value)}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#7c3aed]"
           />
         </div>
       </div>
@@ -185,7 +185,7 @@ export default function CurveExtractor() {
               <XAxis dataKey="x" type="number" tick={{ fontSize: 11 }} domain={['dataMin', 'dataMax']} />
               <YAxis dataKey="y" type="number" tick={{ fontSize: 11 }} domain={['dataMin', 'dataMax']} />
               <Tooltip />
-              <Line type="monotone" dataKey="y" stroke="#1D6F42" strokeWidth={1.5} dot={false} />
+              <Line type="monotone" dataKey="y" stroke="#7c3aed" strokeWidth={1.5} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -194,7 +194,7 @@ export default function CurveExtractor() {
       <button
         onClick={handleExport}
         disabled={extractedPoints.length === 0}
-        className="px-5 py-2 bg-[#1D6F42] text-white rounded-lg text-sm font-medium hover:bg-[#155d35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-5 py-2 bg-[#7c3aed] text-white rounded-lg text-sm font-medium hover:bg-[#5b21b6] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Export to Excel
       </button>

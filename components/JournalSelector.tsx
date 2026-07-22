@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import {
   JOURNAL_PRESETS,
@@ -47,7 +47,7 @@ export default function JournalSelector({ onApply, onClear }: Props) {
         <select
           value={journalId}
           onChange={e => handleJournalChange(e.target.value)}
-          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
+          className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-transparent"
         >
           <option value="">— None —</option>
           {JOURNAL_PRESETS.map(p => (
@@ -67,7 +67,7 @@ export default function JournalSelector({ onApply, onClear }: Props) {
                 onClick={() => handleColumnChange('single')}
                 className={`flex-1 py-2 transition-colors ${
                   column === 'single'
-                    ? 'bg-[#1D6F42] text-white'
+                    ? 'bg-[#7c3aed] text-white'
                     : 'bg-white text-slate-500 hover:bg-slate-50'
                 }`}
               >
@@ -77,7 +77,7 @@ export default function JournalSelector({ onApply, onClear }: Props) {
                 onClick={() => handleColumnChange('double')}
                 className={`flex-1 py-2 transition-colors border-l border-slate-200 ${
                   column === 'double'
-                    ? 'bg-[#1D6F42] text-white'
+                    ? 'bg-[#7c3aed] text-white'
                     : 'bg-white text-slate-500 hover:bg-slate-50'
                 }`}
               >
@@ -87,8 +87,8 @@ export default function JournalSelector({ onApply, onClear }: Props) {
           </div>
 
           {/* Spec info card */}
-          <div className="rounded-xl bg-[#e8f5ee] border border-[#c6e6d5] px-3 py-2.5 space-y-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#218255]">
+          <div className="rounded-xl bg-[#ede9fe] border border-[#ddd6fe] px-3 py-2.5 space-y-1.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8b5cf6]">
               Applied specifications
             </p>
             <div className="space-y-1">

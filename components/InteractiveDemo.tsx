@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { gtagEvent } from '@/lib/ga'
@@ -169,7 +169,7 @@ export default function InteractiveDemo() {
               Your Excel file — select columns X and Y:
             </p>
             <div className="rounded-xl overflow-hidden border border-slate-200 w-full max-w-xs shadow-sm">
-              <div className="bg-[#1D6F42] px-4 py-2 flex items-center gap-2">
+              <div className="bg-[#7c3aed] px-4 py-2 flex items-center gap-2">
                 <svg className="w-3.5 h-3.5 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 1.5L18.5 9H13zM8.5 17l2-3-2-3h1.6l1.2 2 1.2-2H14l-2 3 2 3h-1.6l-1.2-2-1.2 2z" />
                 </svg>
@@ -178,9 +178,9 @@ export default function InteractiveDemo() {
               <table className="w-full text-xs">
                 <thead>
                   <tr>
-                    <th className="px-4 py-2 text-left bg-[#e8f5ee] border-r border-slate-200 border-b border-slate-200">
-                      <span className="text-[#1D6F42] font-bold">Conc. (µM)</span>
-                      <span className="ml-2 text-[9px] bg-[#1D6F42] text-white px-1.5 py-0.5 rounded-full font-bold">X</span>
+                    <th className="px-4 py-2 text-left bg-[#ede9fe] border-r border-slate-200 border-b border-slate-200">
+                      <span className="text-[#7c3aed] font-bold">Conc. (µM)</span>
+                      <span className="ml-2 text-[9px] bg-[#7c3aed] text-white px-1.5 py-0.5 rounded-full font-bold">X</span>
                     </th>
                     <th className="px-4 py-2 text-right bg-emerald-50 border-b border-slate-200">
                       <span className="text-emerald-700 font-bold">Absorbance</span>
@@ -191,7 +191,7 @@ export default function InteractiveDemo() {
                 <tbody>
                   {TABLE_DATA.map((row, i) => (
                     <tr key={i} className="border-t border-slate-100">
-                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-[#e8f5ee]/20">{row.x}</td>
+                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-[#ede9fe]/20">{row.x}</td>
                       <td className="px-4 py-1.5 text-right font-mono text-slate-700 bg-emerald-50/20">{row.y}</td>
                     </tr>
                   ))}
@@ -201,7 +201,7 @@ export default function InteractiveDemo() {
             <button
               onClick={handleGenerate}
               className="px-8 py-3 rounded-full text-white font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-md"
-              style={{ background: '#1D6F42' }}
+              style={{ background: '#7c3aed' }}
             >
               Generate figure →
             </button>
@@ -227,7 +227,7 @@ export default function InteractiveDemo() {
             <a
               href="/app"
               className="px-8 py-3 rounded-full text-white font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
-              style={{ background: '#1D6F42' }}
+              style={{ background: '#7c3aed' }}
               onClick={() => gtagEvent('cta_click', { location: 'demo' })}
             >
               Try with your own Excel file →
