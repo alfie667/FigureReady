@@ -41,7 +41,7 @@ export default function TemplateSelector({ onApply }: Props) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-600 bg-slate-50 hover:bg-slate-100 transition-colors"
       >
         <span className="font-medium">My Templates</span>
         <svg

@@ -1088,7 +1088,7 @@ export default function ChartPreview({
       <div className="flex flex-col" style={{ height: '100%' }}>
 
         {/* Chrome bar: annotation tools + export */}
-        <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-b border-slate-200 shrink-0 z-20">
+        <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
           <div className="flex items-center gap-2 shrink-0">
             {zoomDomain && (
@@ -1128,14 +1128,14 @@ export default function ChartPreview({
         </div>
 
         {/* Light workspace */}
-        <div className="flex-1 overflow-auto bg-slate-50">
+        <div className="flex-1 overflow-auto bg-[#e8eaed]">
           <div className="min-h-full flex items-center justify-center p-6 lg:p-10">
             <div className="overflow-x-auto">
               <div
                 ref={chartRef}
-                className="relative bg-white p-6 rounded-xl"
+                className="relative bg-white p-6 rounded-2xl"
                 style={{
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(0,0,0,0.08)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.07), 0 8px 40px rgba(0,0,0,0.12)',
                   fontFamily,
                   cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
@@ -1471,7 +1471,7 @@ export default function ChartPreview({
             ? (rectAnnotations.find(a => a.id === selectedId) ?? ellipseAnnotations.find(a => a.id === selectedId) ?? null)
             : null
           return (
-            <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-t border-slate-100 shrink-0 min-h-[36px]">
+            <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-t border-slate-200/70 shrink-0 min-h-[36px] shadow-[0_-1px_4px_rgba(0,0,0,0.03)]">
               {selShape ? (
                 <div className="flex items-center gap-3 flex-wrap">
                   <span className="text-xs font-medium text-slate-500">Fill</span>

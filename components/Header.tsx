@@ -17,7 +17,7 @@ export default function Header({ hasData, onReset }: Props) {
   }, [])
 
   return (
-    <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b border-slate-100 bg-white shrink-0">
+    <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b border-slate-200/80 bg-white shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-[#1D6F42] flex items-center justify-center shrink-0">

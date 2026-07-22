@@ -90,7 +90,7 @@ export default function ColumnSelector({
           <select
             value={xCol}
             onChange={(e) => handleXChange(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
           >
             {columns.map(col => (
               <option key={col} value={col}>{col}</option>
@@ -99,7 +99,7 @@ export default function ColumnSelector({
         </div>
         <div className="flex-1 min-w-[200px]">
           <label className="block text-xs font-medium text-slate-500 mb-1.5">Y Axis (one or more columns)</label>
-          <div className="border border-slate-200 rounded-xl p-2 max-h-32 overflow-y-auto bg-white space-y-0.5">
+          <div className="border border-slate-200 rounded-xl p-2 max-h-32 overflow-y-auto bg-slate-50 space-y-0.5">
             {yCandidates.map(col => (
               <label key={col} className="flex items-center gap-2 text-sm text-slate-700 px-1.5 py-1 rounded hover:bg-slate-50 cursor-pointer">
                 <input
@@ -123,7 +123,7 @@ export default function ColumnSelector({
             placeholder={formatAxisLabel(xCol)}
             value={xAxisLabel}
             onChange={(e) => onXAxisLabelChange(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
           />
         </div>
         <div className="flex-1 min-w-[160px]">
@@ -133,7 +133,7 @@ export default function ColumnSelector({
             placeholder={yCols.length === 1 ? formatAxisLabel(yCols[0]) : "Y axis label"}
             value={yAxisLabel}
             onChange={(e) => onYAxisLabelChange(e.target.value)}
-            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
           />
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function ColumnSelector({
               const markerSize = seriesMarkerSizes[col] ?? defaultMarkerSize
               const markerShape = seriesMarkerShapes[col] ?? 'circle'
               return (
-                <div key={col} className="rounded-xl border border-slate-200 p-3 space-y-3">
+                <div key={col} className="rounded-xl border border-slate-200/70 bg-slate-50/60 p-3 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     {yCols.length > 1 ? (
                       <input
@@ -155,7 +155,7 @@ export default function ColumnSelector({
                         placeholder={col}
                         value={seriesNames[col] ?? ''}
                         onChange={(e) => onSeriesNamesChange({ ...seriesNames, [col]: e.target.value })}
-                        className="flex-1 min-w-[120px] border border-slate-200 rounded-xl px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
+                        className="flex-1 min-w-[120px] border border-slate-200 rounded-xl px-3 py-1.5 text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
                       />
                     ) : (
                       <p className="flex-1 min-w-[120px] text-sm font-medium text-slate-700">{col}</p>
@@ -193,7 +193,7 @@ export default function ColumnSelector({
                               onErrorColsChange({ ...errorCols, [col]: value })
                             }
                           }}
-                          className="border border-slate-200 rounded-xl px-2 py-1.5 text-sm text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
+                          className="border border-slate-200 rounded-xl px-2 py-1.5 text-sm text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent"
                         >
                           <option value="">None</option>
                           {errorCandidates.map(errCol => (
