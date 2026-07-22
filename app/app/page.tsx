@@ -22,6 +22,7 @@ import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/temp
 import type { MarkerShape } from '@/lib/markerShapes'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
 import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
+import { parseExcelFile } from '@/lib/parseExcel'
 
 export default function AppPage() {
   const [columns, setColumns] = useState<string[]>([])
@@ -55,22 +56,17 @@ export default function AppPage() {
   const updatePanel = (idx: number, patch: Partial<PanelConfig>) =>
     setPanels(prev => prev.map((p, i) => i === idx ? { ...p, ...patch } : p))
 
-  const makeDefaultPanel = (id: string): PanelConfig => ({
-    id,
-    xCol,
-    yCols: yCols.slice(0, 1),
-    chartType,
-    styleOverrides: {},
-    seriesNames: {},
-    errorCols: {},
-    xAxisLabel,
-    yAxisLabel,
+  const makeEmptyPanel = (id: string): PanelConfig => ({
+    id, data: [], columns: [],
+    xCol: '', yCols: [], chartType,
+    styleOverrides: {}, seriesNames: {}, errorCols: {},
+    xAxisLabel: '', yAxisLabel: '',
   })
 
   const toggleMultiPanel = () => {
     if (!isMultiPanel) {
       const count = getLayoutCount(panelLayout)
-      setPanels(Array.from({ length: count }, (_, i) => makeDefaultPanel(PANEL_LABELS[i])))
+      setPanels(Array.from({ length: count }, (_, i) => makeEmptyPanel(PANEL_LABELS[i])))
       setActivePanel(0)
       setPanelAnnotations([[], [], [], []])
     }
@@ -82,7 +78,7 @@ export default function AppPage() {
     setPanels(prev => {
       if (newCount > prev.length) {
         const extra = Array.from({ length: newCount - prev.length }, (_, i) =>
-          makeDefaultPanel(PANEL_LABELS[prev.length + i])
+          makeEmptyPanel(PANEL_LABELS[prev.length + i])
         )
         return [...prev, ...extra]
       }
@@ -92,9 +88,36 @@ export default function AppPage() {
     setPanelLayout(newLayout)
   }
 
+  // Per-panel file upload
+  const handlePanelFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    try {
+      const { columns: cols, rows } = await parseExcelFile(file)
+      if (rows.length === 0) return
+      const x = cols[0] ?? ''
+      const yCandidates = cols.filter(c => c !== x && !isErrorColumn(c))
+      const initialY = yCandidates[0] ? [yCandidates[0]] : cols[1] ? [cols[1]] : []
+      const initialErrCols: Record<string, string> = {}
+      initialY.forEach(y => {
+        const match = matchErrorColumn(y, cols)
+        if (match) initialErrCols[y] = match
+      })
+      updatePanel(activePanel, {
+        data: rows, columns: cols,
+        xCol: x, yCols: initialY,
+        seriesNames: {}, errorCols: initialErrCols,
+        xAxisLabel: x, yAxisLabel: initialY[0] ?? '',
+        styleOverrides: {},
+      })
+    } catch { /* silently ignore parse errors */ }
+  }
+
   // ── Derived current values (routes to active panel or global state) ──────────
 
   const currentPanel = isMultiPanel ? panels[activePanel] : null
+  const currentColumns = currentPanel?.columns ?? columns
   const currentXCol = currentPanel?.xCol ?? xCol
   const currentYCols = currentPanel?.yCols ?? yCols
   const currentChartType = currentPanel?.chartType ?? chartType
@@ -184,9 +207,7 @@ export default function AppPage() {
   const handleSaveTemplate = (name: string) => {
     const base = chartStyles[styleName]
     saveUserTemplate({
-      name,
-      chartType,
-      overrides: styleOverrides,
+      name, chartType, overrides: styleOverrides,
       seriesColorsList: yCols.map((col, i) =>
         styleOverrides.seriesColors?.[col] ?? base.colors[i % base.colors.length]
       ),
@@ -286,10 +307,13 @@ export default function AppPage() {
 
                 {isMultiPanel && (
                   <div className="space-y-3 rounded-2xl bg-[#ede9fe] p-3">
+                    {/* Layout */}
                     <div>
                       <p className="text-xs font-medium text-[#5b21b6] mb-2">Layout</p>
                       <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
                     </div>
+
+                    {/* Panel tabs */}
                     <div>
                       <p className="text-xs font-medium text-[#5b21b6] mb-2">Editing panel</p>
                       <div className="flex gap-1.5">
@@ -304,78 +328,107 @@ export default function AppPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Per-panel file upload */}
+                    <div>
+                      <p className="text-xs font-medium text-[#5b21b6] mb-2">
+                        Excel file — Panel {panels[activePanel]?.id}
+                      </p>
+                      <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#c4b5fd] cursor-pointer hover:bg-violet-50 transition-colors">
+                        <svg className="w-4 h-4 text-[#7c3aed] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                        <span className="text-xs text-slate-600 flex-1 truncate">
+                          {panels[activePanel]?.columns.length > 0
+                            ? `${panels[activePanel].columns.length} columns loaded`
+                            : 'Upload a .xlsx file…'}
+                        </span>
+                        <input
+                          type="file"
+                          accept=".xlsx"
+                          className="hidden"
+                          onChange={handlePanelFileChange}
+                        />
+                      </label>
+                    </div>
                   </div>
                 )}
 
-                <TemplateSelector onApply={handleApplyTemplate} />
-                <ColumnSelector
-                  columns={columns}
-                  xCol={currentXCol}
-                  yCols={currentYCols}
-                  seriesNames={currentSeriesNames}
-                  errorCols={currentErrorCols}
-                  xAxisLabel={currentXAxisLabel}
-                  yAxisLabel={currentYAxisLabel}
-                  chartType={currentChartType}
-                  seriesColors={currentStyleOverrides.seriesColors ?? {}}
-                  seriesStrokeWidths={currentStyleOverrides.seriesStrokeWidths ?? {}}
-                  seriesMarkerSizes={currentStyleOverrides.seriesMarkerSizes ?? {}}
-                  seriesMarkerShapes={currentStyleOverrides.seriesMarkerShapes ?? {}}
-                  yAxisAssignment={currentStyleOverrides.yAxisAssignment ?? {}}
-                  defaultColors={chartStyles[styleName].colors}
-                  defaultStrokeWidth={chartStyles[styleName].strokeWidth}
-                  defaultMarkerSize={chartStyles[styleName].dotRadius}
-                  onChange={setCurrentXYCols}
-                  onSeriesNamesChange={setCurrentSeriesNames}
-                  onErrorColsChange={setCurrentErrorCols}
-                  onXAxisLabelChange={setCurrentXAxisLabel}
-                  onYAxisLabelChange={setCurrentYAxisLabel}
-                  onSeriesColorsChange={(colors) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesColors: colors })}
-                  onSeriesStrokeWidthsChange={(widths) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesStrokeWidths: widths })}
-                  onSeriesMarkerSizesChange={(sizes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerSizes: sizes })}
-                  onSeriesMarkerShapesChange={(shapes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerShapes: shapes })}
-                  onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
-                />
-                <div className="flex flex-wrap gap-6">
-                  <ChartTypeSelector value={currentChartType} onChange={setCurrentChartType} />
-                </div>
-                <div className="space-y-2.5">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
-                    <div className="flex gap-1.5">
-                      {(['linear', 'log', 'ln'] as const).map(sc => {
-                        const active = (currentStyleOverrides.xScale ?? 'linear') === sc
-                        return (
-                          <button key={sc}
-                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
-                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
-                            {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
-                          </button>
-                        )
-                      })}
+                {/* Column selector — only show when current panel has data */}
+                {currentColumns.length > 0 && (
+                  <>
+                    <TemplateSelector onApply={handleApplyTemplate} />
+                    <ColumnSelector
+                      columns={currentColumns}
+                      xCol={currentXCol}
+                      yCols={currentYCols}
+                      seriesNames={currentSeriesNames}
+                      errorCols={currentErrorCols}
+                      xAxisLabel={currentXAxisLabel}
+                      yAxisLabel={currentYAxisLabel}
+                      chartType={currentChartType}
+                      seriesColors={currentStyleOverrides.seriesColors ?? {}}
+                      seriesStrokeWidths={currentStyleOverrides.seriesStrokeWidths ?? {}}
+                      seriesMarkerSizes={currentStyleOverrides.seriesMarkerSizes ?? {}}
+                      seriesMarkerShapes={currentStyleOverrides.seriesMarkerShapes ?? {}}
+                      yAxisAssignment={currentStyleOverrides.yAxisAssignment ?? {}}
+                      defaultColors={chartStyles[styleName].colors}
+                      defaultStrokeWidth={chartStyles[styleName].strokeWidth}
+                      defaultMarkerSize={chartStyles[styleName].dotRadius}
+                      onChange={setCurrentXYCols}
+                      onSeriesNamesChange={setCurrentSeriesNames}
+                      onErrorColsChange={setCurrentErrorCols}
+                      onXAxisLabelChange={setCurrentXAxisLabel}
+                      onYAxisLabelChange={setCurrentYAxisLabel}
+                      onSeriesColorsChange={(colors) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesColors: colors })}
+                      onSeriesStrokeWidthsChange={(widths) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesStrokeWidths: widths })}
+                      onSeriesMarkerSizesChange={(sizes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerSizes: sizes })}
+                      onSeriesMarkerShapesChange={(shapes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerShapes: shapes })}
+                      onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
+                    />
+                    <div className="flex flex-wrap gap-6">
+                      <ChartTypeSelector value={currentChartType} onChange={setCurrentChartType} />
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
-                    <div className="flex gap-1.5">
-                      {(['linear', 'log', 'ln'] as const).map(sc => {
-                        const active = (currentStyleOverrides.yScale ?? 'linear') === sc
-                        return (
-                          <button key={sc}
-                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
-                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
-                            {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
-                          </button>
-                        )
-                      })}
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
+                        <div className="flex gap-1.5">
+                          {(['linear', 'log', 'ln'] as const).map(sc => {
+                            const active = (currentStyleOverrides.xScale ?? 'linear') === sc
+                            return (
+                              <button key={sc}
+                                onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
+                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+                                {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
+                        <div className="flex gap-1.5">
+                          {(['linear', 'log', 'ln'] as const).map(sc => {
+                            const active = (currentStyleOverrides.yScale ?? 'linear') === sc
+                            return (
+                              <button key={sc}
+                                onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
+                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+                                {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
             </Panel>
           )}
 
-          {ready && (
+          {ready && !isMultiPanel && (
             <Panel
               id="style"
               title="Style"
@@ -389,51 +442,48 @@ export default function AppPage() {
             >
               <StyleEditor
                 baseStyle={chartStyles[styleName]}
-                overrides={currentStyleOverrides}
-                hasMultipleSeries={currentYCols.length > 1}
-                onChange={setCurrentStyleOverrides}
+                overrides={styleOverrides}
+                hasMultipleSeries={yCols.length > 1}
+                onChange={setStyleOverrides}
               />
             </Panel>
           )}
         </aside>
 
         <main className="flex-1 flex flex-col lg:overflow-hidden">
-          {ready ? (
-            isMultiPanel && panels.length > 0 ? (
-              <MultiPanelPreview
-                panels={panels}
-                layout={panelLayout}
-                activePanel={activePanel}
-                data={data}
-                styleName={styleName}
-                panelAnnotations={panelAnnotations}
-                onAnnotationsChange={(idx, anns) =>
-                  setPanelAnnotations(prev => prev.map((a, i) => i === idx ? anns : a))
-                }
-                onStyleChange={(idx, patch) =>
-                  updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
-                }
-                onPanelClick={setActivePanel}
-                onSaveTemplate={() => setSaveTemplateOpen(true)}
-              />
-            ) : (
-              <ChartPreview
-                data={data}
-                xCol={xCol}
-                yCols={yCols}
-                seriesNames={seriesNames}
-                errorCols={errorCols}
-                xAxisLabel={xAxisLabel}
-                yAxisLabel={yAxisLabel}
-                chartType={chartType}
-                styleName={styleName}
-                styleOverrides={styleOverrides}
-                annotations={annotations}
-                onAnnotationsChange={setAnnotations}
-                onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
-                onSaveTemplate={() => setSaveTemplateOpen(true)}
-              />
-            )
+          {isMultiPanel && panels.length > 0 ? (
+            <MultiPanelPreview
+              panels={panels}
+              layout={panelLayout}
+              activePanel={activePanel}
+              styleName={styleName}
+              panelAnnotations={panelAnnotations}
+              onAnnotationsChange={(idx, anns) =>
+                setPanelAnnotations(prev => prev.map((a, i) => i === idx ? anns : a))
+              }
+              onStyleChange={(idx, patch) =>
+                updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
+              }
+              onPanelClick={setActivePanel}
+              onSaveTemplate={() => setSaveTemplateOpen(true)}
+            />
+          ) : ready ? (
+            <ChartPreview
+              data={data}
+              xCol={xCol}
+              yCols={yCols}
+              seriesNames={seriesNames}
+              errorCols={errorCols}
+              xAxisLabel={xAxisLabel}
+              yAxisLabel={yAxisLabel}
+              chartType={chartType}
+              styleName={styleName}
+              styleOverrides={styleOverrides}
+              annotations={annotations}
+              onAnnotationsChange={setAnnotations}
+              onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
+              onSaveTemplate={() => setSaveTemplateOpen(true)}
+            />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-[#f5f3ff]">
               <EmptyState onUploadClick={focusUpload} />

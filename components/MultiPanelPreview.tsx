@@ -14,13 +14,13 @@ const PANEL_W: Record<PanelLayout, number> = {
   '4':  560,
 }
 const COLS: Record<PanelLayout, number> = { '1': 1, '2h': 2, '2v': 1, '4': 2 }
+const PANEL_H = 440
 const GAP = 20
 
 interface Props {
   panels: PanelConfig[]
   layout: PanelLayout
   activePanel: number
-  data: Record<string, unknown>[]
   styleName: StyleName
   panelAnnotations: ChartAnnotation[][]
   onAnnotationsChange: (idx: number, anns: ChartAnnotation[]) => void
@@ -30,7 +30,7 @@ interface Props {
 }
 
 export default function MultiPanelPreview({
-  panels, layout, activePanel, data, styleName,
+  panels, layout, activePanel, styleName,
   panelAnnotations, onAnnotationsChange, onStyleChange, onPanelClick,
 }: Props) {
   const gridRef = useRef<HTMLDivElement>(null)
@@ -71,7 +71,6 @@ export default function MultiPanelPreview({
 
       {/* Workspace */}
       <div className="flex-1 overflow-auto bg-[#f5f3ff] flex items-start justify-center p-6 lg:p-10">
-        {/* Export target — white card containing the panel grid */}
         <div
           ref={gridRef}
           style={{
@@ -104,35 +103,53 @@ export default function MultiPanelPreview({
                 }}
               >
                 {/* Panel label */}
-                <div
-                  style={{
-                    fontFamily: 'Arial, Helvetica, sans-serif',
-                    fontWeight: 700,
-                    fontSize: 13,
-                    color: '#1a1a1a',
-                    marginBottom: 4,
-                    lineHeight: 1,
-                    userSelect: 'none',
-                  }}
-                >
+                <div style={{
+                  fontFamily: 'Arial, Helvetica, sans-serif',
+                  fontWeight: 700, fontSize: 13,
+                  color: '#1a1a1a', marginBottom: 4,
+                  lineHeight: 1, userSelect: 'none',
+                }}>
                   {PANEL_LABELS[i]}
                 </div>
-                <ChartPreview
-                  data={data}
-                  xCol={panel.xCol}
-                  yCols={panel.yCols}
-                  seriesNames={panel.seriesNames}
-                  errorCols={panel.errorCols}
-                  xAxisLabel={panel.xAxisLabel}
-                  yAxisLabel={panel.yAxisLabel}
-                  chartType={panel.chartType}
-                  styleName={styleName}
-                  styleOverrides={panel.styleOverrides}
-                  annotations={panelAnnotations[i] ?? []}
-                  onAnnotationsChange={(anns) => onAnnotationsChange(i, anns)}
-                  onStyleChange={(patch) => onStyleChange(i, patch)}
-                  compact
-                />
+
+                {/* Chart or placeholder */}
+                {panel.data.length > 0 && panel.yCols.length > 0 ? (
+                  <ChartPreview
+                    data={panel.data}
+                    xCol={panel.xCol}
+                    yCols={panel.yCols}
+                    seriesNames={panel.seriesNames}
+                    errorCols={panel.errorCols}
+                    xAxisLabel={panel.xAxisLabel}
+                    yAxisLabel={panel.yAxisLabel}
+                    chartType={panel.chartType}
+                    styleName={styleName}
+                    styleOverrides={panel.styleOverrides}
+                    annotations={panelAnnotations[i] ?? []}
+                    onAnnotationsChange={(anns) => onAnnotationsChange(i, anns)}
+                    onStyleChange={(patch) => onStyleChange(i, patch)}
+                    compact
+                  />
+                ) : (
+                  <div style={{
+                    width: panelW, height: PANEL_H,
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    gap: 8, background: '#f8f7ff', borderRadius: 8,
+                    border: '2px dashed #c4b5fd',
+                  }}>
+                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#c4b5fd" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <p style={{ fontSize: 12, color: '#a78bfa', fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>
+                      Panel {panel.id} — no data
+                    </p>
+                    <p style={{ fontSize: 11, color: '#c4b5fd', fontFamily: 'Arial, sans-serif' }}>
+                      Select this panel and upload a file
+                    </p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

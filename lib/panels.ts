@@ -5,6 +5,8 @@ export type PanelLayout = '1' | '2h' | '2v' | '4'
 
 export interface PanelConfig {
   id: string
+  data: Record<string, unknown>[]
+  columns: string[]
   xCol: string
   yCols: string[]
   chartType: ChartType
