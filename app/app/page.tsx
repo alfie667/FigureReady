@@ -1,10 +1,12 @@
-﻿'use client'
-import { useEffect, useRef, useState } from 'react'
+'use client'
+import { useEffect, useState } from 'react'
 import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
 import StyleEditor from '@/components/StyleEditor'
 import ChartPreview from '@/components/ChartPreview'
+import MultiPanelPreview from '@/components/MultiPanelPreview'
+import PanelLayoutSelector from '@/components/PanelLayoutSelector'
 import Panel from '@/components/Panel'
 import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
@@ -19,9 +21,9 @@ import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
+import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
 
 export default function AppPage() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [columns, setColumns] = useState<string[]>([])
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [xCol, setXCol] = useState('')
@@ -36,10 +38,102 @@ export default function AppPage() {
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
 
+  // Multi-panel state
+  const [isMultiPanel, setIsMultiPanel] = useState(false)
+  const [panelLayout, setPanelLayout] = useState<PanelLayout>('2h')
+  const [panels, setPanels] = useState<PanelConfig[]>([])
+  const [activePanel, setActivePanel] = useState(0)
+  const [panelAnnotations, setPanelAnnotations] = useState<ChartAnnotation[][]>([[], [], [], []])
+
   useEffect(() => {
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
   }, [])
+
+  // ── Multi-panel helpers ──────────────────────────────────────────────────────
+
+  const updatePanel = (idx: number, patch: Partial<PanelConfig>) =>
+    setPanels(prev => prev.map((p, i) => i === idx ? { ...p, ...patch } : p))
+
+  const makeDefaultPanel = (id: string): PanelConfig => ({
+    id,
+    xCol,
+    yCols: yCols.slice(0, 1),
+    chartType,
+    styleOverrides: {},
+    seriesNames: {},
+    errorCols: {},
+    xAxisLabel,
+    yAxisLabel,
+  })
+
+  const toggleMultiPanel = () => {
+    if (!isMultiPanel) {
+      const count = getLayoutCount(panelLayout)
+      setPanels(Array.from({ length: count }, (_, i) => makeDefaultPanel(PANEL_LABELS[i])))
+      setActivePanel(0)
+      setPanelAnnotations([[], [], [], []])
+    }
+    setIsMultiPanel(v => !v)
+  }
+
+  const handleLayoutChange = (newLayout: PanelLayout) => {
+    const newCount = getLayoutCount(newLayout)
+    setPanels(prev => {
+      if (newCount > prev.length) {
+        const extra = Array.from({ length: newCount - prev.length }, (_, i) =>
+          makeDefaultPanel(PANEL_LABELS[prev.length + i])
+        )
+        return [...prev, ...extra]
+      }
+      return prev.slice(0, newCount)
+    })
+    if (activePanel >= newCount) setActivePanel(newCount - 1)
+    setPanelLayout(newLayout)
+  }
+
+  // ── Derived current values (routes to active panel or global state) ──────────
+
+  const currentPanel = isMultiPanel ? panels[activePanel] : null
+  const currentXCol = currentPanel?.xCol ?? xCol
+  const currentYCols = currentPanel?.yCols ?? yCols
+  const currentChartType = currentPanel?.chartType ?? chartType
+  const currentSeriesNames = currentPanel?.seriesNames ?? seriesNames
+  const currentErrorCols = currentPanel?.errorCols ?? errorCols
+  const currentXAxisLabel = currentPanel?.xAxisLabel ?? xAxisLabel
+  const currentYAxisLabel = currentPanel?.yAxisLabel ?? yAxisLabel
+  const currentStyleOverrides = currentPanel?.styleOverrides ?? styleOverrides
+
+  const setCurrentStyleOverrides = (v: StyleOverrides) => {
+    if (isMultiPanel) updatePanel(activePanel, { styleOverrides: v })
+    else setStyleOverrides(v)
+  }
+  const setCurrentChartType = (v: ChartType) => {
+    if (isMultiPanel) updatePanel(activePanel, { chartType: v })
+    else setChartType(v)
+  }
+  const setCurrentSeriesNames = (v: Record<string, string>) => {
+    if (isMultiPanel) updatePanel(activePanel, { seriesNames: v })
+    else setSeriesNames(v)
+  }
+  const setCurrentErrorCols = (v: Record<string, string>) => {
+    if (isMultiPanel) updatePanel(activePanel, { errorCols: v })
+    else setErrorCols(v)
+  }
+  const setCurrentXAxisLabel = (v: string) => {
+    if (isMultiPanel) updatePanel(activePanel, { xAxisLabel: v })
+    else setXAxisLabel(v)
+  }
+  const setCurrentYAxisLabel = (v: string) => {
+    if (isMultiPanel) updatePanel(activePanel, { yAxisLabel: v })
+    else setYAxisLabel(v)
+  }
+  const setCurrentXYCols = (x: string, y: string[]) => {
+    if (isMultiPanel) updatePanel(activePanel, { xCol: x, yCols: y })
+    else { setXCol(x); setYCols(y) }
+  }
+
+  // ── Data handlers ─────────────────────────────────────────────────────────────
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
     setColumns(cols)
@@ -61,6 +155,8 @@ export default function AppPage() {
     setYAxisLabel(initialY[0] ?? '')
     setStyleOverrides({})
     setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
 
     trackUpload()
     trackChartCreated()
@@ -77,6 +173,8 @@ export default function AppPage() {
     setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
   }
 
   const focusUpload = () => {
@@ -171,46 +269,85 @@ export default function AppPage() {
               }
             >
               <div className="space-y-5">
+
+                {/* Multi-panel toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">Multi-panel figure</p>
+                    <p className="text-[11px] text-slate-400">Combine charts in one figure</p>
+                  </div>
+                  <button
+                    onClick={toggleMultiPanel}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#7c3aed]' : 'bg-slate-200'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {isMultiPanel && (
+                  <div className="space-y-3 rounded-2xl bg-[#ede9fe] p-3">
+                    <div>
+                      <p className="text-xs font-medium text-[#5b21b6] mb-2">Layout</p>
+                      <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-[#5b21b6] mb-2">Editing panel</p>
+                      <div className="flex gap-1.5">
+                        {panels.map((p, i) => (
+                          <button
+                            key={p.id}
+                            onClick={() => setActivePanel(i)}
+                            className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#7c3aed] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
+                          >
+                            {p.id}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <TemplateSelector onApply={handleApplyTemplate} />
                 <ColumnSelector
                   columns={columns}
-                  xCol={xCol}
-                  yCols={yCols}
-                  seriesNames={seriesNames}
-                  errorCols={errorCols}
-                  xAxisLabel={xAxisLabel}
-                  yAxisLabel={yAxisLabel}
-                  chartType={chartType}
-                  seriesColors={styleOverrides.seriesColors ?? {}}
-                  seriesStrokeWidths={styleOverrides.seriesStrokeWidths ?? {}}
-                  seriesMarkerSizes={styleOverrides.seriesMarkerSizes ?? {}}
-                  seriesMarkerShapes={styleOverrides.seriesMarkerShapes ?? {}}
-                  yAxisAssignment={styleOverrides.yAxisAssignment ?? {}}
+                  xCol={currentXCol}
+                  yCols={currentYCols}
+                  seriesNames={currentSeriesNames}
+                  errorCols={currentErrorCols}
+                  xAxisLabel={currentXAxisLabel}
+                  yAxisLabel={currentYAxisLabel}
+                  chartType={currentChartType}
+                  seriesColors={currentStyleOverrides.seriesColors ?? {}}
+                  seriesStrokeWidths={currentStyleOverrides.seriesStrokeWidths ?? {}}
+                  seriesMarkerSizes={currentStyleOverrides.seriesMarkerSizes ?? {}}
+                  seriesMarkerShapes={currentStyleOverrides.seriesMarkerShapes ?? {}}
+                  yAxisAssignment={currentStyleOverrides.yAxisAssignment ?? {}}
                   defaultColors={chartStyles[styleName].colors}
                   defaultStrokeWidth={chartStyles[styleName].strokeWidth}
                   defaultMarkerSize={chartStyles[styleName].dotRadius}
-                  onChange={(x, y) => { setXCol(x); setYCols(y) }}
-                  onSeriesNamesChange={setSeriesNames}
-                  onErrorColsChange={setErrorCols}
-                  onXAxisLabelChange={setXAxisLabel}
-                  onYAxisLabelChange={setYAxisLabel}
-                  onSeriesColorsChange={(colors) => setStyleOverrides({ ...styleOverrides, seriesColors: colors })}
-                  onSeriesStrokeWidthsChange={(widths) => setStyleOverrides({ ...styleOverrides, seriesStrokeWidths: widths })}
-                  onSeriesMarkerSizesChange={(sizes) => setStyleOverrides({ ...styleOverrides, seriesMarkerSizes: sizes })}
-                  onSeriesMarkerShapesChange={(shapes) => setStyleOverrides({ ...styleOverrides, seriesMarkerShapes: shapes })}
-                  onYAxisAssignmentChange={(assignment) => setStyleOverrides({ ...styleOverrides, yAxisAssignment: assignment })}
+                  onChange={setCurrentXYCols}
+                  onSeriesNamesChange={setCurrentSeriesNames}
+                  onErrorColsChange={setCurrentErrorCols}
+                  onXAxisLabelChange={setCurrentXAxisLabel}
+                  onYAxisLabelChange={setCurrentYAxisLabel}
+                  onSeriesColorsChange={(colors) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesColors: colors })}
+                  onSeriesStrokeWidthsChange={(widths) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesStrokeWidths: widths })}
+                  onSeriesMarkerSizesChange={(sizes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerSizes: sizes })}
+                  onSeriesMarkerShapesChange={(shapes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerShapes: shapes })}
+                  onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
                 />
                 <div className="flex flex-wrap gap-6">
-                  <ChartTypeSelector value={chartType} onChange={setChartType} />
+                  <ChartTypeSelector value={currentChartType} onChange={setCurrentChartType} />
                 </div>
                 <div className="space-y-2.5">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
                     <div className="flex gap-1.5">
                       {(['linear', 'log', 'ln'] as const).map(sc => {
-                        const active = (styleOverrides.xScale ?? 'linear') === sc
+                        const active = (currentStyleOverrides.xScale ?? 'linear') === sc
                         return (
-                          <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, xScale: sc })}
+                          <button key={sc}
+                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
                             className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
@@ -222,9 +359,10 @@ export default function AppPage() {
                     <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
                     <div className="flex gap-1.5">
                       {(['linear', 'log', 'ln'] as const).map(sc => {
-                        const active = (styleOverrides.yScale ?? 'linear') === sc
+                        const active = (currentStyleOverrides.yScale ?? 'linear') === sc
                         return (
-                          <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, yScale: sc })}
+                          <button key={sc}
+                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
                             className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
@@ -251,9 +389,9 @@ export default function AppPage() {
             >
               <StyleEditor
                 baseStyle={chartStyles[styleName]}
-                overrides={styleOverrides}
-                hasMultipleSeries={yCols.length > 1}
-                onChange={setStyleOverrides}
+                overrides={currentStyleOverrides}
+                hasMultipleSeries={currentYCols.length > 1}
+                onChange={setCurrentStyleOverrides}
               />
             </Panel>
           )}
@@ -261,22 +399,41 @@ export default function AppPage() {
 
         <main className="flex-1 flex flex-col lg:overflow-hidden">
           {ready ? (
-            <ChartPreview
-              data={data}
-              xCol={xCol}
-              yCols={yCols}
-              seriesNames={seriesNames}
-              errorCols={errorCols}
-              xAxisLabel={xAxisLabel}
-              yAxisLabel={yAxisLabel}
-              chartType={chartType}
-              styleName={styleName}
-              styleOverrides={styleOverrides}
-              annotations={annotations}
-              onAnnotationsChange={setAnnotations}
-              onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
-              onSaveTemplate={() => setSaveTemplateOpen(true)}
-            />
+            isMultiPanel && panels.length > 0 ? (
+              <MultiPanelPreview
+                panels={panels}
+                layout={panelLayout}
+                activePanel={activePanel}
+                data={data}
+                styleName={styleName}
+                panelAnnotations={panelAnnotations}
+                onAnnotationsChange={(idx, anns) =>
+                  setPanelAnnotations(prev => prev.map((a, i) => i === idx ? anns : a))
+                }
+                onStyleChange={(idx, patch) =>
+                  updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
+                }
+                onPanelClick={setActivePanel}
+                onSaveTemplate={() => setSaveTemplateOpen(true)}
+              />
+            ) : (
+              <ChartPreview
+                data={data}
+                xCol={xCol}
+                yCols={yCols}
+                seriesNames={seriesNames}
+                errorCols={errorCols}
+                xAxisLabel={xAxisLabel}
+                yAxisLabel={yAxisLabel}
+                chartType={chartType}
+                styleName={styleName}
+                styleOverrides={styleOverrides}
+                annotations={annotations}
+                onAnnotationsChange={setAnnotations}
+                onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
+                onSaveTemplate={() => setSaveTemplateOpen(true)}
+              />
+            )
           ) : (
             <div className="flex-1 flex items-center justify-center bg-[#f5f3ff]">
               <EmptyState onUploadClick={focusUpload} />

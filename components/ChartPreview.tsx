@@ -282,6 +282,7 @@ interface Props {
   onAnnotationsChange: (annotations: ChartAnnotation[]) => void
   onStyleChange?: (patch: Partial<StyleOverrides>) => void
   onSaveTemplate?: () => void
+  compact?: boolean
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -290,6 +291,7 @@ export default function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
+  compact = false,
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
@@ -1080,6 +1082,20 @@ export default function ChartPreview({
   const ellipseAnnotations = annotations.filter((a): a is EllipseAnnotation => a.type === 'ellipse')
 
   // ─── JSX ─────────────────────────────────────────────────────────────────────
+
+  // Compact mode: just the chart canvas — no toolbar, no workspace chrome
+  if (compact) {
+    return (
+      <div
+        ref={chartRef}
+        style={{ fontFamily, width: '100%', position: 'relative', userSelect: 'none' }}
+      >
+        <ResponsiveContainer width="100%" height={figureHeight}>
+          {renderChart() as React.ReactElement}
+        </ResponsiveContainer>
+      </div>
+    )
+  }
 
   return (
     <>
