@@ -17,6 +17,19 @@ import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, LineAnnotation, 
 import AnnotationToolbar from '@/components/AnnotationToolbar'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks, buildStepTicks } from '@/lib/niceTicks'
+
+function lnFmt(v: number): string {
+  const val = Math.exp(v)
+  if (val >= 1000) return String(Math.round(val))
+  if (val >= 10) return val.toFixed(1)
+  if (val >= 0.01) return val.toFixed(2)
+  return val.toExponential(1)
+}
+function buildLnTicks(lo: number, hi: number): number[] {
+  const ticks: number[] = []
+  for (let i = Math.floor(lo); i <= Math.ceil(hi); i++) ticks.push(i)
+  return ticks.length >= 2 ? ticks : [Math.floor(lo), Math.ceil(hi)]
+}
 import { renderMarker, type MarkerShape } from '@/lib/markerShapes'
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
@@ -382,6 +395,10 @@ export default function ChartPreview({
   const yScale = styleOverrides.yScale ?? 'linear'
   const isLogX = xScale === 'log'
   const isLogY = yScale === 'log'
+  const isLnX = xScale === 'ln'
+  const isLnY = yScale === 'ln'
+  const rechartsXScale = (isLnX ? 'linear' : xScale) as 'linear' | 'log'
+  const rechartsYScale = (isLnY ? 'linear' : yScale) as 'linear' | 'log'
   const yAxisAssignment = styleOverrides.yAxisAssignment ?? {}
   const hasRightAxis = yCols.some(col => yAxisAssignment[col] === 'right')
   const y2AxisLabel = styleOverrides.y2AxisLabel ?? ''
@@ -390,11 +407,14 @@ export default function ChartPreview({
 
   const processedData = data
     .map(row => {
-      const point: Record<string, unknown> = { x: row[xCol] }
+      const rawX = row[xCol]
+      const x = (isLnX && isNumericX && typeof rawX === 'number')
+        ? (rawX > 0 ? Math.log(rawX) : null)
+        : rawX
+      const point: Record<string, unknown> = { x }
       yCols.forEach(col => {
         const v = Number(row[col])
-        // null out non-positive values so log scale doesn't break
-        point[col] = isNaN(v) ? null : (isLogY && v <= 0 ? null : v)
+        point[col] = isNaN(v) ? null : ((isLogY || isLnY) && v <= 0 ? null : (isLnY ? Math.log(v) : v))
         if (hasError(col)) {
           const e = Number(row[errorCols[col]])
           point[`error_${col}`] = isNaN(e) ? null : e
@@ -405,6 +425,7 @@ export default function ChartPreview({
     .filter(point => {
       if (!inZoomRange(point.x)) return false
       if (isLogX && isNumericX && typeof point.x === 'number' && point.x <= 0) return false
+      if (isLnX && point.x === null) return false
       return true
     })
 
@@ -413,7 +434,12 @@ export default function ChartPreview({
     color: seriesColor(col, i),
     data: data
       .map(row => {
-        const point: Record<string, unknown> = { x: row[xCol], y: Number(row[col]) }
+        const rawX = row[xCol]
+        const numX = typeof rawX === 'number' ? rawX : Number(rawX)
+        const x = (isLnX && isNumericX) ? (numX > 0 ? Math.log(numX) : null) : rawX
+        const yRaw = Number(row[col])
+        const y = isLnY ? (yRaw > 0 ? Math.log(yRaw) : null) : yRaw
+        const point: Record<string, unknown> = { x, y }
         if (hasError(col)) {
           const e = Number(row[errorCols[col]])
           point.error = isNaN(e) ? null : e
@@ -421,23 +447,27 @@ export default function ChartPreview({
         return point
       })
       .filter(d => {
-        if (isNaN(d.y as number)) return false
+        if (d.y === null || isNaN(d.y as number)) return false
         if (!inZoomRange(d.x)) return false
         if (isLogY && (d.y as number) <= 0) return false
         if (isLogX && isNumericX && typeof d.x === 'number' && d.x <= 0) return false
+        if (isLnX && d.x === null) return false
         return true
       }),
   }))
 
   const xValues = isNumericX
-    ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v) && (!isLogX || v > 0))
+    ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v) && (!(isLogX || isLnX) || v > 0))
     : []
-  const xRangeMin = styleOverrides.xMin ?? (xValues.length > 0 ? Math.min(...xValues) : undefined)
-  const xRangeMax = styleOverrides.xMax ?? (xValues.length > 0 ? Math.max(...xValues) : undefined)
+  const xValuesScaled = isLnX ? xValues.map(Math.log) : xValues
+  const xRangeMin = styleOverrides.xMin ?? (xValuesScaled.length > 0 ? Math.min(...xValuesScaled) : undefined)
+  const xRangeMax = styleOverrides.xMax ?? (xValuesScaled.length > 0 ? Math.max(...xValuesScaled) : undefined)
   const xStep = styleOverrides.xStep
-  const xTicks = !isLogX && xRangeMin !== undefined && xRangeMax !== undefined
-    ? (xStep ? buildStepTicks(xRangeMin, xRangeMax, xStep) : getNiceTicks(xRangeMin, xRangeMax))
-    : undefined
+  const xTicks = isLnX && xRangeMin !== undefined && xRangeMax !== undefined
+    ? buildLnTicks(xRangeMin, xRangeMax)
+    : (!isLogX && xRangeMin !== undefined && xRangeMax !== undefined
+      ? (xStep ? buildStepTicks(xRangeMin, xRangeMax, xStep) : getNiceTicks(xRangeMin, xRangeMax))
+      : undefined)
   const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
 
   const yMin = styleOverrides.yMin
@@ -447,20 +477,26 @@ export default function ChartPreview({
   const leftCols = hasRightAxis ? yCols.filter(col => yAxisAssignment[col] !== 'right') : yCols
   const allYValues = leftCols
     .flatMap(col => data.map(row => Number(row[col])))
-    .filter(v => !isNaN(v) && (!isLogY || v > 0))
-  const autoYMin = allYValues.length > 0 ? Math.min(...allYValues) : (isLogY ? 1 : 0)
-  const autoYMax = allYValues.length > 0 ? Math.max(...allYValues) : (isLogY ? 10 : 1)
-  const yTicks = !isLogY && yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined
+    .filter(v => !isNaN(v) && (!(isLogY || isLnY) || v > 0))
+  const allYValuesScaled = isLnY ? allYValues.map(Math.log) : allYValues
+  const autoYMin = allYValuesScaled.length > 0 ? Math.min(...allYValuesScaled) : ((isLogY || isLnY) ? 0 : 0)
+  const autoYMax = allYValuesScaled.length > 0 ? Math.max(...allYValuesScaled) : ((isLogY || isLnY) ? 2 : 1)
+  const yLnTicks = isLnY ? buildLnTicks(autoYMin, autoYMax) : undefined
+  const yTicks = isLnY
+    ? yLnTicks
+    : (!isLogY && yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined)
   const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean; ticks?: number[] } =
-    isLogY
-      ? { domain: [autoYMin / 2, autoYMax * 2] }
-      : (yMin !== undefined || yMax !== undefined || yTicks)
-        ? {
-            domain: [yTicks ? yTicks[0] : (yMin ?? 'auto'), yTicks ? yTicks[yTicks.length - 1] : (yMax ?? 'auto')],
-            allowDataOverflow: true,
-            ...(yTicks ? { ticks: yTicks } : {}),
-          }
-        : {}
+    isLnY
+      ? { domain: [autoYMin - 0.5, autoYMax + 0.5], ...(yLnTicks ? { ticks: yLnTicks } : {}) }
+      : isLogY
+        ? { domain: [autoYMin / 2, autoYMax * 2] }
+        : (yMin !== undefined || yMax !== undefined || yTicks)
+          ? {
+              domain: [yTicks ? yTicks[0] : (yMin ?? 'auto'), yTicks ? yTicks[yTicks.length - 1] : (yMax ?? 'auto')],
+              allowDataOverflow: true,
+              ...(yTicks ? { ticks: yTicks } : {}),
+            }
+          : {}
 
   // ─── Style derivation ────────────────────────────────────────────────────────
 
@@ -732,8 +768,8 @@ export default function ChartPreview({
       return (
         <ScatterChart margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
           {grid}
-          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? xScale : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
-          <YAxis dataKey="y" type="number" scale={yScale} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
+          <YAxis dataKey="y" type="number" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
           <Tooltip content={<ScatterTooltipContent />} cursor={false} />
           {legend}
           {scatterSeries.map(series => {
@@ -756,9 +792,9 @@ export default function ChartPreview({
         <BarChart data={processedData} margin={margin}>
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} height={65} />
-          <YAxis yAxisId="left" scale={yScale} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
           {hasRightAxis && (
-            <YAxis yAxisId="right" orientation="right" scale={yScale} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine}
+            <YAxis yAxisId="right" orientation="right" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine}
               label={y2AxisLabel ? { value: y2AxisLabel, angle: 90, position: 'insideRight', style: yLabelStyle } : undefined}
               width={80} />
           )}
@@ -798,10 +834,10 @@ export default function ChartPreview({
     return (
       <LineChart data={processedData} margin={hasRightAxis ? { ...margin, right: 90 } : margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
         {grid}
-        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? xScale : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
-        <YAxis yAxisId="left" scale={yScale} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
+        <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
         {hasRightAxis && (
-          <YAxis yAxisId="right" orientation="right" scale={yScale} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={y2Label} width={80} />
+          <YAxis yAxisId="right" orientation="right" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={y2Label} width={80} />
         )}
         <Tooltip content={() => null} cursor={false} />
         {legend}

@@ -207,12 +207,12 @@ export default function AppPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
                     <div className="flex gap-1.5">
-                      {(['linear', 'log'] as const).map(sc => {
+                      {(['linear', 'log', 'ln'] as const).map(sc => {
                         const active = (styleOverrides.xScale ?? 'linear') === sc
                         return (
                           <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, xScale: sc })}
-                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                            {sc === 'linear' ? 'Linear' : 'Log'}
+                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-[#1D6F42] text-white border-[#1D6F42]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
                         )
                       })}
@@ -221,12 +221,12 @@ export default function AppPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
                     <div className="flex gap-1.5">
-                      {(['linear', 'log'] as const).map(sc => {
+                      {(['linear', 'log', 'ln'] as const).map(sc => {
                         const active = (styleOverrides.yScale ?? 'linear') === sc
                         return (
                           <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, yScale: sc })}
-                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                            {sc === 'linear' ? 'Linear' : 'Log'}
+                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-[#1D6F42] text-white border-[#1D6F42]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
                         )
                       })}

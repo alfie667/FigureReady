@@ -37,8 +37,8 @@ export interface StyleOverrides {
   legendYPct?: number
   legendOrientation?: 'h' | 'v'
   legendBg?: boolean
-  xScale?: 'linear' | 'log'
-  yScale?: 'linear' | 'log'
+  xScale?: 'linear' | 'log' | 'ln'
+  yScale?: 'linear' | 'log' | 'ln'
   yAxisAssignment?: Record<string, 'left' | 'right'>
   y2AxisLabel?: string
 }
