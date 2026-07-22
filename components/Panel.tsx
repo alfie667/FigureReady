@@ -12,7 +12,7 @@ export default function Panel({ id, icon, title, action, defaultOpen = true, chi
     <details id={id} open={defaultOpen} className="group border-b border-slate-100 scroll-mt-14 last:border-b-0">
       <summary className="flex items-center justify-between gap-3 px-5 py-3.5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden hover:bg-slate-50 transition-colors duration-100">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600 text-white shrink-0">
+          <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#1D6F42] text-white shrink-0">
             {icon}
           </span>
           <span className="text-sm font-semibold text-slate-800 truncate">{title}</span>

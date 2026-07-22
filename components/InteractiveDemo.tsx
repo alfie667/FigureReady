@@ -178,9 +178,9 @@ export default function InteractiveDemo() {
               <table className="w-full text-xs">
                 <thead>
                   <tr>
-                    <th className="px-4 py-2 text-left bg-blue-50 border-r border-slate-200 border-b border-slate-200">
-                      <span className="text-blue-600 font-bold">Conc. (µM)</span>
-                      <span className="ml-2 text-[9px] bg-blue-600 text-white px-1.5 py-0.5 rounded-full font-bold">X</span>
+                    <th className="px-4 py-2 text-left bg-[#e8f5ee] border-r border-slate-200 border-b border-slate-200">
+                      <span className="text-[#1D6F42] font-bold">Conc. (µM)</span>
+                      <span className="ml-2 text-[9px] bg-[#1D6F42] text-white px-1.5 py-0.5 rounded-full font-bold">X</span>
                     </th>
                     <th className="px-4 py-2 text-right bg-emerald-50 border-b border-slate-200">
                       <span className="text-emerald-700 font-bold">Absorbance</span>
@@ -191,7 +191,7 @@ export default function InteractiveDemo() {
                 <tbody>
                   {TABLE_DATA.map((row, i) => (
                     <tr key={i} className="border-t border-slate-100">
-                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-blue-50/20">{row.x}</td>
+                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-[#e8f5ee]/20">{row.x}</td>
                       <td className="px-4 py-1.5 text-right font-mono text-slate-700 bg-emerald-50/20">{row.y}</td>
                     </tr>
                   ))}

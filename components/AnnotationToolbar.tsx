@@ -90,13 +90,13 @@ function ToolBtn({
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 rounded-lg transition-all duration-150 select-none min-w-[52px] ${
         active
-          ? 'bg-blue-600 text-white shadow-sm'
+          ? 'bg-[#1D6F42] text-white shadow-sm'
           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
       }`}
     >
       <span className="flex items-center justify-center">{icon}</span>
       <span className={`text-[10px] font-light tracking-wide leading-none whitespace-nowrap ${
-        active ? 'text-blue-100' : 'text-slate-400'
+        active ? 'text-[#c6e6d5]' : 'text-slate-400'
       }`}>
         {shortLabel}
       </span>
@@ -193,7 +193,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
           onClick={() => setShowSymbols(v => !v)}
           className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 min-w-[52px] rounded-lg transition-all duration-150 select-none ${
             showSymbols
-              ? 'bg-blue-600 text-white shadow-sm'
+              ? 'bg-[#1D6F42] text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -202,7 +202,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
             <ChevronDown />
           </span>
           <span className={`text-[10px] font-light tracking-wide leading-none ${
-            showSymbols ? 'text-blue-100' : 'text-slate-400'
+            showSymbols ? 'text-[#c6e6d5]' : 'text-slate-400'
           }`}>
             Symb.
           </span>
@@ -219,7 +219,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
                   key={sym}
                   title={sym}
                   onClick={() => { onInsertSymbol(sym); setShowSymbols(false) }}
-                  className="w-7 h-7 flex items-center justify-center text-sm text-slate-600 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center text-sm text-slate-600 rounded-lg hover:bg-[#e8f5ee] hover:text-[#155d35] transition-colors"
                 >
                   {sym}
                 </button>

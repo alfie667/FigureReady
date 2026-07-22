@@ -27,10 +27,10 @@ const BarChartThumb = () => (
     <text x="28" y="73" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">50</text>
     <text x="28" y="48" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">75</text>
     <text x="28" y="23" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">100</text>
-    <rect x="35" y="38" width="18" height="82" fill="#2166ac" rx="1"/>
-    <line x1="44" y1="38" x2="44" y2="28" stroke="#2166ac" strokeWidth="1.5"/>
-    <line x1="40" y1="28" x2="48" y2="28" stroke="#2166ac" strokeWidth="1.5"/>
-    <line x1="40" y1="38" x2="48" y2="38" stroke="#2166ac" strokeWidth="1.5"/>
+    <rect x="35" y="38" width="18" height="82" fill="#1D6F42" rx="1"/>
+    <line x1="44" y1="38" x2="44" y2="28" stroke="#1D6F42" strokeWidth="1.5"/>
+    <line x1="40" y1="28" x2="48" y2="28" stroke="#1D6F42" strokeWidth="1.5"/>
+    <line x1="40" y1="38" x2="48" y2="38" stroke="#1D6F42" strokeWidth="1.5"/>
     <rect x="60" y="45" width="18" height="75" fill="#4dac26" rx="1"/>
     <line x1="69" y1="45" x2="69" y2="35" stroke="#4dac26" strokeWidth="1.5"/>
     <line x1="65" y1="35" x2="73" y2="35" stroke="#4dac26" strokeWidth="1.5"/>
@@ -78,9 +78,9 @@ const ScatterThumb = () => (
     <text x="34" y="48" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">0.6</text>
     <text x="34" y="23" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">0.8</text>
     <line x1="42" y1="118" x2="185" y2="22" stroke="#aaa" strokeWidth="1" strokeDasharray="3,2"/>
-    <circle cx="50" cy="112" r="4.5" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
-    <circle cx="65" cy="102" r="4.5" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
-    <circle cx="80" cy="91" r="4.5" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
+    <circle cx="50" cy="112" r="4.5" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
+    <circle cx="65" cy="102" r="4.5" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
+    <circle cx="80" cy="91" r="4.5" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
     <circle cx="95" cy="80" r="4.5" fill="#d01c8b" stroke="white" strokeWidth="1.2"/>
     <circle cx="110" cy="70" r="4.5" fill="#d01c8b" stroke="white" strokeWidth="1.2"/>
     <circle cx="125" cy="58" r="4.5" fill="#d01c8b" stroke="white" strokeWidth="1.2"/>
@@ -88,7 +88,7 @@ const ScatterThumb = () => (
     <circle cx="158" cy="36" r="4.5" fill="#4dac26" stroke="white" strokeWidth="1.2"/>
     <circle cx="174" cy="26" r="4.5" fill="#4dac26" stroke="white" strokeWidth="1.2"/>
     <rect x="39" y="18" width="88" height="42" fill="white" stroke="#ddd" strokeWidth="0.8" rx="3"/>
-    <circle cx="48" cy="28" r="3.5" fill="#2166ac"/>
+    <circle cx="48" cy="28" r="3.5" fill="#1D6F42"/>
     <text x="54" y="31" fontSize="7.5" fill="#333" fontFamily="Arial">Group A</text>
     <circle cx="48" cy="38" r="3.5" fill="#d01c8b"/>
     <text x="54" y="41" fontSize="7.5" fill="#333" fontFamily="Arial">Group B</text>
@@ -121,12 +121,12 @@ const LineThumb = () => (
     <text x="34" y="73" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">2</text>
     <text x="34" y="48" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">3</text>
     <text x="34" y="23" textAnchor="end" fontSize="7" fill="#555" fontFamily="Arial">4</text>
-    <polyline points="42,108 78,88 114,65 150,45 185,25" fill="none" stroke="#2166ac" strokeWidth="2" strokeLinejoin="round"/>
-    <circle cx="42" cy="108" r="4" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
-    <circle cx="78" cy="88" r="4" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
-    <circle cx="114" cy="65" r="4" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
-    <circle cx="150" cy="45" r="4" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
-    <circle cx="185" cy="25" r="4" fill="#2166ac" stroke="white" strokeWidth="1.2"/>
+    <polyline points="42,108 78,88 114,65 150,45 185,25" fill="none" stroke="#1D6F42" strokeWidth="2" strokeLinejoin="round"/>
+    <circle cx="42" cy="108" r="4" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
+    <circle cx="78" cy="88" r="4" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
+    <circle cx="114" cy="65" r="4" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
+    <circle cx="150" cy="45" r="4" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
+    <circle cx="185" cy="25" r="4" fill="#1D6F42" stroke="white" strokeWidth="1.2"/>
     <polyline points="42,115 78,102 114,88 150,75 185,62" fill="none" stroke="#d01c8b" strokeWidth="2" strokeLinejoin="round"/>
     <rect x="39" y="112" width="6" height="6" fill="#d01c8b" stroke="white" strokeWidth="1"/>
     <rect x="75" y="99" width="6" height="6" fill="#d01c8b" stroke="white" strokeWidth="1"/>
@@ -140,8 +140,8 @@ const LineThumb = () => (
     <polygon points="150,100 154,92 146,92" fill="#4dac26" stroke="white" strokeWidth="1"/>
     <polygon points="185,90 189,82 181,82" fill="#4dac26" stroke="white" strokeWidth="1"/>
     <rect x="39" y="18" width="88" height="44" fill="white" stroke="#ddd" strokeWidth="0.8" rx="3"/>
-    <line x1="44" y1="28" x2="58" y2="28" stroke="#2166ac" strokeWidth="1.8"/>
-    <circle cx="51" cy="28" r="3" fill="#2166ac" stroke="white" strokeWidth="1"/>
+    <line x1="44" y1="28" x2="58" y2="28" stroke="#1D6F42" strokeWidth="1.8"/>
+    <circle cx="51" cy="28" r="3" fill="#1D6F42" stroke="white" strokeWidth="1"/>
     <text x="61" y="31" fontSize="7.5" fill="#333" fontFamily="Arial">WT</text>
     <line x1="44" y1="38" x2="58" y2="38" stroke="#d01c8b" strokeWidth="1.8"/>
     <rect x="48" y="35" width="6" height="6" fill="#d01c8b" stroke="white" strokeWidth="1"/>
@@ -193,7 +193,7 @@ export default function EmptyState({ onUploadClick }: Props) {
         <div className="flex flex-col items-center gap-2">
           <button
             onClick={onUploadClick}
-            className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1D6F42] hover:bg-[#155d35] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}

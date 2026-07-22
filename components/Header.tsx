@@ -20,7 +20,7 @@ export default function Header({ hasData, onReset }: Props) {
     <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b border-slate-100 bg-white shrink-0">
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-[#1D6F42] flex items-center justify-center shrink-0">
             <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M3 3v18h18M7 16l4-5 3 3 5-7" />
@@ -41,7 +41,7 @@ export default function Header({ hasData, onReset }: Props) {
 
       <div className="flex items-center gap-3">
         {isPro && (
-          <span className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-50 text-blue-600">
+          <span className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full bg-[#e8f5ee] text-[#1D6F42]">
             Pro
           </span>
         )}

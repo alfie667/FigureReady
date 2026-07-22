@@ -63,7 +63,7 @@ export default function TemplateSelector({ onApply }: Props) {
                 <button
                   key={t.id}
                   onClick={() => handleApply(t)}
-                  className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                  className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-[#e8f5ee] hover:text-[#155d35] transition-colors"
                 >
                   {t.name}
                 </button>
@@ -81,7 +81,7 @@ export default function TemplateSelector({ onApply }: Props) {
                 <div key={t.id} className="flex items-center group">
                   <button
                     onClick={() => handleApply(t)}
-                    className="flex-1 text-left px-3 py-2 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                    className="flex-1 text-left px-3 py-2 text-xs text-slate-700 hover:bg-[#e8f5ee] hover:text-[#155d35] transition-colors"
                   >
                     {t.name}
                   </button>

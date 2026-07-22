@@ -72,7 +72,7 @@ function SizeFieldWithInput({
             const v = Number(e.target.value)
             if (v >= min && v <= max) onChange(v)
           }}
-          className="w-14 border border-slate-200 rounded-lg px-2 py-0.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-14 border border-slate-200 rounded-lg px-2 py-0.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#1D6F42]"
         />
       </div>
       <TextSizePicker value={value} presets={presets} onChange={onChange} />
@@ -94,7 +94,7 @@ function SelectField<T extends string>({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
-        className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#1D6F42]"
       >
         {options.map(opt => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -125,7 +125,7 @@ function AxisRangeField({
           value={min ?? ''}
           placeholder="Auto"
           onChange={(e) => onMinChange(parse(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1D6F42]"
         />
         <span className="text-xs text-slate-400 shrink-0">→</span>
         <input
@@ -133,7 +133,7 @@ function AxisRangeField({
           value={max ?? ''}
           placeholder="Auto"
           onChange={(e) => onMaxChange(parse(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1D6F42]"
         />
       </div>
       <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ function AxisRangeField({
           placeholder="Auto"
           min={0}
           onChange={(e) => onStepChange(parse(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1D6F42]"
         />
       </div>
     </div>
@@ -169,7 +169,7 @@ function DimensionField({
           placeholder={String(placeholder)}
           min={1}
           onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#1D6F42]"
         />
         <span className="text-xs text-slate-400 shrink-0">px</span>
       </div>

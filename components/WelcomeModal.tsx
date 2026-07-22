@@ -20,7 +20,7 @@ export default function WelcomeModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 flex flex-col items-center text-center">
-        <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center mb-5 shrink-0">
+        <div className="w-14 h-14 rounded-2xl bg-[#1D6F42] flex items-center justify-center mb-5 shrink-0">
           <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 16l4-5 3 3 5-7" />
           </svg>
@@ -36,7 +36,7 @@ export default function WelcomeModal() {
 
         <button
           onClick={dismiss}
-          className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors"
+          className="w-full py-3 px-6 bg-[#1D6F42] hover:bg-[#155d35] text-white text-sm font-semibold rounded-xl transition-colors"
         >
           Start Exploring
         </button>

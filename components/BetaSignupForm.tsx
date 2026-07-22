@@ -25,7 +25,7 @@ export default function BetaSignupForm() {
 
   if (sent) {
     return (
-      <p className="text-sm text-blue-600 font-medium">
+      <p className="text-sm text-[#1D6F42] font-medium">
         You're on the list! We'll be in touch.
       </p>
     )
@@ -39,12 +39,12 @@ export default function BetaSignupForm() {
         value={email}
         onChange={e => setEmail(e.target.value)}
         placeholder="your@email.com"
-        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#1D6F42] bg-white"
       />
       <button
         type="submit"
         disabled={loading}
-        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap shadow-sm disabled:opacity-60"
+        className="px-6 py-3 bg-[#1D6F42] hover:bg-[#155d35] text-white text-sm font-semibold rounded-xl transition-colors whitespace-nowrap shadow-sm disabled:opacity-60"
       >
         {loading ? 'Sending…' : 'Get early access'}
       </button>

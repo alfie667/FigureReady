@@ -13,8 +13,8 @@ export default function UpgradeModal({ onClose }: Props) {
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
 
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center mx-auto mb-4">
-            <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-12 h-12 rounded-2xl bg-[#d1ebb6] flex items-center justify-center mx-auto mb-4">
+            <svg className="w-6 h-6 text-[#1D6F42]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
@@ -27,7 +27,7 @@ export default function UpgradeModal({ onClose }: Props) {
         <div className="rounded-xl border-2 border-slate-100 bg-slate-50 p-4 mb-4 text-sm text-slate-600 space-y-1.5">
           {['Unlimited figures', 'PNG + SVG + TIFF 300 dpi', 'No watermark', 'Priority support'].map(f => (
             <div key={f} className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[#1D6F42] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
               {f}
@@ -37,12 +37,12 @@ export default function UpgradeModal({ onClose }: Props) {
 
         <a
           href={CHECKOUT_URL}
-          className="flex items-center justify-between w-full px-5 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors mb-3"
+          className="flex items-center justify-between w-full px-5 py-4 bg-[#1D6F42] hover:bg-[#155d35] text-white rounded-xl transition-colors mb-3"
         >
           <span className="font-semibold">Upgrade to Pro</span>
           <div className="text-right">
             <p className="font-bold text-sm">12€/month</p>
-            <p className="text-xs text-blue-200">or 99€/year</p>
+            <p className="text-xs text-[#8fcdb0]">or 99€/year</p>
           </div>
         </a>
 

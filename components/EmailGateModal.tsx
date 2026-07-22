@@ -47,7 +47,7 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-8">
         <div className="flex justify-center mb-5">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-xl bg-[#1D6F42] flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5M12 16.5V3" />
@@ -70,7 +70,7 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
               value={email}
               onChange={(e) => { setEmail(e.target.value); setError('') }}
               placeholder="your@email.com"
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1D6F42] focus:border-transparent transition"
             />
             {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
           </div>
@@ -78,7 +78,7 @@ export default function EmailGateModal({ onConfirm, onClose, title, description,
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-60"
+            className="w-full py-3 bg-[#1D6F42] text-white text-sm font-semibold rounded-xl hover:bg-[#155d35] transition-colors shadow-sm disabled:opacity-60"
           >
             {loading ? 'Loading…' : (cta ?? 'Download')}
           </button>
