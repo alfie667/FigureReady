@@ -145,7 +145,7 @@ export default function AppPage() {
       <Header hasData={columns.length > 0} onReset={reset} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
-        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-[#fde68a]">
+        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-[#fef9c3]">
           <Panel
             id="data"
             title="Data"
@@ -278,7 +278,7 @@ export default function AppPage() {
               onSaveTemplate={() => setSaveTemplateOpen(true)}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-[#fde68a]">
+            <div className="flex-1 flex items-center justify-center bg-[#fef9c3]">
               <EmptyState onUploadClick={focusUpload} />
             </div>
           )}

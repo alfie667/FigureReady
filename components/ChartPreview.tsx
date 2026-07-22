@@ -1128,7 +1128,7 @@ export default function ChartPreview({
         </div>
 
         {/* Light workspace */}
-        <div className="flex-1 overflow-auto bg-[#fde68a]">
+        <div className="flex-1 overflow-auto bg-[#fef9c3]">
           <div className="min-h-full flex items-center justify-center p-6 lg:p-10">
             <div className="overflow-x-auto">
               <div
