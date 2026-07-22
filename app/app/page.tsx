@@ -211,7 +211,7 @@ export default function AppPage() {
                         const active = (styleOverrides.xScale ?? 'linear') === sc
                         return (
                           <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, xScale: sc })}
-                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#1D6F42] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#1D6F42] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
                         )
@@ -225,7 +225,7 @@ export default function AppPage() {
                         const active = (styleOverrides.yScale ?? 'linear') === sc
                         return (
                           <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, yScale: sc })}
-                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#1D6F42] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#1D6F42] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
                         )

@@ -90,7 +90,7 @@ export default function ColumnSelector({
           <select
             value={xCol}
             onChange={(e) => handleXChange(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm text-slate-700 bg-slate-100 border-0 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+            className="w-full rounded-xl px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
           >
             {columns.map(col => (
               <option key={col} value={col}>{col}</option>
@@ -99,7 +99,7 @@ export default function ColumnSelector({
         </div>
         <div className="flex-1 min-w-[200px]">
           <label className="block text-xs font-medium text-slate-500 mb-1.5">Y Axis (one or more columns)</label>
-          <div className="rounded-xl p-2 max-h-32 overflow-y-auto bg-slate-100 space-y-0.5">
+          <div className="rounded-xl p-2 max-h-32 overflow-y-auto bg-white border border-slate-200 space-y-0.5">
             {yCandidates.map(col => (
               <label key={col} className="flex items-center gap-2 text-sm text-slate-700 px-1.5 py-1 rounded hover:bg-slate-50 cursor-pointer">
                 <input
@@ -123,7 +123,7 @@ export default function ColumnSelector({
             placeholder={formatAxisLabel(xCol)}
             value={xAxisLabel}
             onChange={(e) => onXAxisLabelChange(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm text-slate-700 bg-slate-100 border-0 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+            className="w-full rounded-xl px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
           />
         </div>
         <div className="flex-1 min-w-[160px]">
@@ -133,7 +133,7 @@ export default function ColumnSelector({
             placeholder={yCols.length === 1 ? formatAxisLabel(yCols[0]) : "Y axis label"}
             value={yAxisLabel}
             onChange={(e) => onYAxisLabelChange(e.target.value)}
-            className="w-full rounded-xl px-3 py-2 text-sm text-slate-700 bg-slate-100 border-0 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+            className="w-full rounded-xl px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
           />
         </div>
       </div>
@@ -147,7 +147,7 @@ export default function ColumnSelector({
               const markerSize = seriesMarkerSizes[col] ?? defaultMarkerSize
               const markerShape = seriesMarkerShapes[col] ?? 'circle'
               return (
-                <div key={col} className="rounded-2xl bg-slate-100/70 p-3 space-y-3">
+                <div key={col} className="rounded-2xl bg-[#fefce8] border border-yellow-100 p-3 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     {yCols.length > 1 ? (
                       <input
@@ -155,7 +155,7 @@ export default function ColumnSelector({
                         placeholder={col}
                         value={seriesNames[col] ?? ''}
                         onChange={(e) => onSeriesNamesChange({ ...seriesNames, [col]: e.target.value })}
-                        className="flex-1 min-w-[120px] rounded-xl px-3 py-1.5 text-sm bg-slate-100 border-0 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+                        className="flex-1 min-w-[120px] rounded-xl px-3 py-1.5 text-sm bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
                       />
                     ) : (
                       <p className="flex-1 min-w-[120px] text-sm font-medium text-slate-700">{col}</p>
@@ -193,7 +193,7 @@ export default function ColumnSelector({
                               onErrorColsChange({ ...errorCols, [col]: value })
                             }
                           }}
-                          className="rounded-xl px-2 py-1.5 text-sm text-slate-700 bg-slate-100 border-0 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
+                          className="rounded-xl px-2 py-1.5 text-sm text-slate-700 bg-white border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1D6F42]"
                         >
                           <option value="">None</option>
                           {errorCandidates.map(errCol => (
