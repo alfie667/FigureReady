@@ -31,12 +31,6 @@ export default function Header({ hasData, onReset }: Props) {
             <p className="text-[11px] text-slate-400 hidden sm:block">Publication-ready figures for Nature, JACS, and beyond</p>
           </div>
         </Link>
-        <Link href="/roadmap" className="hidden sm:block text-xs text-slate-400 hover:text-slate-600 transition-colors">
-          Roadmap
-        </Link>
-        <Link href="/pricing" className="hidden sm:block text-xs text-slate-400 hover:text-slate-600 transition-colors">
-          Pricing
-        </Link>
       </div>
 
       <div className="flex items-center gap-3">
