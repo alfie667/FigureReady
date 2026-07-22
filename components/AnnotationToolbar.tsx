@@ -138,7 +138,7 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
   const sep = <div className="w-px h-14 bg-slate-100 mx-0.5 shrink-0" />
 
   return (
-    <div className="flex items-center bg-white border border-slate-200 rounded-xl shadow px-1.5 py-1.5 gap-0">
+    <div className="flex items-center bg-white rounded-2xl shadow-lg px-2 py-2 gap-0">
       {/* Line tools */}
       <div className="flex items-center">
         {lineTools.map(t => (

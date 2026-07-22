@@ -145,7 +145,7 @@ export default function AppPage() {
       <Header hasData={columns.length > 0} onReset={reset} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
-        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-slate-50">
+        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-[#f5f6f7]">
           <Panel
             id="data"
             title="Data"
@@ -211,7 +211,7 @@ export default function AppPage() {
                         const active = (styleOverrides.xScale ?? 'linear') === sc
                         return (
                           <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, xScale: sc })}
-                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-[#1D6F42] text-white border-[#1D6F42]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#1D6F42] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
                         )
@@ -225,7 +225,7 @@ export default function AppPage() {
                         const active = (styleOverrides.yScale ?? 'linear') === sc
                         return (
                           <button key={sc} onClick={() => setStyleOverrides({ ...styleOverrides, yScale: sc })}
-                            className={`px-3 py-1 text-xs rounded-lg border transition-colors ${active ? 'bg-[#1D6F42] text-white border-[#1D6F42]' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#1D6F42] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                           </button>
                         )

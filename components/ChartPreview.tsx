@@ -1094,7 +1094,7 @@ export default function ChartPreview({
             {zoomDomain && (
               <button
                 onClick={resetZoom}
-                className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-500 hover:bg-slate-50 transition-colors"
+                className="px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
               >
                 Reset zoom
               </button>
@@ -1102,7 +1102,7 @@ export default function ChartPreview({
             {onSaveTemplate && (
               <button
                 onClick={onSaveTemplate}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -1112,14 +1112,14 @@ export default function ChartPreview({
             )}
             <button
               onClick={() => triggerExport('svg')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
             >
               <DownloadIcon />
               SVG
             </button>
             <button
               onClick={() => triggerExport('png')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#1D6F42] text-white text-xs font-semibold hover:bg-[#155d35] transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#1D6F42] text-white text-xs font-bold hover:bg-[#155d35] transition-colors shadow-sm"
             >
               <DownloadIcon />
               PNG · 300 DPI
@@ -1133,9 +1133,9 @@ export default function ChartPreview({
             <div className="overflow-x-auto">
               <div
                 ref={chartRef}
-                className="relative bg-white p-6 rounded-2xl"
+                className="relative bg-white p-8 rounded-3xl"
                 style={{
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.07), 0 8px 40px rgba(0,0,0,0.12)',
+                  boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
                   cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
