@@ -3,6 +3,7 @@ import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
 import InteractiveDemo from '@/components/InteractiveDemo'
+import TestimonialsMarquee from '@/components/TestimonialsMarquee'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Free Scientific Figure Maker from Excel',
@@ -187,6 +188,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Testimonials marquee ─────────────────────────────────────────── */}
+      <TestimonialsMarquee />
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
       <section id="how-it-works" className="py-28 bg-white">
