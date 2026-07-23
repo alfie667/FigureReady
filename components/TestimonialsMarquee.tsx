@@ -2,71 +2,61 @@ const TESTIMONIALS = [
   {
     name: 'Sophie M.',
     role: 'PhD student, Biochemistry — Paris',
-    initials: 'SM',
-    color: '#7c3aed',
+    avatar: 'https://i.pravatar.cc/80?img=47',
     text: "I used to spend hours in Origin just to get a decent figure. FigureReady gave me a Nature-style scatter plot in 30 seconds. Honestly shocked.",
   },
   {
     name: 'James K.',
     role: 'Postdoc, Neuroscience — Stanford',
-    initials: 'JK',
-    color: '#059669',
+    avatar: 'https://i.pravatar.cc/80?img=68',
     text: "My PI kept rejecting my figures for formatting. I uploaded my Excel, picked ACS style, exported PNG. He approved on the first try.",
   },
   {
     name: 'Amina R.',
     role: 'Research Engineer, Pharma',
-    initials: 'AR',
-    color: '#d01c8b',
+    avatar: 'https://i.pravatar.cc/80?img=44',
     text: "Error bars, dual Y axis, log scale — all in 3 clicks. I've been waiting for a tool like this for years. No more GraphPad.",
   },
   {
     name: 'Lucas B.',
     role: 'PhD student, Materials Science — TU Munich',
-    initials: 'LB',
-    color: '#f59e0b',
+    avatar: 'https://i.pravatar.cc/80?img=57',
     text: "The log scale button alone saved me 20 minutes per figure. And the output looks like something straight out of Nature Materials.",
   },
   {
     name: 'Yuna P.',
     role: 'Postdoc, Immunology — NIH',
-    initials: 'YP',
-    color: '#3b82f6',
+    avatar: 'https://i.pravatar.cc/80?img=45',
     text: "FigureReady replaced GraphPad Prism for 90% of my figures. For a PhD student on a budget, this is incredible.",
   },
   {
     name: 'Marco D.',
     role: 'PhD student, Chemistry — Bologna',
-    initials: 'MD',
-    color: '#ef4444',
+    avatar: 'https://i.pravatar.cc/80?img=52',
     text: "My thesis defense was in two days. I had 12 figures to redo. FigureReady handled them all in an afternoon. My committee was impressed.",
   },
   {
     name: 'Chloé T.',
     role: 'Researcher, Biophysics — Cambridge',
-    initials: 'CT',
-    color: '#8b5cf6',
-    text: "The SVG export is a gem — collaborators can edit labels in Inkscape. Exactly what we needed for journal revisions.",
+    avatar: 'https://i.pravatar.cc/80?img=48',
+    text: "The SVG export is a gem — collaborators can edit labels in Inkscape after. Exactly what we needed for journal revisions.",
   },
   {
     name: 'Arjun S.',
     role: 'Postdoc, Structural Biology — Oxford',
-    initials: 'AS',
-    color: '#10b981',
+    avatar: 'https://i.pravatar.cc/80?img=63',
     text: "I had to reformat 20 figures for a Cell submission. FigureReady made it manageable. Consistent style across all panels, first try.",
   },
   {
     name: 'Elena V.',
     role: 'PhD student, Pharmacology — Amsterdam',
-    initials: 'EV',
-    color: '#f43f5e',
+    avatar: 'https://i.pravatar.cc/80?img=49',
     text: "I generated publication-quality dose-response curves for my paper in under 5 minutes. My supervisor couldn't believe it.",
   },
   {
     name: 'Thomas G.',
     role: 'Research Scientist, Biotech startup',
-    initials: 'TG',
-    color: '#0ea5e9',
+    avatar: 'https://i.pravatar.cc/80?img=59',
     text: "We use FigureReady for every internal report and publication. It's become a core tool in our lab. Simple, fast, beautiful results.",
   },
 ]
@@ -92,12 +82,14 @@ function TestimonialCard({ t }: { t: typeof TESTIMONIALS[0] }) {
       <StarRating />
       <p className="text-sm text-slate-700 leading-relaxed mb-4">&ldquo;{t.text}&rdquo;</p>
       <div className="flex items-center gap-3">
-        <div
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
-          style={{ background: t.color }}
-        >
-          {t.initials}
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={t.avatar}
+          alt={t.name}
+          width={36}
+          height={36}
+          className="w-9 h-9 rounded-full object-cover shrink-0 ring-2 ring-slate-100"
+        />
         <div>
           <p className="text-xs font-bold text-slate-900">{t.name}</p>
           <p className="text-[11px] text-slate-400">{t.role}</p>
