@@ -8,8 +8,7 @@ export async function POST(req: NextRequest) {
     const { productId } = await req.json()
     if (!productId) return NextResponse.json({ error: 'Missing productId' }, { status: 400 })
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
-      || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://figureready.com'
 
     const checkout = await polar.checkouts.create({
       products: [productId],
