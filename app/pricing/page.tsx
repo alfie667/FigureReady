@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: 'Start free. Upgrade to Pro for unlimited figures, PNG + SVG + TIFF 300 dpi export, and no watermark.',
 }
 
-const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
+const CHECKOUT_MONTHLY = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
+const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1'
 
 const proFeatures = [
   'Unlimited figures',
@@ -82,7 +83,7 @@ export default function PricingPage() {
               ))}
             </ul>
             <CheckoutButton
-              href={CHECKOUT_URL}
+              href={CHECKOUT_MONTHLY}
               className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Get started →
@@ -111,7 +112,7 @@ export default function PricingPage() {
               ))}
             </ul>
             <CheckoutButton
-              href={CHECKOUT_URL}
+              href={CHECKOUT_YEARLY}
               className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
             >
               Get Pro →
