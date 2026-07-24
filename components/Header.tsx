@@ -27,7 +27,7 @@ export default function Header({ hasData, onReset }: Props) {
 
       <div className="flex items-center gap-3">
         {isPro && (
-          <span className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full bg-[#ede9fe] text-[#7c3aed]">
+          <span className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full bg-[#dbeafe] text-[#2563eb]">
             Pro
           </span>
         )}

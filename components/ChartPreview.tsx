@@ -1064,7 +1064,7 @@ export default function ChartPreview({
 
   // ─── Fill helpers ────────────────────────────────────────────────────────────
 
-  const FILL_COLORS = ['#1e293b', '#ffffff', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#8b5cf6']
+  const FILL_COLORS = ['#1e293b', '#ffffff', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#3b82f6']
 
   const toRgba = (hex: string, opacity: number) => {
     const r = parseInt(hex.slice(1, 3), 16)
@@ -1135,7 +1135,7 @@ export default function ChartPreview({
             </button>
             <button
               onClick={() => triggerExport('png')}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#7c3aed] text-white text-xs font-bold hover:bg-[#5b21b6] transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm"
             >
               <DownloadIcon />
               PNG · 300 DPI
@@ -1144,7 +1144,7 @@ export default function ChartPreview({
         </div>
 
         {/* Light workspace */}
-        <div className="flex-1 overflow-auto bg-[#f5f3ff]">
+        <div className="flex-1 overflow-auto bg-[#eff6ff]">
           <div className="min-h-full flex items-center justify-center p-6 lg:p-10">
             <div className="overflow-x-auto">
               <div
@@ -1496,7 +1496,7 @@ export default function ChartPreview({
                     <button
                       title="No fill"
                       onClick={() => updateAnnotation(selShape.id, { fillColor: undefined })}
-                      className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-[#7c3aed] ring-1 ring-[#c4b5fd]' : 'border-slate-200'}`}
+                      className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-[#2563eb] ring-1 ring-[#93c5fd]' : 'border-slate-200'}`}
                       style={{
                         background: 'repeating-conic-gradient(#e2e8f0 0% 25%, white 0% 50%) 0 0 / 6px 6px',
                       }}
@@ -1506,7 +1506,7 @@ export default function ChartPreview({
                         key={c}
                         title={c}
                         onClick={() => updateAnnotation(selShape.id, { fillColor: c, fillOpacity: selShape.fillOpacity ?? 0.3 })}
-                        className={`w-5 h-5 rounded transition-all ${selShape.fillColor === c ? 'ring-2 ring-[#7c3aed] ring-offset-1' : 'ring-1 ring-slate-200'}`}
+                        className={`w-5 h-5 rounded transition-all ${selShape.fillColor === c ? 'ring-2 ring-[#2563eb] ring-offset-1' : 'ring-1 ring-slate-200'}`}
                         style={{ background: c }}
                       />
                     ))}
@@ -1518,7 +1518,7 @@ export default function ChartPreview({
                         type="range" min={0} max={100}
                         value={Math.round((selShape.fillOpacity ?? 0.3) * 100)}
                         onChange={e => updateAnnotation(selShape.id, { fillOpacity: Number(e.target.value) / 100 })}
-                        className="w-24 accent-[#7c3aed] h-1.5 cursor-pointer"
+                        className="w-24 accent-[#2563eb] h-1.5 cursor-pointer"
                       />
                       <span className="text-xs text-slate-600 tabular-nums w-8">
                         {Math.round((selShape.fillOpacity ?? 0.3) * 100)}%

@@ -44,8 +44,8 @@ export default function ImageUploader({ onImage }: Props) {
         onDragLeave={() => setIsDragging(false)}
         className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-10 cursor-pointer transition-colors select-none ${
           isDragging
-            ? 'border-[#7c3aed] bg-[#ede9fe]'
-            : 'border-slate-300 hover:border-[#a78bfa] hover:bg-slate-50'
+            ? 'border-[#2563eb] bg-[#dbeafe]'
+            : 'border-slate-300 hover:border-[#60a5fa] hover:bg-slate-50'
         }`}
       >
         <input

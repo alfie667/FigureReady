@@ -264,7 +264,7 @@ export default function AppPage() {
       <Header hasData={columns.length > 0} onReset={reset} />
 
       <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
-        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-[#f5f3ff]">
+        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-[#eff6ff]">
           <Panel
             id="data"
             title="Data"
@@ -299,29 +299,29 @@ export default function AppPage() {
                   </div>
                   <button
                     onClick={toggleMultiPanel}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#7c3aed]' : 'bg-slate-200'}`}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#2563eb]' : 'bg-slate-200'}`}
                   >
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
 
                 {isMultiPanel && (
-                  <div className="space-y-3 rounded-2xl bg-[#ede9fe] p-3">
+                  <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3">
                     {/* Layout */}
                     <div>
-                      <p className="text-xs font-medium text-[#5b21b6] mb-2">Layout</p>
+                      <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
                       <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
                     </div>
 
                     {/* Panel tabs */}
                     <div>
-                      <p className="text-xs font-medium text-[#5b21b6] mb-2">Editing panel</p>
+                      <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
                       <div className="flex gap-1.5">
                         {panels.map((p, i) => (
                           <button
                             key={p.id}
                             onClick={() => setActivePanel(i)}
-                            className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#7c3aed] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
+                            className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#2563eb] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
                           >
                             {p.id}
                           </button>
@@ -331,11 +331,11 @@ export default function AppPage() {
 
                     {/* Per-panel file upload */}
                     <div>
-                      <p className="text-xs font-medium text-[#5b21b6] mb-2">
+                      <p className="text-xs font-medium text-[#1d4ed8] mb-2">
                         Excel file — Panel {panels[activePanel]?.id}
                       </p>
-                      <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#c4b5fd] cursor-pointer hover:bg-violet-50 transition-colors">
-                        <svg className="w-4 h-4 text-[#7c3aed] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#93c5fd] cursor-pointer hover:bg-violet-50 transition-colors">
+                        <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                             d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                         </svg>
@@ -399,7 +399,7 @@ export default function AppPage() {
                             return (
                               <button key={sc}
                                 onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
-                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                                 {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                               </button>
                             )
@@ -414,7 +414,7 @@ export default function AppPage() {
                             return (
                               <button key={sc}
                                 onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
-                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#7c3aed] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                                 {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
                               </button>
                             )
@@ -485,7 +485,7 @@ export default function AppPage() {
               onSaveTemplate={() => setSaveTemplateOpen(true)}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-[#f5f3ff]">
+            <div className="flex-1 flex items-center justify-center bg-[#eff6ff]">
               <EmptyState onUploadClick={focusUpload} />
             </div>
           )}

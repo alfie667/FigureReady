@@ -40,7 +40,7 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
               style={{ filter: 'blur(7px)', transform: 'scale(1.08)' }}
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-[#ede9fe] to-slate-100" />
+            <div className="w-full h-full bg-gradient-to-br from-[#dbeafe] to-slate-100" />
           )}
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/25">
             <div className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center mb-2 shadow-lg">
@@ -65,7 +65,7 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
             <button
               onClick={() => setPlan('monthly')}
               className={`rounded-xl border-2 p-4 text-left transition-all ${
-                plan === 'monthly' ? 'border-[#7c3aed] bg-[#ede9fe]' : 'border-slate-200 hover:border-slate-300'
+                plan === 'monthly' ? 'border-[#2563eb] bg-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Monthly</p>
@@ -75,7 +75,7 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
             <button
               onClick={() => setPlan('yearly')}
               className={`rounded-xl border-2 p-4 text-left relative transition-all ${
-                plan === 'yearly' ? 'border-[#7c3aed] bg-[#ede9fe]' : 'border-slate-200 hover:border-slate-300'
+                plan === 'yearly' ? 'border-[#2563eb] bg-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <span className="absolute -top-2.5 right-3 px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
@@ -91,7 +91,7 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
             href={checkoutUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full text-center py-3.5 bg-[#7c3aed] hover:bg-[#5b21b6] text-white font-bold rounded-xl transition-colors shadow-md text-sm"
+            className="block w-full text-center py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl transition-colors shadow-md text-sm"
           >
             Unlock & Download →
           </a>

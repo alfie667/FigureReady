@@ -59,7 +59,7 @@ export default function MultiPanelPreview({
         </p>
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#7c3aed] text-white text-xs font-bold hover:bg-[#5b21b6] transition-colors shadow-sm"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -70,7 +70,7 @@ export default function MultiPanelPreview({
       </div>
 
       {/* Workspace */}
-      <div className="flex-1 overflow-auto bg-[#f5f3ff] flex items-start justify-center p-6 lg:p-10">
+      <div className="flex-1 overflow-auto bg-[#eff6ff] flex items-start justify-center p-6 lg:p-10">
         <div
           ref={gridRef}
           style={{
@@ -97,7 +97,7 @@ export default function MultiPanelPreview({
                   width: panelW,
                   cursor: 'pointer',
                   borderRadius: 8,
-                  outline: i === activePanel ? '2px solid #7c3aed' : '2px solid transparent',
+                  outline: i === activePanel ? '2px solid #2563eb' : '2px solid transparent',
                   outlineOffset: 3,
                   transition: 'outline-color 0.15s',
                 }}
@@ -136,16 +136,16 @@ export default function MultiPanelPreview({
                     display: 'flex', flexDirection: 'column',
                     alignItems: 'center', justifyContent: 'center',
                     gap: 8, background: '#f8f7ff', borderRadius: 8,
-                    border: '2px dashed #c4b5fd',
+                    border: '2px dashed #93c5fd',
                   }}>
-                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#c4b5fd" strokeWidth={1.5}>
+                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round"
                         d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    <p style={{ fontSize: 12, color: '#a78bfa', fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>
+                    <p style={{ fontSize: 12, color: '#60a5fa', fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>
                       Panel {panel.id} — no data
                     </p>
-                    <p style={{ fontSize: 11, color: '#c4b5fd', fontFamily: 'Arial, sans-serif' }}>
+                    <p style={{ fontSize: 11, color: '#93c5fd', fontFamily: 'Arial, sans-serif' }}>
                       Select this panel and upload a file
                     </p>
                   </div>

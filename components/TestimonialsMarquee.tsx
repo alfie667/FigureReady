@@ -105,7 +105,7 @@ export default function TestimonialsMarquee() {
   return (
     <section className="py-20 bg-slate-50/60 border-y border-slate-100 overflow-hidden">
       <div className="text-center mb-10">
-        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#7c3aed' }}>
+        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#2563eb' }}>
           Testimonials
         </p>
         <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">

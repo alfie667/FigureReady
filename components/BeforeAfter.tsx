@@ -52,11 +52,11 @@ export default function BeforeAfter() {
       <div className="max-w-5xl mx-auto px-6">
 
         <div className="text-center mb-12">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#7c3aed' }}>The difference</p>
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#2563eb' }}>The difference</p>
           <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Stop submitting this.
             <span className="block sm:inline"> Start submitting </span>
-            <span style={{ color: '#7c3aed' }}>this.</span>
+            <span style={{ color: '#2563eb' }}>this.</span>
           </h2>
         </div>
 
@@ -124,7 +124,7 @@ export default function BeforeAfter() {
           {/* Arrow */}
           <div className="shrink-0 rotate-90 sm:rotate-0">
             <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-              <path d="M5 12h14M13 6l6 6-6 6" stroke="#7c3aed" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 12h14M13 6l6 6-6 6" stroke="#2563eb" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
 

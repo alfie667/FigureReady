@@ -57,7 +57,7 @@ export default function PanelLayoutSelector({ value, onChange }: Props) {
             title={label}
             className={`flex flex-col items-center gap-1 px-2 py-1.5 rounded-xl transition-all ${
               active
-                ? 'bg-[#7c3aed] text-white'
+                ? 'bg-[#2563eb] text-white'
                 : 'bg-white text-slate-400 hover:bg-slate-100 border border-slate-200'
             }`}
           >
