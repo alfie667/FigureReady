@@ -56,8 +56,8 @@ export default function PricingPage() {
 
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 pt-16 pb-12 text-center">
-        <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Simple, transparent pricing</h1>
-        <p className="text-slate-500 text-lg">Build and preview for free. Pay only when you download.</p>
+        <h1 className="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Stop wasting time on formatting.</h1>
+        <p className="text-slate-500 text-lg">FigureReady is free to use. Upgrade to export publication-ready figures at 300 DPI.</p>
       </section>
 
       {/* Plans */}
