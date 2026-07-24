@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { isProUser } from '@/lib/usageLimit'
+import { LogoFull } from '@/components/Logo'
 
 interface Props {
   hasData: boolean
@@ -19,17 +20,8 @@ export default function Header({ hasData, onReset }: Props) {
   return (
     <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b border-slate-200/80 bg-white shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
       <div className="flex items-center gap-4">
-        <Link href="/" className="flex items-center gap-2.5 hover:opacity-80 transition-opacity">
-          <div className="w-9 h-9 rounded-xl bg-[#7c3aed] flex items-center justify-center shrink-0">
-            <svg className="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M3 3v18h18M7 16l4-5 3 3 5-7" />
-            </svg>
-          </div>
-          <div className="leading-tight">
-            <p className="text-sm font-bold text-slate-900 tracking-tight">FigureReady</p>
-            <p className="text-[11px] text-slate-400 hidden sm:block">Publication-ready figures for Nature, JACS, and beyond</p>
-          </div>
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <LogoFull size={30} textSize={15} />
         </Link>
       </div>
 

@@ -4,6 +4,7 @@ import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
 import InteractiveDemo from '@/components/InteractiveDemo'
 import TestimonialsMarquee from '@/components/TestimonialsMarquee'
+import { LogoFull, LogoSmall } from '@/components/Logo'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Free Scientific Figure Maker from Excel',
@@ -82,14 +83,7 @@ export default function LandingPage() {
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#7c3aed' }}>
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 16l4-5 3 3 5-7" />
-              </svg>
-            </div>
-            <span className="text-base font-bold text-slate-900 tracking-tight">FigureReady</span>
-          </div>
+          <LogoFull size={30} textSize={16} />
           <div className="hidden md:flex items-center gap-8">
             <a href="#how-it-works" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">How it works</a>
             <a href="#features" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Features</a>
@@ -348,14 +342,9 @@ export default function LandingPage() {
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer className="bg-white border-t border-slate-100 py-10">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#7c3aed' }}>
-              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 16l4-5 3 3 5-7" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-slate-700">FigureReady</span>
-            <span className="text-slate-300 text-xs ml-2">© 2026</span>
+          <div className="flex items-center gap-3">
+            <LogoSmall />
+            <span className="text-slate-300 text-xs">© 2026</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-slate-400">
             <Link href="/pricing" className="hover:text-slate-700 transition-colors">Pricing</Link>

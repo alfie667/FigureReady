@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CheckoutButton } from './CheckoutButton'
+import { LogoFull } from '@/components/Logo'
 
 export const metadata: Metadata = {
   title: 'Pricing — FigureReady',
@@ -37,13 +38,8 @@ export default function PricingPage() {
       {/* Nav */}
       <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 16l4-5 3 3 5-7" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-slate-900 tracking-tight">FigureReady</span>
+          <Link href="/" className="hover:opacity-80 transition-opacity">
+            <LogoFull size={28} textSize={15} />
           </Link>
           <div className="flex items-center gap-6">
             <Link href="/roadmap" className="text-sm text-slate-500 hover:text-slate-800 transition-colors hidden sm:block">Roadmap</Link>
