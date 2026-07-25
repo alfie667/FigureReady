@@ -104,78 +104,8 @@ function SelectField<T extends string>({
   )
 }
 
-function AxisRangeField({
-  label, min, max, step, onMinChange, onMaxChange, onStepChange,
-}: {
-  label: string
-  min?: number
-  max?: number
-  step?: number
-  onMinChange: (value?: number) => void
-  onMaxChange: (value?: number) => void
-  onStepChange: (value?: number) => void
-}) {
-  const parse = (raw: string) => (raw === '' ? undefined : Number(raw))
-  return (
-    <div className="min-w-0 space-y-1.5">
-      <label className="block text-xs font-medium text-slate-500">{label}</label>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={min ?? ''}
-          placeholder="Auto"
-          onChange={(e) => onMinChange(parse(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-        />
-        <span className="text-xs text-slate-400 shrink-0">→</span>
-        <input
-          type="number"
-          value={max ?? ''}
-          placeholder="Auto"
-          onChange={(e) => onMaxChange(parse(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-        />
-      </div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-400 shrink-0">Step</span>
-        <input
-          type="number"
-          value={step ?? ''}
-          placeholder="Auto"
-          min={0}
-          onChange={(e) => onStepChange(parse(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-        />
-      </div>
-    </div>
-  )
-}
-
-function DimensionField({
-  label, value, placeholder, onChange,
-}: {
-  label: string
-  value?: number
-  placeholder: number
-  onChange: (value?: number) => void
-}) {
-  return (
-    <div className="min-w-0">
-      <label className="block text-xs font-medium text-slate-500 mb-1.5">{label}</label>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          value={value ?? ''}
-          placeholder={String(placeholder)}
-          min={1}
-          onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))}
-          className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-        />
-        <span className="text-xs text-slate-400 shrink-0">px</span>
-      </div>
-    </div>
-  )
-}
+const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-300"
+const parseNum = (raw: string) => (raw === '' ? undefined : Number(raw))
 
 export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
   const [saved, setSaved] = useState(false)
@@ -283,32 +213,43 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
           </svg>
         </summary>
 
-        <div className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <AxisRangeField
-              label="X axis range (min → max)"
-              min={overrides.xMin}
-              max={overrides.xMax}
-              step={overrides.xStep}
-              onMinChange={(v) => set('xMin', v)}
-              onMaxChange={(v) => set('xMax', v)}
-              onStepChange={(v) => set('xStep', v)}
-            />
-            <AxisRangeField
-              label="Y axis range (min → max)"
-              min={overrides.yMin}
-              max={overrides.yMax}
-              step={overrides.yStep}
-              onMinChange={(v) => set('yMin', v)}
-              onMaxChange={(v) => set('yMax', v)}
-              onStepChange={(v) => set('yStep', v)}
-            />
+        <div className="mt-4 space-y-5">
+
+          {/* Axis ranges — table layout */}
+          <div>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2.5">Axis ranges</p>
+            <div className="grid grid-cols-[44px_1fr_1fr] gap-x-2 gap-y-2 items-center">
+              <div />
+              <p className="text-[10px] font-bold text-slate-500 text-center">X axis</p>
+              <p className="text-[10px] font-bold text-slate-500 text-center">Y axis</p>
+
+              <p className="text-[10px] text-slate-400 font-medium text-right pr-1">Min</p>
+              <input type="number" value={overrides.xMin ?? ''} placeholder="Auto" onChange={(e) => set('xMin', parseNum(e.target.value))} className={inputCls} />
+              <input type="number" value={overrides.yMin ?? ''} placeholder="Auto" onChange={(e) => set('yMin', parseNum(e.target.value))} className={inputCls} />
+
+              <p className="text-[10px] text-slate-400 font-medium text-right pr-1">Max</p>
+              <input type="number" value={overrides.xMax ?? ''} placeholder="Auto" onChange={(e) => set('xMax', parseNum(e.target.value))} className={inputCls} />
+              <input type="number" value={overrides.yMax ?? ''} placeholder="Auto" onChange={(e) => set('yMax', parseNum(e.target.value))} className={inputCls} />
+
+              <p className="text-[10px] text-slate-400 font-medium text-right pr-1">Step</p>
+              <input type="number" value={overrides.xStep ?? ''} placeholder="Auto" min={0} onChange={(e) => set('xStep', parseNum(e.target.value))} className={inputCls} />
+              <input type="number" value={overrides.yStep ?? ''} placeholder="Auto" min={0} onChange={(e) => set('yStep', parseNum(e.target.value))} className={inputCls} />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <DimensionField label="Custom width" value={overrides.figureWidth} placeholder={700} onChange={(v) => set('figureWidth', v)} />
-            <DimensionField label="Custom height" value={overrides.figureHeight} placeholder={baseStyle.chartHeight} onChange={(v) => set('figureHeight', v)} />
+          {/* Figure dimensions */}
+          <div>
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-2.5">Figure size</p>
+            <div className="flex items-center gap-2">
+              <input type="number" value={overrides.figureWidth ?? ''} placeholder="700" min={1} onChange={(e) => set('figureWidth', parseNum(e.target.value))} className={inputCls} />
+              <span className="text-[10px] text-slate-400 shrink-0 font-semibold">W</span>
+              <span className="text-[10px] text-slate-300 shrink-0">×</span>
+              <input type="number" value={overrides.figureHeight ?? ''} placeholder={String(baseStyle.chartHeight)} min={1} onChange={(e) => set('figureHeight', parseNum(e.target.value))} className={inputCls} />
+              <span className="text-[10px] text-slate-400 shrink-0 font-semibold">H</span>
+              <span className="text-[10px] text-slate-400 shrink-0">px</span>
+            </div>
           </div>
+
         </div>
       </details>
     </div>
