@@ -502,6 +502,14 @@ export default function ChartPreview({
 
   // ─── Style derivation ────────────────────────────────────────────────────────
 
+  const plotBackground = (
+    <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
+      if (!offset) return null
+      const { top, left, width, height } = offset
+      return <rect x={left} y={top} width={width} height={height} fill="#ffffff" />
+    }} />
+  )
+
   const showFrame = s.showFrame
   const frameLines = showFrame
     ? <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
@@ -769,6 +777,7 @@ export default function ChartPreview({
     if (chartType === 'scatter') {
       return (
         <ScatterChart margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+          {plotBackground}
           {grid}
           <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
           <YAxis dataKey="y" type="number" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
@@ -792,6 +801,7 @@ export default function ChartPreview({
     if (chartType === 'bar') {
       return (
         <BarChart data={processedData} margin={margin}>
+          {plotBackground}
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} height={65} />
           <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
@@ -835,6 +845,7 @@ export default function ChartPreview({
 
     return (
       <LineChart data={processedData} margin={hasRightAxis ? { ...margin, right: 90 } : margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+        {plotBackground}
         {grid}
         <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
         <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
