@@ -210,12 +210,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
         <div className="pt-2 border-t border-slate-100 space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-slate-600">Inset figure</p>
-            <button
-              onClick={() => onChange({ ...overrides, insetDefined: false, insetXMin: undefined, insetXMax: undefined, insetYMin: undefined, insetYMax: undefined })}
-              className="text-xs font-medium text-red-400 hover:text-red-600 transition-colors"
-            >
-              Remove
-            </button>
+            <span className="text-[10px] text-slate-400">Press Del to remove</span>
           </div>
 
           <div className="space-y-3">

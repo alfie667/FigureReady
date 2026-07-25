@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
@@ -49,6 +49,69 @@ export default function AppPage() {
   useEffect(() => {
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
+  }, [])
+
+  // ── Undo history (Ctrl+Z) ────────────────────────────────────────────────────
+
+  type HistorySnap = { styleOverrides: StyleOverrides; annotations: ChartAnnotation[] }
+  const historyRef = useRef<HistorySnap[]>([])
+  const historyIndexRef = useRef(-1)
+  const isRestoringRef = useRef(false)
+  const historyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isMultiPanelRef = useRef(isMultiPanel)
+  const styleOverridesSnapRef = useRef(styleOverrides)
+  const annotationsSnapRef = useRef(annotations)
+  useEffect(() => { isMultiPanelRef.current = isMultiPanel }, [isMultiPanel])
+  useEffect(() => { styleOverridesSnapRef.current = styleOverrides }, [styleOverrides])
+  useEffect(() => { annotationsSnapRef.current = annotations }, [annotations])
+
+  // Debounced history push — 400 ms after last change
+  useEffect(() => {
+    if (isMultiPanel || isRestoringRef.current) return
+    if (historyTimerRef.current) clearTimeout(historyTimerRef.current)
+    historyTimerRef.current = setTimeout(() => {
+      const snap: HistorySnap = { styleOverrides, annotations }
+      const cur = historyRef.current[historyIndexRef.current]
+      if (cur && JSON.stringify(cur) === JSON.stringify(snap)) return
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
+      historyRef.current.push(snap)
+      if (historyRef.current.length > 50) historyRef.current.shift()
+      else historyIndexRef.current++
+    }, 400)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styleOverrides, annotations, isMultiPanel])
+
+  // Ctrl+Z handler
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.key !== 'z' || e.shiftKey) return
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (isMultiPanelRef.current) return
+      e.preventDefault()
+      // Flush any pending debounce — commit current state before stepping back
+      if (historyTimerRef.current) {
+        clearTimeout(historyTimerRef.current)
+        historyTimerRef.current = null
+        const snap: HistorySnap = { styleOverrides: styleOverridesSnapRef.current, annotations: annotationsSnapRef.current }
+        const cur = historyRef.current[historyIndexRef.current]
+        if (!cur || JSON.stringify(cur) !== JSON.stringify(snap)) {
+          historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1)
+          historyRef.current.push(snap)
+          if (historyRef.current.length <= 50) historyIndexRef.current++
+          else historyRef.current.shift()
+        }
+      }
+      if (historyIndexRef.current > 0) {
+        historyIndexRef.current--
+        const prev = historyRef.current[historyIndexRef.current]
+        isRestoringRef.current = true
+        setStyleOverrides(prev.styleOverrides)
+        setAnnotations(prev.annotations)
+        requestAnimationFrame(() => { isRestoringRef.current = false })
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   // ── Multi-panel helpers ──────────────────────────────────────────────────────
