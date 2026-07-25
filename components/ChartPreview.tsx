@@ -317,6 +317,12 @@ export default function ChartPreview({
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
+
+  // ─── Inset draw state ────────────────────────────────────────────────────────
+  const [drawInsetMode, setDrawInsetMode] = useState(false)
+  const [drawPt1, setDrawPt1] = useState<{ x: number; y: number } | null>(null)
+  const [drawPt2, setDrawPt2] = useState<{ x: number; y: number } | null>(null)
+  const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
   } | null>(null)
@@ -506,6 +512,7 @@ export default function ChartPreview({
     <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
       if (!offset) return null
       const { top, left, width, height } = offset
+      plotAreaRef.current = { left, top, width: width || 1, height: height || 1 }
       return <rect x={left} y={top} width={width} height={height} fill="#ffffff" />
     }} />
   )
@@ -1114,10 +1121,82 @@ export default function ChartPreview({
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 
+        {/* ── Inset settings bar (only when inset is defined) ───────────────── */}
+        {styleOverrides.insetDefined && (
+          <div className="flex items-center gap-4 px-4 py-1.5 bg-[#f8fafc] border-b border-slate-200 shrink-0 flex-wrap">
+            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Inset</span>
+
+            <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
+              Size
+              <input type="range" min={20} max={50} value={styleOverrides.insetSizePct ?? 35}
+                onChange={e => onStyleChange?.({ insetSizePct: Number(e.target.value) })}
+                className="w-16 accent-[#2563eb]" />
+              <span className="text-[10px] text-slate-400 w-7">{styleOverrides.insetSizePct ?? 35}%</span>
+            </label>
+
+            <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
+              Font
+              <input type="range" min={6} max={12} value={styleOverrides.insetFontSize ?? 8}
+                onChange={e => onStyleChange?.({ insetFontSize: Number(e.target.value) })}
+                className="w-14 accent-[#2563eb]" />
+              <span className="text-[10px] text-slate-400 w-6">{styleOverrides.insetFontSize ?? 8}pt</span>
+            </label>
+
+            <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
+              Lines
+              <input type="range" min={5} max={30} step={5} value={Math.round((styleOverrides.insetLineWidth ?? 1.2) * 10)}
+                onChange={e => onStyleChange?.({ insetLineWidth: Number(e.target.value) / 10 })}
+                className="w-14 accent-[#2563eb]" />
+            </label>
+
+            <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
+              <input type="checkbox" checked={styleOverrides.insetBorder ?? true}
+                onChange={e => onStyleChange?.({ insetBorder: e.target.checked })} />
+              Border
+            </label>
+
+            {(styleOverrides.insetBorder ?? true) && (
+              <>
+                <input type="color" value={styleOverrides.insetBorderColor ?? axisColor}
+                  onChange={e => onStyleChange?.({ insetBorderColor: e.target.value })}
+                  className="w-6 h-5 rounded cursor-pointer border border-slate-200" title="Border color" />
+                <label className="flex items-center gap-1 text-[11px] text-slate-600">
+                  <input type="range" min={1} max={4} step={0.5} value={styleOverrides.insetBorderWidth ?? 1.5}
+                    onChange={e => onStyleChange?.({ insetBorderWidth: Number(e.target.value) })}
+                    className="w-12 accent-[#2563eb]" />
+                  <span className="text-[10px] text-slate-400">{styleOverrides.insetBorderWidth ?? 1.5}px</span>
+                </label>
+              </>
+            )}
+
+            <button
+              onClick={() => onStyleChange?.({ insetDefined: false, insetXMin: undefined, insetXMax: undefined, insetYMin: undefined, insetYMax: undefined })}
+              className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-500 hover:bg-red-100 transition-colors shrink-0"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
         {/* Chrome bar: annotation tools + export */}
         <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
           <div className="flex items-center gap-2 shrink-0">
+            {isNumericX && (
+              <button
+                onClick={() => setDrawInsetMode(v => !v)}
+                title={drawInsetMode ? 'Click and drag on the chart to define the inset region' : 'Draw a zoom region to create an inset figure'}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                  drawInsetMode ? 'bg-[#2563eb] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                {drawInsetMode ? 'Draw zone…' : 'Inset'}
+              </button>
+            )}
             {zoomDomain && (
               <button
                 onClick={resetZoom}
@@ -1164,7 +1243,7 @@ export default function ChartPreview({
                 style={{
                   boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
-                  cursor: isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
+                  cursor: drawInsetMode ? 'crosshair' : isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
                   userSelect: 'none',
                 }}
@@ -1178,56 +1257,142 @@ export default function ChartPreview({
               {renderChart() as React.ReactElement}
             </ResponsiveContainer>
 
-            {/* Inset figure */}
-            {styleOverrides.insetEnabled && data.length > 0 && (() => {
-              const insetYCol = styleOverrides.insetYCol ?? yCols[0]
-              if (!insetYCol) return null
-              const pos = styleOverrides.insetPosition ?? 'top-right'
-              const posMap: Record<string, React.CSSProperties> = {
-                'top-left':     { top: '8%',   left: 96  },
-                'top-right':    { top: '8%',   right: 36 },
-                'bottom-left':  { bottom: '18%', left: 96  },
-                'bottom-right': { bottom: '18%', right: 36 },
-              }
+            {/* ── Draw-inset overlay (capture mouse during draw mode) ────── */}
+            {drawInsetMode && (
+              <div
+                style={{ position: 'absolute', inset: 0, zIndex: 28, cursor: 'crosshair' }}
+                onMouseDown={e => {
+                  const r = e.currentTarget.getBoundingClientRect()
+                  const pt = { x: e.clientX - r.left, y: e.clientY - r.top }
+                  setDrawPt1(pt); setDrawPt2(pt)
+                }}
+                onMouseMove={e => {
+                  if (!drawPt1) return
+                  const r = e.currentTarget.getBoundingClientRect()
+                  setDrawPt2({ x: e.clientX - r.left, y: e.clientY - r.top })
+                }}
+                onMouseUp={e => {
+                  if (!drawPt1 || !drawPt2) { setDrawInsetMode(false); setDrawPt1(null); setDrawPt2(null); return }
+                  const CARD_PAD = 32
+                  const { left: pL, top: pT, width: pW, height: pH } = plotAreaRef.current
+                  const toData = (px: number, py: number) => {
+                    const pctX = Math.max(0, Math.min(1, (px - CARD_PAD - pL) / pW))
+                    const pctY = Math.max(0, Math.min(1, (py - CARD_PAD - pT) / pH))
+                    const xNums = processedData.map(d => typeof d.x === 'number' ? d.x : NaN).filter(v => !isNaN(v))
+                    const rawXMin = xNums.length ? Math.min(...xNums) : 0
+                    const rawXMax = xNums.length ? Math.max(...xNums) : 1
+                    const domXMin = styleOverrides.xMin ?? rawXMin
+                    const domXMax = styleOverrides.xMax ?? rawXMax
+                    const yNums = yCols.flatMap(c => processedData.map(d => typeof d[c] === 'number' ? d[c] as number : NaN).filter(v => !isNaN(v)))
+                    const rawYMin = yNums.length ? Math.min(...yNums) : 0
+                    const rawYMax = yNums.length ? Math.max(...yNums) : 1
+                    const yPad = (rawYMax - rawYMin) * 0.05 || 0.05
+                    const domYMin = styleOverrides.yMin ?? rawYMin - yPad
+                    const domYMax = styleOverrides.yMax ?? rawYMax + yPad
+                    return { x: domXMin + pctX * (domXMax - domXMin), y: domYMax - pctY * (domYMax - domYMin) }
+                  }
+                  const p1 = toData(drawPt1.x, drawPt1.y)
+                  const p2 = toData(drawPt2.x, drawPt2.y)
+                  if (Math.abs(p2.x - p1.x) > 0 && Math.abs(p2.y - p1.y) > 0) {
+                    const r = e.currentTarget.getBoundingClientRect()
+                    const cx = (drawPt1.x + drawPt2.x) / 2
+                    const cy = (drawPt1.y + drawPt2.y) / 2
+                    const defLeft = cx < r.width * 0.5 ? r.width * 0.52 : 32
+                    const defTop  = cy < r.height * 0.5 ? r.height * 0.55 : 32
+                    onStyleChange?.({
+                      insetDefined: true,
+                      insetXMin: Math.min(p1.x, p2.x), insetXMax: Math.max(p1.x, p2.x),
+                      insetYMin: Math.min(p1.y, p2.y), insetYMax: Math.max(p1.y, p2.y),
+                      insetLeft: styleOverrides.insetLeft ?? defLeft,
+                      insetTop:  styleOverrides.insetTop  ?? defTop,
+                      insetSizePct:    styleOverrides.insetSizePct    ?? 35,
+                      insetFontSize:   styleOverrides.insetFontSize   ?? 8,
+                      insetLineWidth:  styleOverrides.insetLineWidth  ?? 1.2,
+                      insetBorder:     styleOverrides.insetBorder     ?? true,
+                      insetBorderColor: styleOverrides.insetBorderColor ?? axisColor,
+                      insetBorderWidth: styleOverrides.insetBorderWidth ?? 1.5,
+                    })
+                  }
+                  setDrawInsetMode(false); setDrawPt1(null); setDrawPt2(null)
+                }}
+                onMouseLeave={() => { setDrawInsetMode(false); setDrawPt1(null); setDrawPt2(null) }}
+              >
+                {drawPt1 && drawPt2 && (
+                  <div style={{
+                    position: 'absolute',
+                    left: Math.min(drawPt1.x, drawPt2.x), top: Math.min(drawPt1.y, drawPt2.y),
+                    width: Math.abs(drawPt2.x - drawPt1.x), height: Math.abs(drawPt2.y - drawPt1.y),
+                    border: '2px dashed #2563eb', background: 'rgba(37,99,235,0.08)', pointerEvents: 'none',
+                  }} />
+                )}
+              </div>
+            )}
+
+            {/* ── Inset chart ───────────────────────────────────────────────── */}
+            {styleOverrides.insetDefined && isNumericX &&
+             styleOverrides.insetXMin !== undefined && styleOverrides.insetXMax !== undefined &&
+             styleOverrides.insetYMin !== undefined && styleOverrides.insetYMax !== undefined && (() => {
+              const iXMin = styleOverrides.insetXMin!
+              const iXMax = styleOverrides.insetXMax!
+              const iYMin = styleOverrides.insetYMin!
+              const iYMax = styleOverrides.insetYMax!
+              const sizePct  = styleOverrides.insetSizePct  ?? 35
+              const iFontSz  = styleOverrides.insetFontSize ?? 8
+              const iLineW   = styleOverrides.insetLineWidth ?? 1.2
+              const iBorder  = styleOverrides.insetBorder   ?? true
+              const iBdrCol  = styleOverrides.insetBorderColor ?? axisColor
+              const iBdrW    = styleOverrides.insetBorderWidth ?? 1.5
+              const figW     = figureWidth  ?? 700
+              const figH     = figureHeight ?? s.chartHeight
+              const insetW   = Math.round(figW * sizePct / 100)
+              const insetH   = Math.round(figH * sizePct / 100)
+              const insetL   = styleOverrides.insetLeft ?? figW * 0.55
+              const insetT   = styleOverrides.insetTop  ?? 32
+
               return (
                 <div
                   style={{
-                    position: 'absolute',
-                    width: '28%',
-                    height: '30%',
-                    background: '#ffffff',
-                    border: `1.5px solid ${axisColor}`,
-                    boxSizing: 'border-box',
-                    pointerEvents: 'none',
-                    ...posMap[pos],
+                    position: 'absolute', left: insetL, top: insetT,
+                    width: insetW, height: insetH, background: '#fff',
+                    border: iBorder ? `${iBdrW}px solid ${iBdrCol}` : 'none',
+                    boxSizing: 'border-box', cursor: 'move', zIndex: 20, overflow: 'hidden',
+                  }}
+                  onPointerDown={e => {
+                    e.stopPropagation()
+                    const startX = e.clientX - insetL
+                    const startY = e.clientY - insetT
+                    const move = (ev: PointerEvent) => {
+                      const cr = chartRef.current?.getBoundingClientRect()
+                      if (!cr) return
+                      onStyleChange?.({
+                        insetLeft: Math.max(0, Math.min(cr.width  - insetW, ev.clientX - startX)),
+                        insetTop:  Math.max(0, Math.min(cr.height - insetH, ev.clientY - startY)),
+                      })
+                    }
+                    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
+                    window.addEventListener('pointermove', move)
+                    window.addEventListener('pointerup', up)
                   }}
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 4 }}>
-                      <XAxis
-                        dataKey={xCol}
-                        tick={{ fontSize: 7, fill: axisColor, fontFamily }}
+                    <LineChart data={data} margin={{ top: 4, right: 6, bottom: 14, left: 28 }}>
+                      <XAxis dataKey={xCol} type="number" domain={[iXMin, iXMax]} allowDataOverflow
+                        tick={{ fontSize: iFontSz, fill: axisColor, fontFamily }}
                         axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
                         tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                        height={14}
-                        interval="preserveStartEnd"
-                        tickCount={4}
+                        height={16} tickCount={4}
                       />
-                      <YAxis
-                        tick={{ fontSize: 7, fill: axisColor, fontFamily }}
+                      <YAxis domain={[iYMin, iYMax]} allowDataOverflow
+                        tick={{ fontSize: iFontSz, fill: axisColor, fontFamily }}
                         axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
                         tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                        width={28}
-                        tickCount={4}
+                        width={26} tickCount={4}
                       />
-                      <Line
-                        type="monotone"
-                        dataKey={insetYCol}
-                        stroke={s.colors[0]}
-                        strokeWidth={1.2}
-                        dot={false}
-                        isAnimationActive={false}
-                      />
+                      {yCols.map((col, i) => (
+                        <Line key={col} type="monotone" dataKey={col}
+                          stroke={seriesColor(col, i)} strokeWidth={iLineW}
+                          dot={false} isAnimationActive={false} />
+                      ))}
                     </LineChart>
                   </ResponsiveContainer>
                 </div>

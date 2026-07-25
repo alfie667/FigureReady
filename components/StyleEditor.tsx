@@ -191,49 +191,6 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
         )}
       </div>
 
-      {columns.length > 0 && (
-        <div className="pt-2 border-t border-slate-100 space-y-3">
-          <ToggleSwitch
-            label="Inset figure"
-            checked={overrides.insetEnabled ?? false}
-            onChange={(v) => onChange({
-              ...overrides,
-              insetEnabled: v,
-              insetYCol: overrides.insetYCol ?? columns[0],
-              insetPosition: overrides.insetPosition ?? 'top-right',
-            })}
-          />
-          {overrides.insetEnabled && (
-            <>
-              <SelectField
-                label="Y data"
-                value={overrides.insetYCol ?? columns[0] ?? ''}
-                options={columns.map(c => ({ value: c, label: c }))}
-                onChange={(v) => set('insetYCol', v)}
-              />
-              <div>
-                <p className="text-xs font-medium text-slate-500 mb-1.5">Position</p>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map(pos => (
-                    <button
-                      key={pos}
-                      onClick={() => set('insetPosition', pos)}
-                      className={`py-1.5 text-[10px] font-semibold rounded-lg border transition-colors capitalize ${
-                        (overrides.insetPosition ?? 'top-right') === pos
-                          ? 'bg-[#2563eb] text-white border-[#2563eb]'
-                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {pos.replace('-', ' ')}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
       <div className="pt-2 border-t border-slate-100 space-y-3">
         <p className="text-xs font-semibold text-slate-600">Figure size</p>
         <div className="flex flex-wrap gap-2">
