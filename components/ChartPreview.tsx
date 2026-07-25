@@ -1268,7 +1268,7 @@ export default function ChartPreview({
                       insetSizePct:    styleOverrides.insetSizePct    ?? 35,
                       insetFontSize:   styleOverrides.insetFontSize   ?? 8,
                       insetLineWidth:  styleOverrides.insetLineWidth  ?? 1.2,
-                      insetBorder:     styleOverrides.insetBorder     ?? true,
+                      insetBorder:     styleOverrides.insetBorder     ?? false,
                       insetBorderColor: styleOverrides.insetBorderColor ?? axisColor,
                       insetBorderWidth: styleOverrides.insetBorderWidth ?? 1.5,
                     })
@@ -1299,7 +1299,7 @@ export default function ChartPreview({
               const sizePct = styleOverrides.insetSizePct   ?? 35
               const iTickSz = styleOverrides.insetTickFontSize ?? 7
               const iLineW  = styleOverrides.insetLineWidth  ?? 1.2
-              const iBorder = styleOverrides.insetBorder     ?? true
+              const iBorder = styleOverrides.insetBorder     ?? false
               const iBdrCol = styleOverrides.insetBorderColor ?? axisColor
               const iBdrW   = styleOverrides.insetBorderWidth ?? 1.5
               const figW    = figureWidth  ?? 700

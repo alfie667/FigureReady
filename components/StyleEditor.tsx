@@ -247,10 +247,10 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-500">Border</p>
               <div className="flex items-center gap-2">
-                <input type="checkbox" checked={overrides.insetBorder ?? true}
+                <input type="checkbox" checked={overrides.insetBorder ?? false}
                   onChange={e => set('insetBorder', e.target.checked)}
                   className="accent-[#2563eb]" />
-                {(overrides.insetBorder ?? true) && (
+                {(overrides.insetBorder ?? false) && (
                   <>
                     <input type="color" value={overrides.insetBorderColor ?? axisColor}
                       onChange={e => set('insetBorderColor', e.target.value)}
