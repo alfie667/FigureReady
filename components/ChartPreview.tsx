@@ -330,16 +330,25 @@ export default function ChartPreview({
   // Keep stable refs for the keydown handler (avoids re-registering on every render)
   const annotationsRef = useRef(annotations)
   const onAnnotationsChangeRef = useRef(onAnnotationsChange)
+  const onStyleChangeRef = useRef(onStyleChange)
+  const styleOverridesRef = useRef(styleOverrides)
   useEffect(() => { annotationsRef.current = annotations }, [annotations])
   useEffect(() => { onAnnotationsChangeRef.current = onAnnotationsChange }, [onAnnotationsChange])
+  useEffect(() => { onStyleChangeRef.current = onStyleChange }, [onStyleChange])
+  useEffect(() => { styleOverridesRef.current = styleOverrides }, [styleOverrides])
 
-  // Delete / Escape keyboard shortcuts for selected annotation
+  // Delete / Escape keyboard shortcuts for selected annotation and inset
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       const selId = selectedIdRef.current
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selId && !editingIdRef.current) {
-        onAnnotationsChangeRef.current(annotationsRef.current.filter(a => a.id !== selId))
-        selectedIdRef.current = null; _setSelectedId(null)
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selId && !editingIdRef.current) {
+          onAnnotationsChangeRef.current(annotationsRef.current.filter(a => a.id !== selId))
+          selectedIdRef.current = null; _setSelectedId(null)
+        } else if (!selId && styleOverridesRef.current.insetDefined) {
+          onStyleChangeRef.current?.({ insetDefined: false, insetXMin: undefined, insetXMax: undefined, insetYMin: undefined, insetYMax: undefined })
+        }
       }
       if (e.key === 'Escape') {
         selectedIdRef.current = null; _setSelectedId(null)
