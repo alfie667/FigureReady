@@ -206,6 +206,72 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
         </div>
       </div>
 
+      {overrides.insetDefined && (
+        <div className="pt-2 border-t border-slate-100 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-slate-600">Inset figure</p>
+            <button
+              onClick={() => onChange({ ...overrides, insetDefined: false, insetXMin: undefined, insetXMax: undefined, insetYMin: undefined, insetYMax: undefined })}
+              className="text-xs font-medium text-red-400 hover:text-red-600 transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">Size</p>
+              <div className="flex items-center gap-2">
+                <input type="range" min={20} max={50} value={overrides.insetSizePct ?? 35}
+                  onChange={e => set('insetSizePct', Number(e.target.value))}
+                  className="w-20 accent-[#2563eb]" />
+                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetSizePct ?? 35}%</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">Font</p>
+              <div className="flex items-center gap-2">
+                <input type="range" min={6} max={12} value={overrides.insetFontSize ?? 8}
+                  onChange={e => set('insetFontSize', Number(e.target.value))}
+                  className="w-20 accent-[#2563eb]" />
+                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetFontSize ?? 8}pt</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">Line width</p>
+              <div className="flex items-center gap-2">
+                <input type="range" min={5} max={30} step={5} value={Math.round((overrides.insetLineWidth ?? 1.2) * 10)}
+                  onChange={e => set('insetLineWidth', Number(e.target.value) / 10)}
+                  className="w-20 accent-[#2563eb]" />
+                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetLineWidth ?? 1.2}px</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-slate-500">Border</p>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" checked={overrides.insetBorder ?? true}
+                  onChange={e => set('insetBorder', e.target.checked)}
+                  className="accent-[#2563eb]" />
+                {(overrides.insetBorder ?? true) && (
+                  <>
+                    <input type="color" value={overrides.insetBorderColor ?? axisColor}
+                      onChange={e => set('insetBorderColor', e.target.value)}
+                      className="w-6 h-5 rounded cursor-pointer border border-slate-200" title="Border color" />
+                    <input type="range" min={1} max={4} step={0.5} value={overrides.insetBorderWidth ?? 1.5}
+                      onChange={e => set('insetBorderWidth', Number(e.target.value))}
+                      className="w-14 accent-[#2563eb]" />
+                    <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetBorderWidth ?? 1.5}px</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <details className="pt-2 border-t border-slate-100 group">
         <summary className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
           Advanced options

@@ -1130,63 +1130,6 @@ export default function ChartPreview({
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 
-        {/* ── Inset settings bar (only when inset is defined) ───────────────── */}
-        {styleOverrides.insetDefined && (
-          <div className="flex items-center gap-4 px-4 py-1.5 bg-[#f8fafc] border-b border-slate-200 shrink-0 flex-wrap">
-            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Inset</span>
-
-            <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
-              Size
-              <input type="range" min={20} max={50} value={styleOverrides.insetSizePct ?? 35}
-                onChange={e => onStyleChange?.({ insetSizePct: Number(e.target.value) })}
-                className="w-16 accent-[#2563eb]" />
-              <span className="text-[10px] text-slate-400 w-7">{styleOverrides.insetSizePct ?? 35}%</span>
-            </label>
-
-            <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
-              Font
-              <input type="range" min={6} max={12} value={styleOverrides.insetFontSize ?? 8}
-                onChange={e => onStyleChange?.({ insetFontSize: Number(e.target.value) })}
-                className="w-14 accent-[#2563eb]" />
-              <span className="text-[10px] text-slate-400 w-6">{styleOverrides.insetFontSize ?? 8}pt</span>
-            </label>
-
-            <label className="flex items-center gap-1.5 text-[11px] text-slate-600">
-              Lines
-              <input type="range" min={5} max={30} step={5} value={Math.round((styleOverrides.insetLineWidth ?? 1.2) * 10)}
-                onChange={e => onStyleChange?.({ insetLineWidth: Number(e.target.value) / 10 })}
-                className="w-14 accent-[#2563eb]" />
-            </label>
-
-            <label className="flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer">
-              <input type="checkbox" checked={styleOverrides.insetBorder ?? true}
-                onChange={e => onStyleChange?.({ insetBorder: e.target.checked })} />
-              Border
-            </label>
-
-            {(styleOverrides.insetBorder ?? true) && (
-              <>
-                <input type="color" value={styleOverrides.insetBorderColor ?? axisColor}
-                  onChange={e => onStyleChange?.({ insetBorderColor: e.target.value })}
-                  className="w-6 h-5 rounded cursor-pointer border border-slate-200" title="Border color" />
-                <label className="flex items-center gap-1 text-[11px] text-slate-600">
-                  <input type="range" min={1} max={4} step={0.5} value={styleOverrides.insetBorderWidth ?? 1.5}
-                    onChange={e => onStyleChange?.({ insetBorderWidth: Number(e.target.value) })}
-                    className="w-12 accent-[#2563eb]" />
-                  <span className="text-[10px] text-slate-400">{styleOverrides.insetBorderWidth ?? 1.5}px</span>
-                </label>
-              </>
-            )}
-
-            <button
-              onClick={() => onStyleChange?.({ insetDefined: false, insetXMin: undefined, insetXMax: undefined, insetYMin: undefined, insetYMax: undefined })}
-              className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded bg-red-50 text-red-500 hover:bg-red-100 transition-colors shrink-0"
-            >
-              Remove
-            </button>
-          </div>
-        )}
-
         {/* Chrome bar: annotation tools + export */}
         <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
