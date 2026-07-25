@@ -225,12 +225,12 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
             </div>
 
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Font</p>
+              <p className="text-xs text-slate-500">Tick font</p>
               <div className="flex items-center gap-2">
-                <input type="range" min={6} max={12} value={overrides.insetFontSize ?? 8}
-                  onChange={e => set('insetFontSize', Number(e.target.value))}
+                <input type="range" min={5} max={12} value={overrides.insetTickFontSize ?? 7}
+                  onChange={e => set('insetTickFontSize', Number(e.target.value))}
                   className="w-20 accent-[#2563eb]" />
-                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetFontSize ?? 8}pt</span>
+                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetTickFontSize ?? 7}pt</span>
               </div>
             </div>
 

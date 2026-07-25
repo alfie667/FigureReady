@@ -54,6 +54,9 @@ export interface StyleOverrides {
   insetBorder?: boolean
   insetBorderColor?: string
   insetBorderWidth?: number
+  insetWidth?: number
+  insetHeight?: number
+  insetTickFontSize?: number
 }
 
 export const fontOptions: { value: string; label: string }[] = [

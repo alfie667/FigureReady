@@ -25,6 +25,12 @@ function lnFmt(v: number): string {
   if (val >= 0.01) return val.toFixed(2)
   return val.toExponential(1)
 }
+
+function fmtInsetTick(v: number): string {
+  if (!isFinite(v)) return ''
+  if (Number.isInteger(v)) return String(v)
+  return String(Math.round(v * 100) / 100)
+}
 function buildLnTicks(lo: number, hi: number): number[] {
   const ticks: number[] = []
   for (let i = Math.floor(lo); i <= Math.ceil(hi); i++) ticks.push(i)
@@ -322,6 +328,7 @@ export default function ChartPreview({
   const [drawInsetMode, setDrawInsetMode] = useState(false)
   const [drawPt1, setDrawPt1] = useState<{ x: number; y: number } | null>(null)
   const [drawPt2, setDrawPt2] = useState<{ x: number; y: number } | null>(null)
+  const [insetSelected, setInsetSelected] = useState(false)
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
@@ -784,6 +791,7 @@ export default function ChartPreview({
   // Deselect when clicking the chart background (not on an annotation)
   const handleContainerClick = () => {
     setSelectedId(null)
+    setInsetSelected(false)
     if (editingIdRef.current) setEditingId(null)
   }
 
@@ -1284,70 +1292,172 @@ export default function ChartPreview({
             {styleOverrides.insetDefined && isNumericX &&
              styleOverrides.insetXMin !== undefined && styleOverrides.insetXMax !== undefined &&
              styleOverrides.insetYMin !== undefined && styleOverrides.insetYMax !== undefined && (() => {
-              const iXMin = styleOverrides.insetXMin!
-              const iXMax = styleOverrides.insetXMax!
-              const iYMin = styleOverrides.insetYMin!
-              const iYMax = styleOverrides.insetYMax!
-              const sizePct  = styleOverrides.insetSizePct  ?? 35
-              const iFontSz  = styleOverrides.insetFontSize ?? 8
-              const iLineW   = styleOverrides.insetLineWidth ?? 1.2
-              const iBorder  = styleOverrides.insetBorder   ?? true
-              const iBdrCol  = styleOverrides.insetBorderColor ?? axisColor
-              const iBdrW    = styleOverrides.insetBorderWidth ?? 1.5
-              const figW     = figureWidth  ?? 700
-              const figH     = figureHeight ?? s.chartHeight
-              const insetW   = Math.round(figW * sizePct / 100)
-              const insetH   = Math.round(figH * sizePct / 100)
-              const insetL   = styleOverrides.insetLeft ?? figW * 0.55
-              const insetT   = styleOverrides.insetTop  ?? 32
+              const iXMin   = styleOverrides.insetXMin!
+              const iXMax   = styleOverrides.insetXMax!
+              const iYMin   = styleOverrides.insetYMin!
+              const iYMax   = styleOverrides.insetYMax!
+              const sizePct = styleOverrides.insetSizePct   ?? 35
+              const iTickSz = styleOverrides.insetTickFontSize ?? 7
+              const iLineW  = styleOverrides.insetLineWidth  ?? 1.2
+              const iBorder = styleOverrides.insetBorder     ?? true
+              const iBdrCol = styleOverrides.insetBorderColor ?? axisColor
+              const iBdrW   = styleOverrides.insetBorderWidth ?? 1.5
+              const figW    = figureWidth  ?? 700
+              const figH    = figureHeight ?? s.chartHeight
+              const baseW   = Math.round(figW * sizePct / 100)
+              const baseH   = Math.round(figH * sizePct / 100)
+              const rW      = styleOverrides.insetWidth  ?? baseW
+              const rH      = styleOverrides.insetHeight ?? baseH
+              const insetL  = styleOverrides.insetLeft   ?? figW * 0.55
+              const insetT  = styleOverrides.insetTop    ?? 32
+
+              // Nice round ticks for the zoomed domain
+              const rawXTicks = getNiceTicks(iXMin, iXMax)
+              const rawYTicks = getNiceTicks(iYMin, iYMax)
+              const xTicks = rawXTicks.length >= 2 ? rawXTicks : [iXMin, iXMax]
+              const yTicks = rawYTicks.length >= 2 ? rawYTicks : [iYMin, iYMax]
+
+              const HS: React.CSSProperties = {
+                position: 'absolute', width: 8, height: 8,
+                background: 'white', border: '1.5px solid #3b82f6',
+                borderRadius: 2, zIndex: 22, touchAction: 'none',
+              }
+
+              const startResize = (e: React.PointerEvent<HTMLDivElement>, h: string) => {
+                e.stopPropagation(); e.preventDefault()
+                const sx = e.clientX, sy = e.clientY
+                const sL = insetL, sT = insetT, sW = rW, sH = rH
+                const move = (ev: PointerEvent) => {
+                  const dx = ev.clientX - sx, dy = ev.clientY - sy
+                  const cr = chartRef.current?.getBoundingClientRect()
+                  if (!cr) return
+                  let nL = sL, nT = sT, nW = sW, nH = sH
+                  if (h.includes('e')) nW = Math.max(80, sW + dx)
+                  if (h.includes('w')) { nW = Math.max(80, sW - dx); nL = sL + sW - nW }
+                  if (h.includes('s')) nH = Math.max(60, sH + dy)
+                  if (h.includes('n')) { nH = Math.max(60, sH - dy); nT = sT + sH - nH }
+                  nL = Math.max(0, Math.min(cr.width - nW, nL))
+                  nT = Math.max(0, Math.min(cr.height - nH, nT))
+                  onStyleChange?.({ insetLeft: nL, insetTop: nT, insetWidth: nW, insetHeight: nH })
+                }
+                const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
+                window.addEventListener('pointermove', move)
+                window.addEventListener('pointerup', up)
+              }
 
               return (
-                <div
-                  style={{
-                    position: 'absolute', left: insetL, top: insetT,
-                    width: insetW, height: insetH, background: '#fff',
-                    border: iBorder ? `${iBdrW}px solid ${iBdrCol}` : 'none',
-                    boxSizing: 'border-box', cursor: 'move', zIndex: 20, overflow: 'hidden',
-                  }}
-                  onPointerDown={e => {
-                    e.stopPropagation()
-                    const startX = e.clientX - insetL
-                    const startY = e.clientY - insetT
-                    const move = (ev: PointerEvent) => {
-                      const cr = chartRef.current?.getBoundingClientRect()
-                      if (!cr) return
-                      onStyleChange?.({
-                        insetLeft: Math.max(0, Math.min(cr.width  - insetW, ev.clientX - startX)),
-                        insetTop:  Math.max(0, Math.min(cr.height - insetH, ev.clientY - startY)),
-                      })
-                    }
-                    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
-                    window.addEventListener('pointermove', move)
-                    window.addEventListener('pointerup', up)
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={data} margin={{ top: 4, right: 6, bottom: 14, left: 28 }}>
-                      <XAxis dataKey={xCol} type="number" domain={[iXMin, iXMax]} allowDataOverflow
-                        tick={{ fontSize: iFontSz, fill: axisColor, fontFamily }}
-                        axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                        tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                        height={16} tickCount={4}
-                      />
-                      <YAxis domain={[iYMin, iYMax]} allowDataOverflow
-                        tick={{ fontSize: iFontSz, fill: axisColor, fontFamily }}
-                        axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                        tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                        width={26} tickCount={4}
-                      />
-                      {yCols.map((col, i) => (
-                        <Line key={col} type="monotone" dataKey={col}
-                          stroke={seriesColor(col, i)} strokeWidth={iLineW}
-                          dot={false} isAnimationActive={false} />
-                      ))}
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
+                <>
+                  {/* Floating toolbar — appears above inset when selected */}
+                  {insetSelected && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: insetL,
+                        top: Math.max(4, insetT - 50),
+                        zIndex: 25,
+                        background: 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: 8,
+                        padding: '5px 10px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        userSelect: 'none', whiteSpace: 'nowrap',
+                      }}
+                      onPointerDown={e => e.stopPropagation()}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#64748b' }}>
+                        Tick
+                        <input type="range" min={5} max={12} value={iTickSz}
+                          onChange={e => onStyleChange?.({ insetTickFontSize: Number(e.target.value) })}
+                          style={{ width: 52, accentColor: '#2563eb' }} />
+                        <span style={{ fontSize: 9, color: '#94a3b8', minWidth: 20 }}>{iTickSz}pt</span>
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#64748b' }}>
+                        Lines
+                        <input type="range" min={5} max={30} step={5} value={Math.round(iLineW * 10)}
+                          onChange={e => onStyleChange?.({ insetLineWidth: Number(e.target.value) / 10 })}
+                          style={{ width: 48, accentColor: '#2563eb' }} />
+                        <span style={{ fontSize: 9, color: '#94a3b8', minWidth: 20 }}>{iLineW}px</span>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Inset wrapper — overflow visible so handles extend outside bounds */}
+                  <div
+                    style={{ position: 'absolute', left: insetL, top: insetT, width: rW, height: rH, zIndex: 20 }}
+                    onClick={e => { e.stopPropagation(); setInsetSelected(true) }}
+                  >
+                    {/* Chart box — clipped, draggable */}
+                    <div
+                      style={{
+                        position: 'absolute', inset: 0, background: '#fff',
+                        border: iBorder ? `${iBdrW}px solid ${iBdrCol}` : 'none',
+                        outline: insetSelected ? '2px solid #3b82f6' : 'none',
+                        outlineOffset: 1,
+                        boxSizing: 'border-box', overflow: 'hidden', cursor: 'move',
+                      }}
+                      onPointerDown={e => {
+                        e.stopPropagation()
+                        const startX = e.clientX - insetL
+                        const startY = e.clientY - insetT
+                        const move = (ev: PointerEvent) => {
+                          const cr = chartRef.current?.getBoundingClientRect()
+                          if (!cr) return
+                          onStyleChange?.({
+                            insetLeft: Math.max(0, Math.min(cr.width  - rW, ev.clientX - startX)),
+                            insetTop:  Math.max(0, Math.min(cr.height - rH, ev.clientY - startY)),
+                          })
+                        }
+                        const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
+                        window.addEventListener('pointermove', move)
+                        window.addEventListener('pointerup', up)
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={data} margin={{ top: 4, right: 6, bottom: 14, left: 28 }}>
+                          <XAxis dataKey={xCol} type="number"
+                            domain={[xTicks[0], xTicks[xTicks.length - 1]]}
+                            ticks={xTicks} allowDataOverflow
+                            tickFormatter={fmtInsetTick}
+                            tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
+                            axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                            tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                            height={16}
+                          />
+                          <YAxis
+                            domain={[yTicks[0], yTicks[yTicks.length - 1]]}
+                            ticks={yTicks} allowDataOverflow
+                            tickFormatter={fmtInsetTick}
+                            tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
+                            axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                            tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                            width={26}
+                          />
+                          {yCols.map((col, i) => (
+                            <Line key={col} type="monotone" dataKey={col}
+                              stroke={seriesColor(col, i)} strokeWidth={iLineW}
+                              dot={false} isAnimationActive={false} />
+                          ))}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    {/* 8 resize handles — shown when inset is selected */}
+                    {insetSelected && (
+                      <>
+                        <div style={{ ...HS, top: -4, left: -4, cursor: 'nw-resize' }} onPointerDown={e => startResize(e, 'nw')} />
+                        <div style={{ ...HS, top: -4, left: '50%', transform: 'translateX(-50%)', cursor: 'n-resize' }} onPointerDown={e => startResize(e, 'n')} />
+                        <div style={{ ...HS, top: -4, right: -4, cursor: 'ne-resize' }} onPointerDown={e => startResize(e, 'ne')} />
+                        <div style={{ ...HS, top: '50%', left: -4, transform: 'translateY(-50%)', cursor: 'w-resize' }} onPointerDown={e => startResize(e, 'w')} />
+                        <div style={{ ...HS, top: '50%', right: -4, transform: 'translateY(-50%)', cursor: 'e-resize' }} onPointerDown={e => startResize(e, 'e')} />
+                        <div style={{ ...HS, bottom: -4, left: -4, cursor: 'sw-resize' }} onPointerDown={e => startResize(e, 'sw')} />
+                        <div style={{ ...HS, bottom: -4, left: '50%', transform: 'translateX(-50%)', cursor: 's-resize' }} onPointerDown={e => startResize(e, 's')} />
+                        <div style={{ ...HS, bottom: -4, right: -4, cursor: 'se-resize' }} onPointerDown={e => startResize(e, 'se')} />
+                      </>
+                    )}
+                  </div>
+                </>
               )
             })()}
 
