@@ -244,6 +244,8 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
               </div>
             </div>
 
+            <ToggleSwitch label="Show zoom rectangle" checked={overrides.insetShowZoomRect ?? false} onChange={v => set('insetShowZoomRect', v)} />
+
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-500">Border</p>
               <div className="flex items-center gap-2">

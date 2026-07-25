@@ -614,6 +614,18 @@ export default function ChartPreview({
     ? <ReferenceArea x1={refLeft} x2={refRight} strokeOpacity={0.3} fill={s.colors[0]} fillOpacity={0.12} />
     : null
 
+  const insetZoomRectProps = styleOverrides.insetDefined && styleOverrides.insetShowZoomRect &&
+    isNumericX && styleOverrides.insetXMin !== undefined && styleOverrides.insetXMax !== undefined
+    ? {
+        x1: styleOverrides.insetXMin, x2: styleOverrides.insetXMax,
+        y1: styleOverrides.insetYMin, y2: styleOverrides.insetYMax,
+        stroke: styleOverrides.insetBorderColor ?? axisColor,
+        strokeWidth: styleOverrides.insetBorderWidth ?? 1.5,
+        strokeDasharray: '5 3',
+        fill: 'transparent', fillOpacity: 0,
+      }
+    : null
+
   // ─── Marker renderers ────────────────────────────────────────────────────────
 
   const markerRenderer = (shape: MarkerShape, size: number, color: string) => (props: unknown) => {
@@ -817,6 +829,7 @@ export default function ChartPreview({
             )
           })}
           {zoomArea}
+          {insetZoomRectProps && <ReferenceArea {...insetZoomRectProps} />}
           {frameLines}
         </ScatterChart>
       )
@@ -893,6 +906,7 @@ export default function ChartPreview({
           )
         })}
         {zoomArea}
+        {insetZoomRectProps && <ReferenceArea {...insetZoomRectProps} yAxisId="left" />}
         {frameLines}
       </LineChart>
     )
