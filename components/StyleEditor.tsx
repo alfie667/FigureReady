@@ -207,65 +207,60 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
       </div>
 
       {overrides.insetDefined && (
-        <div className="pt-2 border-t border-slate-100 space-y-4">
+        <div className="pt-2 border-t border-slate-100 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold text-slate-600">Inset figure</p>
-            <span className="text-[10px] text-slate-400">Press Del to remove</span>
+            <span className="text-[10px] text-slate-400 italic">Del to remove</span>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Size</p>
-              <div className="flex items-center gap-2">
-                <input type="range" min={20} max={50} value={overrides.insetSizePct ?? 35}
-                  onChange={e => set('insetSizePct', Number(e.target.value))}
-                  className="w-20 accent-[#2563eb]" />
-                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetSizePct ?? 35}%</span>
+          {/* Size + Tick font — 2 columns */}
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            <div>
+              <p className="text-[10px] text-slate-400 mb-1">Size</p>
+              <div className="flex items-center gap-1">
+                <input type="number" min={10} max={80}
+                  value={overrides.insetSizePct ?? 35}
+                  onChange={e => { const v = Number(e.target.value); if (v >= 10 && v <= 80) set('insetSizePct', v) }}
+                  className={inputCls} />
+                <span className="text-[10px] text-slate-400 shrink-0">%</span>
               </div>
             </div>
-
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Tick font</p>
-              <div className="flex items-center gap-2">
-                <input type="range" min={5} max={12} value={overrides.insetTickFontSize ?? 7}
-                  onChange={e => set('insetTickFontSize', Number(e.target.value))}
-                  className="w-20 accent-[#2563eb]" />
-                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetTickFontSize ?? 7}pt</span>
+            <div>
+              <p className="text-[10px] text-slate-400 mb-1">Tick font</p>
+              <div className="flex items-center gap-1">
+                <input type="number" min={5} max={14}
+                  value={overrides.insetTickFontSize ?? 7}
+                  onChange={e => { const v = Number(e.target.value); if (v >= 5 && v <= 14) set('insetTickFontSize', v) }}
+                  className={inputCls} />
+                <span className="text-[10px] text-slate-400 shrink-0">pt</span>
               </div>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Line width</p>
-              <div className="flex items-center gap-2">
-                <input type="range" min={5} max={30} step={5} value={Math.round((overrides.insetLineWidth ?? 1.2) * 10)}
-                  onChange={e => set('insetLineWidth', Number(e.target.value) / 10)}
-                  className="w-20 accent-[#2563eb]" />
-                <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetLineWidth ?? 1.2}px</span>
-              </div>
-            </div>
+          {/* Line width presets */}
+          <LineThicknessPicker label="Line width" value={overrides.insetLineWidth ?? 1.2} presets={axisWidthPresets} onChange={v => set('insetLineWidth', v)} />
 
+          {/* Toggles side by side */}
+          <div className="flex gap-4">
             <ToggleSwitch label="Box frame" checked={overrides.insetShowFrame ?? false} onChange={v => set('insetShowFrame', v)} />
-            <ToggleSwitch label="Show zoom rectangle" checked={overrides.insetShowZoomRect ?? false} onChange={v => set('insetShowZoomRect', v)} />
+            <ToggleSwitch label="Zoom rect" checked={overrides.insetShowZoomRect ?? false} onChange={v => set('insetShowZoomRect', v)} />
+          </div>
 
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Border</p>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={overrides.insetBorder ?? false}
-                  onChange={e => set('insetBorder', e.target.checked)}
-                  className="accent-[#2563eb]" />
-                {(overrides.insetBorder ?? false) && (
-                  <>
-                    <input type="color" value={overrides.insetBorderColor ?? axisColor}
-                      onChange={e => set('insetBorderColor', e.target.value)}
-                      className="w-6 h-5 rounded cursor-pointer border border-slate-200" title="Border color" />
-                    <input type="range" min={1} max={4} step={0.5} value={overrides.insetBorderWidth ?? 1.5}
-                      onChange={e => set('insetBorderWidth', Number(e.target.value))}
-                      className="w-14 accent-[#2563eb]" />
-                    <span className="text-[10px] text-slate-400 w-7 text-right">{overrides.insetBorderWidth ?? 1.5}px</span>
-                  </>
-                )}
-              </div>
-            </div>
+          {/* Border */}
+          <div className="flex items-center gap-2">
+            <ToggleSwitch label="Border" checked={overrides.insetBorder ?? false} onChange={v => set('insetBorder', v)} />
+            {(overrides.insetBorder ?? false) && (
+              <>
+                <input type="color" value={overrides.insetBorderColor ?? axisColor}
+                  onChange={e => set('insetBorderColor', e.target.value)}
+                  className="w-6 h-5 rounded cursor-pointer border border-slate-200 ml-1" title="Color" />
+                <input type="number" min={0.5} max={4} step={0.5}
+                  value={overrides.insetBorderWidth ?? 1.5}
+                  onChange={e => set('insetBorderWidth', Number(e.target.value))}
+                  className={`${inputCls} w-14`} />
+                <span className="text-[10px] text-slate-400 shrink-0">px</span>
+              </>
+            )}
           </div>
         </div>
       )}
