@@ -38,6 +38,7 @@ export default function AppPage() {
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
+  const [drawInsetMode, setDrawInsetMode] = useState(false)
 
   // Multi-panel state
   const [isMultiPanel, setIsMultiPanel] = useState(false)
@@ -493,6 +494,50 @@ export default function AppPage() {
 
           {ready && !isMultiPanel && (
             <Panel
+              id="figure-options"
+              title="Figure options"
+              defaultOpen={true}
+              icon={
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              }
+            >
+              {/* Inset figure */}
+              {typeof data[0]?.[xCol] === 'number' && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-600">Inset figure</p>
+                  <button
+                    onClick={() => setDrawInsetMode(v => !v)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
+                      drawInsetMode
+                        ? 'bg-[#2563eb] text-white border-[#2563eb]'
+                        : styleOverrides.insetDefined
+                          ? 'bg-blue-50 text-[#2563eb] border-blue-200'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                    {drawInsetMode
+                      ? 'Click & drag on chart…'
+                      : styleOverrides.insetDefined
+                        ? 'Redefine inset zone'
+                        : 'Add inset figure'}
+                  </button>
+                  {styleOverrides.insetDefined && (
+                    <p className="text-[10px] text-slate-400 italic text-center">Press Del to remove</p>
+                  )}
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {ready && !isMultiPanel && (
+            <Panel
               id="style"
               title="Style"
               defaultOpen={false}
@@ -545,8 +590,13 @@ export default function AppPage() {
               styleOverrides={styleOverrides}
               annotations={annotations}
               onAnnotationsChange={setAnnotations}
-              onStyleChange={(patch) => setStyleOverrides(prev => ({ ...prev, ...patch }))}
+              onStyleChange={(patch) => {
+                setStyleOverrides(prev => ({ ...prev, ...patch }))
+                if (patch.insetDefined === false) setDrawInsetMode(false)
+              }}
               onSaveTemplate={() => setSaveTemplateOpen(true)}
+              drawInsetActive={drawInsetMode}
+              onDrawInsetActiveChange={setDrawInsetMode}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-[#eff6ff]">

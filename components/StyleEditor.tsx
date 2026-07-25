@@ -208,10 +208,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
 
       {overrides.insetDefined && (
         <div className="pt-2 border-t border-slate-100 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-slate-600">Inset figure</p>
-            <span className="text-[10px] text-slate-400 italic">Del to remove</span>
-          </div>
+          <p className="text-xs font-semibold text-slate-600">Inset settings</p>
 
           {/* Size + Tick font — 2 columns */}
           <div className="grid grid-cols-2 gap-x-3 gap-y-2">

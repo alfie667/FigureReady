@@ -289,6 +289,8 @@ interface Props {
   onStyleChange?: (patch: Partial<StyleOverrides>) => void
   onSaveTemplate?: () => void
   compact?: boolean
+  drawInsetActive?: boolean
+  onDrawInsetActiveChange?: (active: boolean) => void
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -297,7 +299,7 @@ export default function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
-  compact = false,
+  compact = false, drawInsetActive, onDrawInsetActiveChange,
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
@@ -325,10 +327,17 @@ export default function ChartPreview({
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
 
   // ─── Inset draw state ────────────────────────────────────────────────────────
-  const [drawInsetMode, setDrawInsetMode] = useState(false)
+  const [drawInsetMode, _setDrawInsetMode] = useState(false)
+  const setDrawInsetMode = (v: boolean) => { _setDrawInsetMode(v); onDrawInsetActiveChange?.(v) }
   const [drawPt1, setDrawPt1] = useState<{ x: number; y: number } | null>(null)
   const [drawPt2, setDrawPt2] = useState<{ x: number; y: number } | null>(null)
   const [insetSelected, setInsetSelected] = useState(false)
+  const [annotExpanded, setAnnotExpanded] = useState(false)
+
+  // Sync external drawInsetActive prop → local state
+  useEffect(() => {
+    if (drawInsetActive !== undefined) _setDrawInsetMode(drawInsetActive)
+  }, [drawInsetActive])
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
@@ -1152,60 +1161,43 @@ export default function ChartPreview({
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 
-        {/* Chrome bar: annotation tools + export */}
-        <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-          <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
-          <div className="flex items-center gap-2 shrink-0">
-            {isNumericX && (
-              <button
-                onClick={() => setDrawInsetMode(v => !v)}
-                title={drawInsetMode ? 'Click and drag on the chart to define the inset region' : 'Draw a zoom region to create an inset figure'}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-                  drawInsetMode ? 'bg-[#2563eb] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                {drawInsetMode ? 'Draw zone…' : 'Inset'}
-              </button>
-            )}
+        {/* Main toolbar — Annotate toggle + Export only */}
+        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+          <button
+            onClick={() => setAnnotExpanded(v => !v)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+              annotExpanded ? 'bg-slate-200 text-slate-800' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            Annotate
+            <svg className={`w-3 h-3 transition-transform duration-200 ${annotExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-2 ml-auto shrink-0">
             {zoomDomain && (
-              <button
-                onClick={resetZoom}
-                className="px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
-              >
+              <button onClick={resetZoom} className="px-3 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors">
                 Reset zoom
               </button>
             )}
-            {onSaveTemplate && (
-              <button
-                onClick={onSaveTemplate}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
-                Save as Template
-              </button>
-            )}
-            <button
-              onClick={() => triggerExport('svg')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
-            >
-              <DownloadIcon />
-              SVG
+            <button onClick={() => triggerExport('svg')} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors">
+              <DownloadIcon />SVG
             </button>
-            <button
-              onClick={() => triggerExport('png')}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm"
-            >
-              <DownloadIcon />
-              PNG · 300 DPI
+            <button onClick={() => triggerExport('png')} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm">
+              <DownloadIcon />PNG · 300 DPI
             </button>
           </div>
         </div>
+
+        {/* Annotation tools — collapsible second row */}
+        {annotExpanded && (
+          <div className="px-4 py-2 bg-[#f8fafc] border-b border-slate-200 shrink-0">
+            <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
+          </div>
+        )}
 
         {/* Light workspace */}
         <div className="flex-1 overflow-auto bg-[#eff6ff]">
