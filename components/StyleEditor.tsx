@@ -196,7 +196,12 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
           <ToggleSwitch
             label="Inset figure"
             checked={overrides.insetEnabled ?? false}
-            onChange={(v) => set('insetEnabled', v)}
+            onChange={(v) => onChange({
+              ...overrides,
+              insetEnabled: v,
+              insetYCol: overrides.insetYCol ?? columns[0],
+              insetPosition: overrides.insetPosition ?? 'top-right',
+            })}
           />
           {overrides.insetEnabled && (
             <>

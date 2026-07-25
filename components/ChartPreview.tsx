@@ -1179,8 +1179,9 @@ export default function ChartPreview({
             </ResponsiveContainer>
 
             {/* Inset figure */}
-            {styleOverrides.insetEnabled && styleOverrides.insetYCol && data.length > 0 && (() => {
-              const insetYCol = styleOverrides.insetYCol!
+            {styleOverrides.insetEnabled && data.length > 0 && (() => {
+              const insetYCol = styleOverrides.insetYCol ?? yCols[0]
+              if (!insetYCol) return null
               const pos = styleOverrides.insetPosition ?? 'top-right'
               const posMap: Record<string, React.CSSProperties> = {
                 'top-left':     { top: '8%',   left: 96  },
