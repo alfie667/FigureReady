@@ -444,6 +444,7 @@ export default function AppPage() {
                 baseStyle={chartStyles[styleName]}
                 overrides={styleOverrides}
                 hasMultipleSeries={yCols.length > 1}
+                columns={columns.filter(c => c !== xCol)}
                 onChange={setStyleOverrides}
               />
             </Panel>

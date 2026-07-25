@@ -10,6 +10,7 @@ interface Props {
   baseStyle: ChartStyle
   overrides: StyleOverrides
   hasMultipleSeries: boolean
+  columns?: string[]
   onChange: (overrides: StyleOverrides) => void
 }
 
@@ -107,7 +108,7 @@ function SelectField<T extends string>({
 const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb] placeholder:text-slate-300"
 const parseNum = (raw: string) => (raw === '' ? undefined : Number(raw))
 
-export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, onChange }: Props) {
+export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, columns = [], onChange }: Props) {
   const [saved, setSaved] = useState(false)
 
   const set = <K extends keyof StyleOverrides>(key: K, value: StyleOverrides[K]) => {
@@ -189,6 +190,44 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, o
           </>
         )}
       </div>
+
+      {columns.length > 0 && (
+        <div className="pt-2 border-t border-slate-100 space-y-3">
+          <ToggleSwitch
+            label="Inset figure"
+            checked={overrides.insetEnabled ?? false}
+            onChange={(v) => set('insetEnabled', v)}
+          />
+          {overrides.insetEnabled && (
+            <>
+              <SelectField
+                label="Y data"
+                value={overrides.insetYCol ?? columns[0] ?? ''}
+                options={columns.map(c => ({ value: c, label: c }))}
+                onChange={(v) => set('insetYCol', v)}
+              />
+              <div>
+                <p className="text-xs font-medium text-slate-500 mb-1.5">Position</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map(pos => (
+                    <button
+                      key={pos}
+                      onClick={() => set('insetPosition', pos)}
+                      className={`py-1.5 text-[10px] font-semibold rounded-lg border transition-colors capitalize ${
+                        (overrides.insetPosition ?? 'top-right') === pos
+                          ? 'bg-[#2563eb] text-white border-[#2563eb]'
+                          : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pos.replace('-', ' ')}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="pt-2 border-t border-slate-100 space-y-3">
         <p className="text-xs font-semibold text-slate-600">Figure size</p>

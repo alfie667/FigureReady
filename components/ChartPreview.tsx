@@ -1178,6 +1178,61 @@ export default function ChartPreview({
               {renderChart() as React.ReactElement}
             </ResponsiveContainer>
 
+            {/* Inset figure */}
+            {styleOverrides.insetEnabled && styleOverrides.insetYCol && data.length > 0 && (() => {
+              const insetYCol = styleOverrides.insetYCol!
+              const pos = styleOverrides.insetPosition ?? 'top-right'
+              const posMap: Record<string, React.CSSProperties> = {
+                'top-left':     { top: '8%',   left: 96  },
+                'top-right':    { top: '8%',   right: 36 },
+                'bottom-left':  { bottom: '18%', left: 96  },
+                'bottom-right': { bottom: '18%', right: 36 },
+              }
+              return (
+                <div
+                  style={{
+                    position: 'absolute',
+                    width: '28%',
+                    height: '30%',
+                    background: '#ffffff',
+                    border: `1.5px solid ${axisColor}`,
+                    boxSizing: 'border-box',
+                    pointerEvents: 'none',
+                    ...posMap[pos],
+                  }}
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data} margin={{ top: 4, right: 8, bottom: 4, left: 4 }}>
+                      <XAxis
+                        dataKey={xCol}
+                        tick={{ fontSize: 7, fill: axisColor, fontFamily }}
+                        axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                        tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                        height={14}
+                        interval="preserveStartEnd"
+                        tickCount={4}
+                      />
+                      <YAxis
+                        tick={{ fontSize: 7, fill: axisColor, fontFamily }}
+                        axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                        tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                        width={28}
+                        tickCount={4}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey={insetYCol}
+                        stroke={s.colors[0]}
+                        strokeWidth={1.2}
+                        dot={false}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )
+            })()}
+
             {/* Draggable legend overlay */}
             {legendEnabled && (
               <DraggableLegend

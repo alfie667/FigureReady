@@ -41,6 +41,9 @@ export interface StyleOverrides {
   yScale?: 'linear' | 'log' | 'ln'
   yAxisAssignment?: Record<string, 'left' | 'right'>
   y2AxisLabel?: string
+  insetEnabled?: boolean
+  insetYCol?: string
+  insetPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 }
 
 export const fontOptions: { value: string; label: string }[] = [
