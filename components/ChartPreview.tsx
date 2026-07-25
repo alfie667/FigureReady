@@ -1430,6 +1430,18 @@ export default function ChartPreview({
                     >
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data} margin={{ top: 4, right: 6, bottom: 14, left: 28 }}>
+                          {(styleOverrides.insetShowFrame ?? false) && (
+                            <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
+                              if (!offset) return null
+                              const { top, left, width, height } = offset
+                              return (
+                                <g>
+                                  <line x1={left} y1={top} x2={left + width} y2={top} stroke={axisColor} strokeWidth={0.8} />
+                                  <line x1={left + width} y1={top} x2={left + width} y2={top + height} stroke={axisColor} strokeWidth={0.8} />
+                                </g>
+                              )
+                            }} />
+                          )}
                           <XAxis dataKey={xCol} type="number"
                             domain={[xTicks[0], xTicks[xTicks.length - 1]]}
                             ticks={xTicks} allowDataOverflow

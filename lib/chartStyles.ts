@@ -58,6 +58,7 @@ export interface StyleOverrides {
   insetHeight?: number
   insetTickFontSize?: number
   insetShowZoomRect?: boolean
+  insetShowFrame?: boolean
 }
 
 export const fontOptions: { value: string; label: string }[] = [

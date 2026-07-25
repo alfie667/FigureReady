@@ -244,6 +244,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
               </div>
             </div>
 
+            <ToggleSwitch label="Box frame" checked={overrides.insetShowFrame ?? false} onChange={v => set('insetShowFrame', v)} />
             <ToggleSwitch label="Show zoom rectangle" checked={overrides.insetShowZoomRect ?? false} onChange={v => set('insetShowZoomRect', v)} />
 
             <div className="flex items-center justify-between">
