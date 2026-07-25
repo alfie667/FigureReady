@@ -1,6 +1,6 @@
 const LOGO_STYLE = {
   fontFamily: "var(--font-plus-jakarta), Inter, sans-serif",
-  fontWeight: 600,
+  fontWeight: 800,
   color: '#1a2f5e',
   letterSpacing: '0.5px',
 } as const
