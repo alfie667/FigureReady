@@ -1,119 +1,125 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import { gtagEvent } from '@/lib/ga'
 
-// ── Chart math (computed once at module level) ───────────────────────────────
+// ── Chart geometry ───────────────────────────────────────────────────────────
 
 const W = 520, H = 340
-const PAD = { top: 20, right: 24, bottom: 56, left: 66 }
-const PW = W - PAD.left - PAD.right   // 430
-const PH = H - PAD.top - PAD.bottom   // 264
+const PAD = { top: 24, right: 30, bottom: 64, left: 70 }
+const PW = W - PAD.left - PAD.right   // 420
+const PH = H - PAD.top - PAD.bottom   // 252
+const Y_MAX = 10
+const Y_MAJOR = [0, 2, 4, 6, 8, 10]
 
-const X_LOG_MIN = Math.log10(0.07)
-const X_LOG_MAX = Math.log10(130)
-
-function toX(x: number) {
-  return PAD.left + (Math.log10(x) - X_LOG_MIN) / (X_LOG_MAX - X_LOG_MIN) * PW
-}
 function toY(y: number) {
-  return PAD.top + PH * (1 - y)
+  return PAD.top + PH * (1 - y / Y_MAX)
 }
-function hill(x: number) { return x / (3 + x) }
 
-const CURVE_PATH = Array.from({ length: 80 }, (_, i) => {
-  const logX = X_LOG_MIN + (X_LOG_MAX - X_LOG_MIN) * i / 79
-  const x = Math.pow(10, logX)
-  return `${i === 0 ? 'M' : 'L'}${toX(x).toFixed(1)},${toY(hill(x)).toFixed(1)}`
-}).join(' ')
-
-const DATA = [
-  { x: 0.1, y: 0.02 }, { x: 0.3, y: 0.07 }, { x: 1, y: 0.19 },
-  { x: 3, y: 0.50 }, { x: 10, y: 0.82 }, { x: 30, y: 0.94 }, { x: 100, y: 0.99 },
+const BAR_DATA = [
+  { label: 'HeLa',   mean: 4.2, sd: 0.38, color: '#3b82f6' },
+  { label: 'MCF-7',  mean: 6.8, sd: 0.55, color: '#ef4444' },
+  { label: 'HEK293', mean: 2.9, sd: 0.28, color: '#10b981' },
+  { label: 'A549',   mean: 8.5, sd: 0.62, color: '#f59e0b' },
+  { label: 'PC-3',   mean: 5.1, sd: 0.44, color: '#8b5cf6' },
 ]
 
-const X_MAJOR = [0.1, 1, 10, 100]
-const X_MINOR = [-1, 0, 1, 2].flatMap(d =>
-  [2, 3, 4, 5, 6, 7, 8, 9].map(m => m * Math.pow(10, d))
-).filter(v => v > 0.07 && v < 130 && !X_MAJOR.includes(v))
+const GROUP_W = PW / BAR_DATA.length  // 84
+const BAR_W = 50
 
-const Y_MAJOR = [0, 0.25, 0.50, 0.75, 1.00]
-
-// ── Publication-quality SVG chart ────────────────────────────────────────────
+// ── Publication-quality bar chart ────────────────────────────────────────────
 
 function PublicationChart({ animate }: { animate: boolean }) {
-  const cy = PAD.top + PH / 2
+  const baseY = PAD.top + PH
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', fontFamily: 'Arial, Helvetica, sans-serif' }}>
 
-      {/* Smooth sigmoid curve — draws itself via strokeDashoffset animation */}
-      <path
-        d={CURVE_PATH}
-        fill="none"
-        stroke="#111111"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        pathLength={1}
-        strokeDasharray={1}
-        strokeDashoffset={animate ? 0 : 1}
-        style={{ transition: animate ? 'stroke-dashoffset 1.2s ease-out' : 'none' }}
-      />
-
-      {/* Data points — open circles, fade in after curve */}
-      {DATA.map((d, i) => (
-        <circle
-          key={i}
-          cx={toX(d.x)} cy={toY(d.y)} r={4.5}
-          fill="white" stroke="#e02020" strokeWidth={2}
-          style={{
-            opacity: animate ? 1 : 0,
-            transition: animate ? `opacity 0.2s ease ${0.85 + i * 0.07}s` : 'none',
-          }}
+      {/* Horizontal grid lines */}
+      {Y_MAJOR.filter(y => y > 0).map(y => (
+        <line key={y}
+          x1={PAD.left} y1={toY(y)}
+          x2={PAD.left + PW} y2={toY(y)}
+          stroke="#e5e7eb" strokeWidth={1} strokeDasharray="3,3"
         />
       ))}
 
-      {/* L-shaped axes */}
-      <line x1={PAD.left} y1={PAD.top + PH} x2={PAD.left + PW} y2={PAD.top + PH} stroke="#111" strokeWidth={1.5} />
-      <line x1={PAD.left} y1={PAD.top}       x2={PAD.left}      y2={PAD.top + PH} stroke="#111" strokeWidth={1.5} />
+      {/* Bars + error bars */}
+      {BAR_DATA.map((d, i) => {
+        const cx = PAD.left + (i + 0.5) * GROUP_W
+        const barH = PH * d.mean / Y_MAX
+        const delay = i * 0.09
 
-      {/* X major ticks + labels */}
-      {X_MAJOR.map(x => (
-        <g key={x}>
-          <line x1={toX(x)} y1={PAD.top + PH} x2={toX(x)} y2={PAD.top + PH + 6} stroke="#111" strokeWidth={1.3} />
-          <text x={toX(x)} y={PAD.top + PH + 17} textAnchor="middle" fontSize={9} fill="#444">{x}</text>
-        </g>
-      ))}
+        return (
+          <g key={i}>
+            {/* Bar — grows from bottom */}
+            <rect
+              x={cx - BAR_W / 2}
+              y={baseY - barH}
+              width={BAR_W}
+              height={barH}
+              fill={d.color}
+              rx={4}
+              style={{
+                transformOrigin: `${cx}px ${baseY}px`,
+                transform: animate ? 'scaleY(1)' : 'scaleY(0)',
+                transition: animate
+                  ? `transform 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) ${delay}s`
+                  : 'none',
+              }}
+            />
 
-      {/* X minor ticks (log scale) */}
-      {X_MINOR.map((x, i) => (
-        <line key={i}
-          x1={toX(x)} y1={PAD.top + PH}
-          x2={toX(x)} y2={PAD.top + PH + 3}
-          stroke="#666" strokeWidth={0.8}
-        />
-      ))}
+            {/* Error bar — fades in after bar */}
+            <g style={{
+              opacity: animate ? 1 : 0,
+              transition: animate ? `opacity 0.25s ease ${0.55 + delay}s` : 'none',
+            }}>
+              <line
+                x1={cx} y1={toY(d.mean + d.sd)}
+                x2={cx} y2={toY(d.mean - d.sd)}
+                stroke="#1a1a1a" strokeWidth={1.8}
+              />
+              <line x1={cx - 6} y1={toY(d.mean + d.sd)} x2={cx + 6} y2={toY(d.mean + d.sd)}
+                stroke="#1a1a1a" strokeWidth={1.8} />
+              <line x1={cx - 6} y1={toY(d.mean - d.sd)} x2={cx + 6} y2={toY(d.mean - d.sd)}
+                stroke="#1a1a1a" strokeWidth={1.8} />
+            </g>
+          </g>
+        )
+      })}
 
-      {/* Y major ticks + labels */}
+      {/* Axes */}
+      <line x1={PAD.left} y1={baseY} x2={PAD.left + PW} y2={baseY} stroke="#111" strokeWidth={1.5} />
+      <line x1={PAD.left} y1={PAD.top} x2={PAD.left} y2={baseY} stroke="#111" strokeWidth={1.5} />
+
+      {/* X labels */}
+      {BAR_DATA.map((d, i) => {
+        const cx = PAD.left + (i + 0.5) * GROUP_W
+        return (
+          <text key={i} x={cx} y={baseY + 16} textAnchor="middle" fontSize={9.5} fill="#333" fontWeight="600">
+            {d.label}
+          </text>
+        )
+      })}
+
+      {/* Y ticks + labels */}
       {Y_MAJOR.map(y => (
         <g key={y}>
-          <line x1={PAD.left - 6} y1={toY(y)} x2={PAD.left} y2={toY(y)} stroke="#111" strokeWidth={1.3} />
-          <text x={PAD.left - 10} y={toY(y) + 3.5} textAnchor="end" fontSize={9} fill="#444">
-            {y.toFixed(2)}
-          </text>
+          <line x1={PAD.left - 5} y1={toY(y)} x2={PAD.left} y2={toY(y)} stroke="#111" strokeWidth={1.3} />
+          <text x={PAD.left - 9} y={toY(y) + 3.5} textAnchor="end" fontSize={9} fill="#444">{y}</text>
         </g>
       ))}
 
-      {/* Axis labels — italic, like Nature/ACS */}
-      <text x={PAD.left + PW / 2} y={H - 4} textAnchor="middle" fontSize={11} fill="#333" fontStyle="normal">
-        Concentration (µM)
+      {/* Axis labels */}
+      <text x={PAD.left + PW / 2} y={H - 6} textAnchor="middle" fontSize={11} fill="#333">
+        Cell Line
       </text>
       <text
-        x={13} y={cy}
-        textAnchor="middle" fontSize={11} fill="#333" fontStyle="normal"
-        transform={`rotate(-90, 13, ${cy})`}
+        x={13} y={PAD.top + PH / 2}
+        textAnchor="middle" fontSize={11} fill="#333"
+        transform={`rotate(-90, 13, ${PAD.top + PH / 2})`}
       >
-        Absorbance (AU)
+        mRNA Expression (AU)
       </text>
     </svg>
   )
@@ -122,8 +128,11 @@ function PublicationChart({ animate }: { animate: boolean }) {
 // ── Demo component ───────────────────────────────────────────────────────────
 
 const TABLE_DATA = [
-  { x: 0.1, y: '0.02' }, { x: 0.3, y: '0.07' }, { x: 1, y: '0.19' },
-  { x: 3, y: '0.50' }, { x: 10, y: '0.82' }, { x: 30, y: '0.94' }, { x: 100, y: '0.99' },
+  { sample: 'HeLa',   value: '4.2 ± 0.4' },
+  { sample: 'MCF-7',  value: '6.8 ± 0.6' },
+  { sample: 'HEK293', value: '2.9 ± 0.3' },
+  { sample: 'A549',   value: '8.5 ± 0.6' },
+  { sample: 'PC-3',   value: '5.1 ± 0.4' },
 ]
 
 type Phase = 'table' | 'loading' | 'chart'
@@ -173,17 +182,17 @@ export default function InteractiveDemo() {
                 <svg className="w-3.5 h-3.5 text-white shrink-0" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zm-1 1.5L18.5 9H13zM8.5 17l2-3-2-3h1.6l1.2 2 1.2-2H14l-2 3 2 3h-1.6l-1.2-2-1.2 2z" />
                 </svg>
-                <span className="text-white text-xs font-semibold">experiment.xlsx</span>
+                <span className="text-white text-xs font-semibold">expression_data.xlsx</span>
               </div>
               <table className="w-full text-xs">
                 <thead>
                   <tr>
                     <th className="px-4 py-2 text-left bg-[#dbeafe] border-r border-slate-200 border-b border-slate-200">
-                      <span className="text-[#2563eb] font-bold">Conc. (µM)</span>
+                      <span className="text-[#2563eb] font-bold">Cell Line</span>
                       <span className="ml-2 text-[9px] bg-[#2563eb] text-white px-1.5 py-0.5 rounded-full font-bold">X</span>
                     </th>
                     <th className="px-4 py-2 text-right bg-emerald-50 border-b border-slate-200">
-                      <span className="text-emerald-700 font-bold">Absorbance</span>
+                      <span className="text-emerald-700 font-bold">Expression</span>
                       <span className="ml-2 text-[9px] bg-emerald-600 text-white px-1.5 py-0.5 rounded-full font-bold">Y</span>
                     </th>
                   </tr>
@@ -191,8 +200,8 @@ export default function InteractiveDemo() {
                 <tbody>
                   {TABLE_DATA.map((row, i) => (
                     <tr key={i} className="border-t border-slate-100">
-                      <td className="px-4 py-1.5 text-slate-500 border-r border-slate-100 bg-[#dbeafe]/20">{row.x}</td>
-                      <td className="px-4 py-1.5 text-right font-mono text-slate-700 bg-emerald-50/20">{row.y}</td>
+                      <td className="px-4 py-1.5 text-slate-600 border-r border-slate-100 bg-[#dbeafe]/20 font-semibold">{row.sample}</td>
+                      <td className="px-4 py-1.5 text-right font-mono text-slate-700 bg-emerald-50/20">{row.value}</td>
                     </tr>
                   ))}
                 </tbody>
