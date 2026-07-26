@@ -1323,6 +1323,9 @@ export default function ChartPreview({
               const xTicks = rawXTicks.length >= 2 ? rawXTicks : [iXMin, iXMax]
               const yTicks = rawYTicks.length >= 2 ? rawYTicks : [iYMin, iYMax]
 
+              const yAxisW = Math.max(18, Math.ceil(iTickSz * 3.2))
+              const chartMargin = { top: 4, right: 6, bottom: 14, left: yAxisW + 2 }
+
               const HS: React.CSSProperties = {
                 position: 'absolute', width: 8, height: 8,
                 background: 'white', border: '1.5px solid #3b82f6',
@@ -1385,7 +1388,7 @@ export default function ChartPreview({
                       }}
                     >
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={{ top: 4, right: 6, bottom: 14, left: 28 }}>
+                        <LineChart data={data} margin={chartMargin}>
                           {(styleOverrides.insetShowFrame ?? false) && (
                             <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
                               if (!offset) return null
@@ -1400,7 +1403,7 @@ export default function ChartPreview({
                           )}
                           <XAxis dataKey={xCol} type="number"
                             domain={[xTicks[0], xTicks[xTicks.length - 1]]}
-                            ticks={xTicks} allowDataOverflow
+                            ticks={xTicks} allowDataOverflow minTickGap={0}
                             tickFormatter={fmtInsetTick}
                             tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
                             axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
@@ -1409,12 +1412,12 @@ export default function ChartPreview({
                           />
                           <YAxis
                             domain={[yTicks[0], yTicks[yTicks.length - 1]]}
-                            ticks={yTicks} allowDataOverflow
+                            ticks={yTicks} allowDataOverflow minTickGap={0}
                             tickFormatter={fmtInsetTick}
                             tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
                             axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
                             tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                            width={26}
+                            width={yAxisW}
                           />
                           {yCols.map((col, i) => (
                             <Line key={col} type="monotone" dataKey={col}
