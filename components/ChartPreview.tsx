@@ -1324,7 +1324,7 @@ export default function ChartPreview({
               const yTicks = rawYTicks.length >= 2 ? rawYTicks : [iYMin, iYMax]
 
               const yAxisW = Math.max(18, Math.ceil(iTickSz * 3.2))
-              const chartMargin = { top: 4, right: 6, bottom: 14, left: yAxisW + 2 }
+              const chartMargin = { top: 4, right: 6, bottom: 14, left: 2 }
 
               const HS: React.CSSProperties = {
                 position: 'absolute', width: 8, height: 8,
