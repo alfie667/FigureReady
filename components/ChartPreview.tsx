@@ -1388,7 +1388,7 @@ export default function ChartPreview({
                       }}
                     >
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data} margin={chartMargin}>
+                        <LineChart key={`inset-${iTickSz}-${yAxisW}`} data={data} margin={chartMargin}>
                           {(styleOverrides.insetShowFrame ?? false) && (
                             <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
                               if (!offset) return null
