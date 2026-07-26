@@ -60,12 +60,42 @@ function AvatarRow({ centered = false }: { centered?: boolean }) {
 // ── Page data ────────────────────────────────────────────────────────────────
 
 const features = [
-  { label: 'Your .xlsx as-is',               desc: 'No conversion, no export. Drop your file exactly as it is — columns detected in seconds.' },
-  { label: 'Compare samples on one chart',   desc: 'Multiple series, dual Y axes, one figure. No copy-pasting between worksheets.' },
-  { label: '±SD and ±SEM in one click',      desc: 'Select your error column — bars appear instantly, formatted to journal standards.' },
-  { label: 'Dose-response curves done right', desc: 'One click to log scale. Your sigmoid looks exactly like it should in a Nature paper.' },
-  { label: 'Nature, ACS, Cell presets',      desc: 'Pick a journal style or tweak font, line weight and colors — all visual, zero Illustrator.' },
-  { label: 'Ready for submission',           desc: '300 DPI PNG for upload portals. Editable SVG when reviewers ask for changes.' },
+  {
+    color: '#2563eb', bg: '#dbeafe',
+    icon: (<><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5"/><line x1="3" y1="9" x2="21" y2="9" strokeWidth="1.5"/><line x1="3" y1="15" x2="21" y2="15" strokeWidth="1.5"/><line x1="9" y1="3" x2="9" y2="21" strokeWidth="1.5"/></>),
+    label: 'Your .xlsx as-is',
+    desc: 'No conversion, no export. Drop your file exactly as it is — columns detected in seconds.',
+  },
+  {
+    color: '#ea580c', bg: '#ffedd5',
+    icon: (<><polyline points="3 17 7 12 11 14 16 8 21 10" strokeWidth="1.5"/><polyline points="3 19 7 15 11 17 16 12 21 14" strokeWidth="1.5"/></>),
+    label: 'Compare samples on one chart',
+    desc: 'Multiple series, dual Y axes, one figure. No copy-pasting between worksheets.',
+  },
+  {
+    color: '#059669', bg: '#d1fae5',
+    icon: (<><line x1="18" y1="20" x2="18" y2="10" strokeWidth="1.5"/><line x1="12" y1="20" x2="12" y2="4" strokeWidth="1.5"/><line x1="6" y1="20" x2="6" y2="14" strokeWidth="1.5"/><line x1="15" y1="10" x2="21" y2="10" strokeWidth="1.5"/><line x1="9" y1="4" x2="15" y2="4" strokeWidth="1.5"/><line x1="3" y1="14" x2="9" y2="14" strokeWidth="1.5"/><line x1="3" y1="20" x2="21" y2="20" strokeWidth="1.5"/></>),
+    label: '±SD and ±SEM in one click',
+    desc: 'Select your error column — bars appear instantly, formatted to journal standards.',
+  },
+  {
+    color: '#7c3aed', bg: '#ede9fe',
+    icon: (<path d="M3 18 C5 18 6 16 8 13 C10 10 11 9 12 9 C13 9 14 8 16 6 C18 4 19 4 21 4" strokeWidth="1.5" fill="none"/>),
+    label: 'Dose-response curves done right',
+    desc: 'One click to log scale. Your sigmoid looks exactly like it should in a Nature paper.',
+  },
+  {
+    color: '#db2777', bg: '#fce7f3',
+    icon: (<><circle cx="12" cy="12" r="9" strokeWidth="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/><path d="M9 13 Q12 16 15 13" strokeWidth="1.5" fill="none"/></>),
+    label: 'Nature, ACS, Cell presets',
+    desc: 'Pick a journal style or tweak font, line weight and colors — all visual, zero Illustrator.',
+  },
+  {
+    color: '#0891b2', bg: '#cffafe',
+    icon: (<><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeWidth="1.5"/><polyline points="7 10 12 15 17 10" strokeWidth="1.5"/><line x1="12" y1="15" x2="12" y2="3" strokeWidth="1.5"/></>),
+    label: 'Ready for submission',
+    desc: '300 DPI PNG for upload portals. Editable SVG when reviewers ask for changes.',
+  },
 ]
 const steps = [
   { n: '1', title: 'Upload your Excel file',  desc: 'Drag and drop a .xlsx file. Columns detected automatically.', accent: '#2563eb' },
@@ -205,22 +235,24 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ─────────────────────────────────────────────────────── */}
-      <section id="features" className="py-28 bg-white">
+      <section id="features" className="py-28 bg-slate-50">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-20">
+          <div className="text-center mb-16">
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#2563eb' }}>Features</p>
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
               Stop losing hours on figure formatting.<br className="hidden sm:block" /> Start publishing faster.
             </h2>
           </div>
-          <div className="grid sm:grid-cols-2 gap-x-20 gap-y-12">
-            {features.map((f, i) => (
-              <div key={f.label} className="border-t border-slate-200 pt-8">
-                <p className="text-xs font-bold tracking-widest mb-4" style={{ color: '#2563eb' }}>
-                  {String(i + 1).padStart(2, '0')}
-                </p>
-                <h3 className="font-bold text-slate-900 mb-3 leading-snug" style={{ fontSize: 21 }}>{f.label}</h3>
-                <p className="text-slate-500 leading-relaxed" style={{ fontSize: 15.5 }}>{f.desc}</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {features.map(f => (
+              <div key={f.label} className="bg-white rounded-2xl p-7 border border-slate-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: f.bg }}>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={f.color} strokeLinecap="round" strokeLinejoin="round">
+                    {f.icon}
+                  </svg>
+                </div>
+                <h3 className="font-bold text-slate-900 mb-2 leading-snug" style={{ fontSize: 19 }}>{f.label}</h3>
+                <p className="text-slate-500 leading-relaxed" style={{ fontSize: 15 }}>{f.desc}</p>
               </div>
             ))}
           </div>
