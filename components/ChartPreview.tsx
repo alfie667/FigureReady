@@ -1317,11 +1317,18 @@ export default function ChartPreview({
               const insetL  = styleOverrides.insetLeft   ?? figW * 0.55
               const insetT  = styleOverrides.insetTop    ?? 32
 
-              // Nice round ticks for the zoomed domain
+              // Nice round ticks — subsampled to fit available space
               const rawXTicks = getNiceTicks(iXMin, iXMax)
               const rawYTicks = getNiceTicks(iYMin, iYMax)
-              const xTicks = rawXTicks.length >= 2 ? rawXTicks : [iXMin, iXMax]
-              const yTicks = rawYTicks.length >= 2 ? rawYTicks : [iYMin, iYMax]
+              const subsample = (tks: number[], maxCount: number) => {
+                if (tks.length <= maxCount) return tks
+                const step = Math.ceil(tks.length / maxCount)
+                return tks.filter((_, i) => i % step === 0 || i === tks.length - 1)
+              }
+              const maxXTicks = Math.max(2, Math.floor(rW / (iTickSz * 4)))
+              const maxYTicks = Math.max(2, Math.floor(rH / (iTickSz * 2.2)))
+              const xTicks = subsample(rawXTicks.length >= 2 ? rawXTicks : [iXMin, iXMax], maxXTicks)
+              const yTicks = subsample(rawYTicks.length >= 2 ? rawYTicks : [iYMin, iYMax], maxYTicks)
 
               const yAxisW = Math.max(18, Math.ceil(iTickSz * 3.2))
               const chartMargin = { top: 4, right: 6, bottom: 14, left: 2 }
