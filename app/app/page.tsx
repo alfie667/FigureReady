@@ -23,6 +23,14 @@ import type { MarkerShape } from '@/lib/markerShapes'
 import { trackUpload, trackChartCreated } from '@/lib/analytics'
 import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
 import { parseExcelFile } from '@/lib/parseExcel'
+import { LineThicknessPicker, ToggleSwitch, type NumericPreset } from '@/components/StyleControls'
+
+const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
+const insetLinePresets: NumericPreset[] = [
+  { label: 'Thin', value: 0.8 },
+  { label: 'Med', value: 1.5 },
+  { label: 'Thick', value: 2.5 },
+]
 
 export default function AppPage() {
   const [columns, setColumns] = useState<string[]>([])
@@ -492,47 +500,91 @@ export default function AppPage() {
             </Panel>
           )}
 
-          {ready && !isMultiPanel && (
+          {ready && !isMultiPanel && typeof data[0]?.[xCol] === 'number' && (
             <Panel
-              id="figure-options"
-              title="Figure options"
+              id="inset-options"
+              title="Add inset"
               defaultOpen={true}
               icon={
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
               }
             >
-              {/* Inset figure */}
-              {typeof data[0]?.[xCol] === 'number' && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-slate-600">Inset figure</p>
-                  <button
-                    onClick={() => setDrawInsetMode(v => !v)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
-                      drawInsetMode
-                        ? 'bg-[#2563eb] text-white border-[#2563eb]'
-                        : styleOverrides.insetDefined
-                          ? 'bg-blue-50 text-[#2563eb] border-blue-200'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                    {drawInsetMode
-                      ? 'Click & drag on chart…'
-                      : styleOverrides.insetDefined
-                        ? 'Redefine inset zone'
-                        : 'Add inset figure'}
-                  </button>
-                  {styleOverrides.insetDefined && (
-                    <p className="text-[10px] text-slate-400 italic text-center">Press Del to remove</p>
-                  )}
-                </div>
-              )}
+              {/* Draw button */}
+              <button
+                onClick={() => setDrawInsetMode(v => !v)}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
+                  drawInsetMode
+                    ? 'bg-[#2563eb] text-white border-[#2563eb]'
+                    : styleOverrides.insetDefined
+                      ? 'bg-blue-50 text-[#2563eb] border-blue-200'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
+              </button>
+
+              {/* Settings — only when inset is defined */}
+              {styleOverrides.insetDefined && (() => {
+                const so = styleOverrides
+                const upd = (patch: Partial<StyleOverrides>) => setStyleOverrides(prev => ({ ...prev, ...patch }))
+                const axisColor = so.axisColor ?? chartStyles[styleName].axisColor
+                return (
+                  <div className="pt-3 border-t border-slate-100 space-y-3">
+                    {/* Size + Tick font */}
+                    <div className="grid grid-cols-2 gap-x-3">
+                      <div>
+                        <p className="text-[10px] text-slate-400 mb-1">Size</p>
+                        <div className="flex items-center gap-1">
+                          <input type="number" min={10} max={80} value={so.insetSizePct ?? 35}
+                            onChange={e => { const v = Number(e.target.value); if (v >= 10 && v <= 80) upd({ insetSizePct: v }) }}
+                            className={inputCls} />
+                          <span className="text-[10px] text-slate-400 shrink-0">%</span>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400 mb-1">Tick font</p>
+                        <div className="flex items-center gap-1">
+                          <input type="number" min={5} max={14} value={so.insetTickFontSize ?? 7}
+                            onChange={e => { const v = Number(e.target.value); if (v >= 5 && v <= 14) upd({ insetTickFontSize: v }) }}
+                            className={inputCls} />
+                          <span className="text-[10px] text-slate-400 shrink-0">pt</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <LineThicknessPicker label="Line width" value={so.insetLineWidth ?? 1.2} presets={insetLinePresets} onChange={v => upd({ insetLineWidth: v })} />
+
+                    <div className="flex gap-4">
+                      <ToggleSwitch label="Box frame" checked={so.insetShowFrame ?? false} onChange={v => upd({ insetShowFrame: v })} />
+                      <ToggleSwitch label="Zoom rect" checked={so.insetShowZoomRect ?? false} onChange={v => upd({ insetShowZoomRect: v })} />
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ToggleSwitch label="Border" checked={so.insetBorder ?? false} onChange={v => upd({ insetBorder: v })} />
+                      {(so.insetBorder ?? false) && (
+                        <>
+                          <input type="color" value={so.insetBorderColor ?? axisColor}
+                            onChange={e => upd({ insetBorderColor: e.target.value })}
+                            className="w-6 h-5 rounded cursor-pointer border border-slate-200 ml-1" />
+                          <input type="number" min={0.5} max={4} step={0.5} value={so.insetBorderWidth ?? 1.5}
+                            onChange={e => upd({ insetBorderWidth: Number(e.target.value) })}
+                            className={`${inputCls} w-14`} />
+                          <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                        </>
+                      )}
+                    </div>
+
+                    <p className="text-[10px] text-slate-400 italic">Press Del to remove</p>
+                  </div>
+                )
+              })()}
             </Panel>
           )}
 

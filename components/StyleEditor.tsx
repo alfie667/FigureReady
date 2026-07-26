@@ -206,62 +206,6 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
         </div>
       </div>
 
-      {overrides.insetDefined && (
-        <div className="pt-2 border-t border-slate-100 space-y-3">
-          <p className="text-xs font-semibold text-slate-600">Inset settings</p>
-
-          {/* Size + Tick font — 2 columns */}
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-            <div>
-              <p className="text-[10px] text-slate-400 mb-1">Size</p>
-              <div className="flex items-center gap-1">
-                <input type="number" min={10} max={80}
-                  value={overrides.insetSizePct ?? 35}
-                  onChange={e => { const v = Number(e.target.value); if (v >= 10 && v <= 80) set('insetSizePct', v) }}
-                  className={inputCls} />
-                <span className="text-[10px] text-slate-400 shrink-0">%</span>
-              </div>
-            </div>
-            <div>
-              <p className="text-[10px] text-slate-400 mb-1">Tick font</p>
-              <div className="flex items-center gap-1">
-                <input type="number" min={5} max={14}
-                  value={overrides.insetTickFontSize ?? 7}
-                  onChange={e => { const v = Number(e.target.value); if (v >= 5 && v <= 14) set('insetTickFontSize', v) }}
-                  className={inputCls} />
-                <span className="text-[10px] text-slate-400 shrink-0">pt</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Line width presets */}
-          <LineThicknessPicker label="Line width" value={overrides.insetLineWidth ?? 1.2} presets={axisWidthPresets} onChange={v => set('insetLineWidth', v)} />
-
-          {/* Toggles side by side */}
-          <div className="flex gap-4">
-            <ToggleSwitch label="Box frame" checked={overrides.insetShowFrame ?? false} onChange={v => set('insetShowFrame', v)} />
-            <ToggleSwitch label="Zoom rect" checked={overrides.insetShowZoomRect ?? false} onChange={v => set('insetShowZoomRect', v)} />
-          </div>
-
-          {/* Border */}
-          <div className="flex items-center gap-2">
-            <ToggleSwitch label="Border" checked={overrides.insetBorder ?? false} onChange={v => set('insetBorder', v)} />
-            {(overrides.insetBorder ?? false) && (
-              <>
-                <input type="color" value={overrides.insetBorderColor ?? axisColor}
-                  onChange={e => set('insetBorderColor', e.target.value)}
-                  className="w-6 h-5 rounded cursor-pointer border border-slate-200 ml-1" title="Color" />
-                <input type="number" min={0.5} max={4} step={0.5}
-                  value={overrides.insetBorderWidth ?? 1.5}
-                  onChange={e => set('insetBorderWidth', Number(e.target.value))}
-                  className={`${inputCls} w-14`} />
-                <span className="text-[10px] text-slate-400 shrink-0">px</span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
       <details className="pt-2 border-t border-slate-100 group">
         <summary className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 cursor-pointer list-none select-none [&::-webkit-details-marker]:hidden">
           Advanced options

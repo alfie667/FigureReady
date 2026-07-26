@@ -1353,42 +1353,6 @@ export default function ChartPreview({
 
               return (
                 <>
-                  {/* Floating toolbar — appears above inset when selected */}
-                  {insetSelected && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        left: insetL,
-                        top: Math.max(4, insetT - 50),
-                        zIndex: 25,
-                        background: 'white',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: 8,
-                        padding: '5px 10px',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        userSelect: 'none', whiteSpace: 'nowrap',
-                      }}
-                      onPointerDown={e => e.stopPropagation()}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#64748b' }}>
-                        Tick
-                        <input type="range" min={5} max={12} value={iTickSz}
-                          onChange={e => onStyleChange?.({ insetTickFontSize: Number(e.target.value) })}
-                          style={{ width: 52, accentColor: '#2563eb' }} />
-                        <span style={{ fontSize: 9, color: '#94a3b8', minWidth: 20 }}>{iTickSz}pt</span>
-                      </label>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#64748b' }}>
-                        Lines
-                        <input type="range" min={5} max={30} step={5} value={Math.round(iLineW * 10)}
-                          onChange={e => onStyleChange?.({ insetLineWidth: Number(e.target.value) / 10 })}
-                          style={{ width: 48, accentColor: '#2563eb' }} />
-                        <span style={{ fontSize: 9, color: '#94a3b8', minWidth: 20 }}>{iLineW}px</span>
-                      </label>
-                    </div>
-                  )}
-
                   {/* Inset wrapper — overflow visible so handles extend outside bounds */}
                   <div
                     style={{ position: 'absolute', left: insetL, top: insetT, width: rW, height: rH, zIndex: 20 }}
