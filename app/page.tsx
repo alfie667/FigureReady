@@ -62,37 +62,83 @@ function AvatarRow({ centered = false }: { centered?: boolean }) {
 const features = [
   {
     color: '#2563eb', bg: '#dbeafe',
-    icon: (<><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth="1.5"/><line x1="3" y1="9" x2="21" y2="9" strokeWidth="1.5"/><line x1="3" y1="15" x2="21" y2="15" strokeWidth="1.5"/><line x1="9" y1="3" x2="9" y2="21" strokeWidth="1.5"/></>),
+    icon: (
+      <>
+        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" strokeWidth="1.5"/>
+        <polyline points="14 2 14 8 20 8" strokeWidth="1.5"/>
+        <line x1="8" y1="13" x2="16" y2="13" strokeWidth="1.5"/>
+        <line x1="8" y1="17" x2="16" y2="17" strokeWidth="1.5"/>
+      </>
+    ),
     label: 'Your .xlsx as-is',
     desc: 'No conversion, no export. Drop your file exactly as it is — columns detected in seconds.',
   },
   {
     color: '#ea580c', bg: '#ffedd5',
-    icon: (<><polyline points="3 17 7 12 11 14 16 8 21 10" strokeWidth="1.5"/><polyline points="3 19 7 15 11 17 16 12 21 14" strokeWidth="1.5"/></>),
+    icon: (
+      <>
+        <polyline points="3 18 8 12 13 15 18 7 22 10" strokeWidth="1.5"/>
+        <polyline points="3 21 8 17 13 19 18 14 22 17" strokeWidth="1.5"/>
+      </>
+    ),
     label: 'Compare samples on one chart',
     desc: 'Multiple series, dual Y axes, one figure. No copy-pasting between worksheets.',
   },
   {
     color: '#059669', bg: '#d1fae5',
-    icon: (<><line x1="18" y1="20" x2="18" y2="10" strokeWidth="1.5"/><line x1="12" y1="20" x2="12" y2="4" strokeWidth="1.5"/><line x1="6" y1="20" x2="6" y2="14" strokeWidth="1.5"/><line x1="15" y1="10" x2="21" y2="10" strokeWidth="1.5"/><line x1="9" y1="4" x2="15" y2="4" strokeWidth="1.5"/><line x1="3" y1="14" x2="9" y2="14" strokeWidth="1.5"/><line x1="3" y1="20" x2="21" y2="20" strokeWidth="1.5"/></>),
+    icon: (
+      <>
+        <line x1="18" y1="20" x2="18" y2="8"  strokeWidth="1.5"/>
+        <line x1="12" y1="20" x2="12" y2="3"  strokeWidth="1.5"/>
+        <line x1="6"  y1="20" x2="6"  y2="13" strokeWidth="1.5"/>
+        <line x1="3"  y1="20" x2="21" y2="20" strokeWidth="1.5"/>
+        <line x1="15" y1="8"  x2="21" y2="8"  strokeWidth="1.5"/>
+        <line x1="9"  y1="3"  x2="15" y2="3"  strokeWidth="1.5"/>
+        <line x1="3"  y1="13" x2="9"  y2="13" strokeWidth="1.5"/>
+      </>
+    ),
     label: '±SD and ±SEM in one click',
     desc: 'Select your error column — bars appear instantly, formatted to journal standards.',
   },
   {
     color: '#7c3aed', bg: '#ede9fe',
-    icon: (<path d="M3 18 C5 18 6 16 8 13 C10 10 11 9 12 9 C13 9 14 8 16 6 C18 4 19 4 21 4" strokeWidth="1.5" fill="none"/>),
+    icon: (
+      <>
+        <path d="M3 20 C5 20 7 17 9 14 C11 11 12 10 12 9 C12 8 13 7 15 5 C17 3 19 3 21 3" strokeWidth="1.5" fill="none"/>
+        <line x1="12" y1="9" x2="12" y2="20" strokeWidth="1" strokeDasharray="2 2"/>
+        <line x1="3" y1="9" x2="12" y2="9" strokeWidth="1" strokeDasharray="2 2"/>
+      </>
+    ),
     label: 'Dose-response curves done right',
     desc: 'One click to log scale. Your sigmoid looks exactly like it should in a Nature paper.',
   },
   {
     color: '#db2777', bg: '#fce7f3',
-    icon: (<><circle cx="12" cy="12" r="9" strokeWidth="1.5"/><circle cx="9" cy="10" r="1.5" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/><path d="M9 13 Q12 16 15 13" strokeWidth="1.5" fill="none"/></>),
+    icon: (
+      <>
+        <line x1="4"  y1="21" x2="4"  y2="14" strokeWidth="1.5"/>
+        <line x1="4"  y1="6"  x2="4"  y2="3"  strokeWidth="1.5"/>
+        <line x1="12" y1="21" x2="12" y2="12" strokeWidth="1.5"/>
+        <line x1="12" y1="6"  x2="12" y2="3"  strokeWidth="1.5"/>
+        <line x1="20" y1="21" x2="20" y2="16" strokeWidth="1.5"/>
+        <line x1="20" y1="10" x2="20" y2="3"  strokeWidth="1.5"/>
+        <line x1="2"  y1="14" x2="6"  y2="14" strokeWidth="1.5"/>
+        <line x1="10" y1="6"  x2="14" y2="6"  strokeWidth="1.5"/>
+        <line x1="18" y1="16" x2="22" y2="16" strokeWidth="1.5"/>
+      </>
+    ),
     label: 'Nature, ACS, Cell presets',
     desc: 'Pick a journal style or tweak font, line weight and colors — all visual, zero Illustrator.',
   },
   {
     color: '#0891b2', bg: '#cffafe',
-    icon: (<><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" strokeWidth="1.5"/><polyline points="7 10 12 15 17 10" strokeWidth="1.5"/><line x1="12" y1="15" x2="12" y2="3" strokeWidth="1.5"/></>),
+    icon: (
+      <>
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeWidth="1.5"/>
+        <polyline points="7 10 12 15 17 10" strokeWidth="1.5"/>
+        <line x1="12" y1="15" x2="12" y2="3" strokeWidth="1.5"/>
+      </>
+    ),
     label: 'Ready for submission',
     desc: '300 DPI PNG for upload portals. Editable SVG when reviewers ask for changes.',
   },
@@ -246,8 +292,8 @@ export default function LandingPage() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {features.map(f => (
               <div key={f.label} className="bg-white rounded-2xl p-7 border border-slate-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: f.bg }}>
-                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke={f.color} strokeLinecap="round" strokeLinejoin="round">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: f.bg }}>
+                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke={f.color} strokeLinecap="round" strokeLinejoin="round">
                     {f.icon}
                   </svg>
                 </div>
