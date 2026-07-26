@@ -7,7 +7,6 @@ import StyleEditor from '@/components/StyleEditor'
 import ChartPreview from '@/components/ChartPreview'
 import MultiPanelPreview from '@/components/MultiPanelPreview'
 import PanelLayoutSelector from '@/components/PanelLayoutSelector'
-import Panel from '@/components/Panel'
 import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
 import WelcomeModal from '@/components/WelcomeModal'
@@ -32,6 +31,74 @@ const insetLinePresets: NumericPreset[] = [
   { label: 'Thick', value: 2.5 },
 ]
 
+// ── Icon bar tab definitions ─────────────────────────────────────────────────
+
+const SIDEBAR_TABS = [
+  {
+    id: 'data',
+    label: 'Data',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+      </svg>
+    ),
+  },
+  {
+    id: 'style',
+    label: 'Style',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+      </svg>
+    ),
+  },
+  {
+    id: 'journal',
+    label: 'Journal',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+      </svg>
+    ),
+  },
+  {
+    id: 'annotate',
+    label: 'Annotate',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+      </svg>
+    ),
+  },
+  {
+    id: 'inset',
+    label: 'Inset',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+      </svg>
+    ),
+  },
+  {
+    id: 'templates',
+    label: 'Templ.',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
+      </svg>
+    ),
+  },
+]
+
+const PANEL_LABELS_MAP: Record<string, string> = {
+  data: 'Data',
+  style: 'Style',
+  journal: 'Journal',
+  annotate: 'Annotate',
+  inset: 'Inset Figure',
+  templates: 'Templates',
+}
+
 export default function AppPage() {
   const [columns, setColumns] = useState<string[]>([])
   const [data, setData] = useState<Record<string, unknown>[]>([])
@@ -47,6 +114,9 @@ export default function AppPage() {
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [drawInsetMode, setDrawInsetMode] = useState(false)
+
+  // Active sidebar panel
+  const [activeSidePanel, setActiveSidePanel] = useState<string | null>('data')
 
   // Multi-panel state
   const [isMultiPanel, setIsMultiPanel] = useState(false)
@@ -324,45 +394,18 @@ export default function AppPage() {
 
   const ready = xCol && yCols.length > 0 && data.length > 0
 
-  return (
-    <div className="min-h-screen lg:h-screen bg-white flex flex-col overflow-hidden">
-      <WelcomeModal />
-      {saveTemplateOpen && (
-        <SaveTemplateModal
-          onSave={handleSaveTemplate}
-          onClose={() => setSaveTemplateOpen(false)}
-        />
-      )}
-      <Header hasData={columns.length > 0} onReset={reset} />
+  // ── Secondary panel content ───────────────────────────────────────────────────
 
-      <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
-        <aside className="w-full lg:w-[380px] lg:shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 lg:overflow-y-auto bg-[#eff6ff]">
-          <Panel
-            id="data"
-            title="Data"
-            icon={
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-            }
-          >
+  const renderPanelContent = () => {
+    switch (activeSidePanel) {
+
+      case 'data':
+        return (
+          <div className="space-y-5">
             <FileUploader onData={handleData} />
-          </Panel>
 
-          {columns.length > 0 && (
-            <Panel
-              id="config"
-              title="Settings"
-              icon={
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m9 6h3.75M16.5 12a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 12H13.5m-9.75 6h9.75M13.5 18a1.5 1.5 0 1003 0m-3 0a1.5 1.5 0 003 0m3.75 0H17.25" />
-                </svg>
-              }
-            >
+            {columns.length > 0 && (
               <div className="space-y-5">
-
                 {/* Multi-panel toggle */}
                 <div className="flex items-center justify-between">
                   <div>
@@ -379,13 +422,10 @@ export default function AppPage() {
 
                 {isMultiPanel && (
                   <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3">
-                    {/* Layout */}
                     <div>
                       <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
                       <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
                     </div>
-
-                    {/* Panel tabs */}
                     <div>
                       <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
                       <div className="flex gap-1.5">
@@ -400,8 +440,6 @@ export default function AppPage() {
                         ))}
                       </div>
                     </div>
-
-                    {/* Per-panel file upload */}
                     <div>
                       <p className="text-xs font-medium text-[#1d4ed8] mb-2">
                         Excel file — Panel {panels[activePanel]?.id}
@@ -427,10 +465,8 @@ export default function AppPage() {
                   </div>
                 )}
 
-                {/* Column selector — only show when current panel has data */}
                 {currentColumns.length > 0 && (
                   <>
-                    <TemplateSelector onApply={handleApplyTemplate} />
                     <ColumnSelector
                       columns={currentColumns}
                       xCol={currentXCol}
@@ -497,123 +533,221 @@ export default function AppPage() {
                   </>
                 )}
               </div>
-            </Panel>
-          )}
+            )}
+          </div>
+        )
 
-          {ready && !isMultiPanel && typeof data[0]?.[xCol] === 'number' && (
-            <Panel
-              id="inset-options"
-              title="Add inset"
-              defaultOpen={true}
-              icon={
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+      case 'style':
+        return ready && !isMultiPanel ? (
+          <StyleEditor
+            baseStyle={chartStyles[styleName]}
+            overrides={styleOverrides}
+            hasMultipleSeries={yCols.length > 1}
+            columns={columns.filter(c => c !== xCol)}
+            onChange={setStyleOverrides}
+          />
+        ) : (
+          <p className="text-xs text-slate-400">Load data first to edit styles.</p>
+        )
+
+      case 'journal':
+        return (
+          <div className="space-y-5">
+            <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
+              <p className="text-xs font-semibold text-[#1d4ed8]">ACS style active</p>
+              <p className="text-[11px] text-blue-500 mt-0.5">American Chemical Society format</p>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-600">Figure width</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={300}
+                  max={1600}
+                  step={50}
+                  value={styleOverrides.figureWidth ?? 700}
+                  onChange={e => {
+                    const v = Number(e.target.value)
+                    if (v >= 300 && v <= 1600) setStyleOverrides(prev => ({ ...prev, figureWidth: v }))
+                  }}
+                  className={inputCls}
+                />
+                <span className="text-[10px] text-slate-400 shrink-0">px</span>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+              <p className="text-[11px] text-slate-400">More journal presets coming soon — Nature, Cell, JACS</p>
+            </div>
+          </div>
+        )
+
+      case 'annotate':
+        return (
+          <div className="space-y-4">
+            <div className="rounded-xl bg-slate-50 border border-slate-100 px-3 py-3">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
-              }
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Click the <span className="font-semibold text-slate-700">Annotate</span> button in the canvas toolbar to add lines, arrows, text and shapes.
+                </p>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'inset':
+        return ready && !isMultiPanel && typeof data[0]?.[xCol] === 'number' ? (
+          <div className="space-y-4">
+            <button
+              onClick={() => setDrawInsetMode(v => !v)}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
+                drawInsetMode
+                  ? 'bg-[#2563eb] text-white border-[#2563eb]'
+                  : styleOverrides.insetDefined
+                    ? 'bg-blue-50 text-[#2563eb] border-blue-200'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
             >
-              {/* Draw button */}
-              <button
-                onClick={() => setDrawInsetMode(v => !v)}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
-                  drawInsetMode
-                    ? 'bg-[#2563eb] text-white border-[#2563eb]'
-                    : styleOverrides.insetDefined
-                      ? 'bg-blue-50 text-[#2563eb] border-blue-200'
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
-              </button>
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+              {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
+            </button>
 
-              {/* Settings — always visible */}
-              {(() => {
-                const so = styleOverrides
-                const upd = (patch: Partial<StyleOverrides>) => setStyleOverrides(prev => ({ ...prev, ...patch }))
-                const axisColor = so.axisColor ?? chartStyles[styleName].axisColor
-                return (
-                  <div className="pt-3 border-t border-slate-100 space-y-3">
-                    {/* Size + Tick font */}
-                    <div className="grid grid-cols-2 gap-x-3">
-                      <div>
-                        <p className="text-[10px] text-slate-400 mb-1">Size</p>
-                        <div className="flex items-center gap-1">
-                          <input type="number" min={10} max={80} value={so.insetSizePct ?? 35}
-                            onChange={e => { const v = Number(e.target.value); if (v >= 10 && v <= 80) upd({ insetSizePct: v }) }}
-                            className={inputCls} />
-                          <span className="text-[10px] text-slate-400 shrink-0">%</span>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-slate-400 mb-1">Tick font</p>
-                        <div className="flex items-center gap-1">
-                          <input type="number" min={5} max={14} value={so.insetTickFontSize ?? 7}
-                            onChange={e => { const v = Number(e.target.value); if (v >= 5 && v <= 14) upd({ insetTickFontSize: v }) }}
-                            className={inputCls} />
-                          <span className="text-[10px] text-slate-400 shrink-0">pt</span>
-                        </div>
+            {(() => {
+              const so = styleOverrides
+              const upd = (patch: Partial<StyleOverrides>) => setStyleOverrides(prev => ({ ...prev, ...patch }))
+              const axisColor = so.axisColor ?? chartStyles[styleName].axisColor
+              return (
+                <div className="pt-3 border-t border-slate-100 space-y-3">
+                  <div className="grid grid-cols-2 gap-x-3">
+                    <div>
+                      <p className="text-[10px] text-slate-400 mb-1">Size</p>
+                      <div className="flex items-center gap-1">
+                        <input type="number" min={10} max={80} value={so.insetSizePct ?? 35}
+                          onChange={e => { const v = Number(e.target.value); if (v >= 10 && v <= 80) upd({ insetSizePct: v }) }}
+                          className={inputCls} />
+                        <span className="text-[10px] text-slate-400 shrink-0">%</span>
                       </div>
                     </div>
-
-                    <LineThicknessPicker label="Line width" value={so.insetLineWidth ?? 1.2} presets={insetLinePresets} onChange={v => upd({ insetLineWidth: v })} />
-
-                    <div className="flex gap-4">
-                      <ToggleSwitch label="Box frame" checked={so.insetShowFrame ?? false} onChange={v => upd({ insetShowFrame: v })} />
-                      <ToggleSwitch label="Zoom rect" checked={so.insetShowZoomRect ?? false} onChange={v => upd({ insetShowZoomRect: v })} />
+                    <div>
+                      <p className="text-[10px] text-slate-400 mb-1">Tick font</p>
+                      <div className="flex items-center gap-1">
+                        <input type="number" min={5} max={14} value={so.insetTickFontSize ?? 7}
+                          onChange={e => { const v = Number(e.target.value); if (v >= 5 && v <= 14) upd({ insetTickFontSize: v }) }}
+                          className={inputCls} />
+                        <span className="text-[10px] text-slate-400 shrink-0">pt</span>
+                      </div>
                     </div>
+                  </div>
 
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <ToggleSwitch label="Border" checked={so.insetBorder ?? false} onChange={v => upd({ insetBorder: v })} />
-                      {(so.insetBorder ?? false) && (
-                        <>
-                          <input type="color" value={so.insetBorderColor ?? axisColor}
-                            onChange={e => upd({ insetBorderColor: e.target.value })}
-                            className="w-6 h-5 rounded cursor-pointer border border-slate-200 ml-1" />
-                          <input type="number" min={0.5} max={4} step={0.5} value={so.insetBorderWidth ?? 1.5}
-                            onChange={e => upd({ insetBorderWidth: Number(e.target.value) })}
-                            className={`${inputCls} w-14`} />
-                          <span className="text-[10px] text-slate-400 shrink-0">px</span>
-                        </>
-                      )}
-                    </div>
+                  <LineThicknessPicker label="Line width" value={so.insetLineWidth ?? 1.2} presets={insetLinePresets} onChange={v => upd({ insetLineWidth: v })} />
 
-                    {so.insetDefined && (
-                      <p className="text-[10px] text-slate-400 italic">Press Del to remove</p>
+                  <div className="flex gap-4">
+                    <ToggleSwitch label="Box frame" checked={so.insetShowFrame ?? false} onChange={v => upd({ insetShowFrame: v })} />
+                    <ToggleSwitch label="Zoom rect" checked={so.insetShowZoomRect ?? false} onChange={v => upd({ insetShowZoomRect: v })} />
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <ToggleSwitch label="Border" checked={so.insetBorder ?? false} onChange={v => upd({ insetBorder: v })} />
+                    {(so.insetBorder ?? false) && (
+                      <>
+                        <input type="color" value={so.insetBorderColor ?? axisColor}
+                          onChange={e => upd({ insetBorderColor: e.target.value })}
+                          className="w-6 h-5 rounded cursor-pointer border border-slate-200 ml-1" />
+                        <input type="number" min={0.5} max={4} step={0.5} value={so.insetBorderWidth ?? 1.5}
+                          onChange={e => upd({ insetBorderWidth: Number(e.target.value) })}
+                          className={`${inputCls} w-14`} />
+                        <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                      </>
                     )}
                   </div>
-                )
-              })()}
-            </Panel>
-          )}
 
-          {ready && !isMultiPanel && (
-            <Panel
-              id="style"
-              title="Style"
-              defaultOpen={false}
-              icon={
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-                </svg>
-              }
+                  {so.insetDefined && (
+                    <p className="text-[10px] text-slate-400 italic">Press Del to remove</p>
+                  )}
+                </div>
+              )
+            })()}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400">Load numeric data to add an inset figure.</p>
+        )
+
+      case 'templates':
+        return (
+          <div className="space-y-4">
+            <TemplateSelector onApply={handleApplyTemplate} />
+            <button
+              onClick={() => setSaveTemplateOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
             >
-              <StyleEditor
-                baseStyle={chartStyles[styleName]}
-                overrides={styleOverrides}
-                hasMultipleSeries={yCols.length > 1}
-                columns={columns.filter(c => c !== xCol)}
-                onChange={setStyleOverrides}
-              />
-            </Panel>
-          )}
-        </aside>
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+              </svg>
+              Save current style as template
+            </button>
+          </div>
+        )
 
-        <main className="flex-1 flex flex-col lg:overflow-hidden">
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
+      <WelcomeModal />
+      {saveTemplateOpen && (
+        <SaveTemplateModal
+          onSave={handleSaveTemplate}
+          onClose={() => setSaveTemplateOpen(false)}
+        />
+      )}
+      <Header hasData={columns.length > 0} onReset={reset} />
+
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* Icon bar — 60px wide */}
+        <nav className="w-[60px] shrink-0 border-r border-slate-100 flex flex-col items-center py-3 gap-1 bg-white">
+          {SIDEBAR_TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveSidePanel(p => p === tab.id ? null : tab.id)}
+              className={`w-11 h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all text-center ${
+                activeSidePanel === tab.id
+                  ? 'bg-blue-50 text-[#2563eb]'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+              title={tab.label}
+            >
+              <div className="w-5 h-5">{tab.icon}</div>
+              <span className="text-[9px] font-medium leading-none">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        {/* Secondary panel — 280px, only when activeSidePanel !== null */}
+        {activeSidePanel && (
+          <aside className="w-[280px] shrink-0 border-r border-slate-200 flex flex-col overflow-hidden bg-white">
+            <div className="px-4 py-3 border-b border-slate-100 shrink-0">
+              <h2 className="text-sm font-semibold text-slate-800">
+                {PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}
+              </h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-5">
+              {renderPanelContent()}
+            </div>
+          </aside>
+        )}
+
+        {/* Canvas */}
+        <main className="flex-1 flex flex-col overflow-hidden">
           {isMultiPanel && panels.length > 0 ? (
             <MultiPanelPreview
               panels={panels}
@@ -658,6 +792,7 @@ export default function AppPage() {
             </div>
           )}
         </main>
+
       </div>
 
       <FeedbackButton />
