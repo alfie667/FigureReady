@@ -530,8 +530,8 @@ export default function AppPage() {
                 {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
               </button>
 
-              {/* Settings — only when inset is defined */}
-              {styleOverrides.insetDefined && (() => {
+              {/* Settings — always visible */}
+              {(() => {
                 const so = styleOverrides
                 const upd = (patch: Partial<StyleOverrides>) => setStyleOverrides(prev => ({ ...prev, ...patch }))
                 const axisColor = so.axisColor ?? chartStyles[styleName].axisColor
@@ -581,7 +581,9 @@ export default function AppPage() {
                       )}
                     </div>
 
-                    <p className="text-[10px] text-slate-400 italic">Press Del to remove</p>
+                    {so.insetDefined && (
+                      <p className="text-[10px] text-slate-400 italic">Press Del to remove</p>
+                    )}
                   </div>
                 )
               })()}
