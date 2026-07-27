@@ -38,7 +38,7 @@ const SIDEBAR_TABS = [
     id: 'data',
     label: 'Data',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
       </svg>
     ),
@@ -47,7 +47,7 @@ const SIDEBAR_TABS = [
     id: 'style',
     label: 'Style',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
       </svg>
     ),
@@ -56,7 +56,7 @@ const SIDEBAR_TABS = [
     id: 'journal',
     label: 'Journal',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
       </svg>
     ),
@@ -65,7 +65,7 @@ const SIDEBAR_TABS = [
     id: 'annotate',
     label: 'Annotate',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
       </svg>
     ),
@@ -74,16 +74,16 @@ const SIDEBAR_TABS = [
     id: 'inset',
     label: 'Inset',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
       </svg>
     ),
   },
   {
     id: 'templates',
-    label: 'Templ.',
+    label: 'Templates',
     icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
         <path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
       </svg>
     ),
@@ -746,30 +746,39 @@ export default function AppPage() {
 
       <div className="flex-1 flex overflow-hidden">
 
-        {/* Icon bar — 60px wide */}
-        <nav className="w-[60px] shrink-0 border-r border-slate-100 flex flex-col items-center py-3 gap-1 bg-white">
-          {SIDEBAR_TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveSidePanel(p => p === tab.id ? null : tab.id)}
-              className={`w-11 h-12 rounded-xl flex flex-col items-center justify-center gap-1 transition-all text-center ${
-                activeSidePanel === tab.id
-                  ? 'bg-blue-50 text-[#2563eb]'
-                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-              }`}
-              title={tab.label}
-            >
-              <div className="w-5 h-5">{tab.icon}</div>
-              <span className="text-[9px] font-medium leading-none">{tab.label}</span>
-            </button>
-          ))}
+        {/* Icon bar — 72px wide, Figma-style */}
+        <nav className="w-[72px] shrink-0 border-r border-slate-100 flex flex-col items-center py-3 gap-0.5 bg-white">
+          {SIDEBAR_TABS.flatMap((tab, i) => {
+            const sep = (i === 2 || i === 4)
+              ? [<div key={`sep-${i}`} className="w-9 h-px bg-slate-100 my-1.5 shrink-0" />]
+              : []
+            const btn = (
+              <button
+                key={tab.id}
+                onClick={() => setActiveSidePanel(p => p === tab.id ? null : tab.id)}
+                className={`w-[58px] h-[60px] rounded-2xl flex flex-col items-center justify-center gap-[5px] transition-all duration-150 select-none group ${
+                  activeSidePanel === tab.id
+                    ? 'bg-[#2563eb] text-white shadow-md shadow-blue-200/60'
+                    : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
+                }`}
+                title={tab.label}
+              >
+                <div className="w-[22px] h-[22px] shrink-0">{tab.icon}</div>
+                <span className={`text-[9.5px] font-semibold leading-none tracking-wide ${
+                  activeSidePanel === tab.id ? 'text-white/80' : ''
+                }`}>{tab.label}</span>
+              </button>
+            )
+            return [...sep, btn]
+          })}
         </nav>
 
         {/* Secondary panel — 280px, only when activeSidePanel !== null */}
         {activeSidePanel && (
           <aside className="w-[280px] shrink-0 border-r border-slate-200 flex flex-col overflow-hidden bg-white">
-            <div className="px-4 py-3 border-b border-slate-100 shrink-0">
-              <h2 className="text-sm font-semibold text-slate-800">
+            <div className="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0 flex items-center gap-2.5">
+              <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
+              <h2 className="text-[13px] font-bold text-slate-800 tracking-tight">
                 {PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}
               </h2>
             </div>
