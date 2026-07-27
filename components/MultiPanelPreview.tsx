@@ -1,5 +1,5 @@
 'use client'
-import { useRef } from 'react'
+import { forwardRef, useImperativeHandle, useRef } from 'react'
 import { toPng } from 'html-to-image'
 import ChartPreview from './ChartPreview'
 import type { PanelConfig, PanelLayout } from '@/lib/panels'
@@ -29,10 +29,14 @@ interface Props {
   onSaveTemplate?: () => void
 }
 
-export default function MultiPanelPreview({
+export interface MultiPanelPreviewHandle {
+  exportPNG: () => void
+}
+
+const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function MultiPanelPreview({
   panels, layout, activePanel, styleName,
   panelAnnotations, onAnnotationsChange, onStyleChange, onPanelClick,
-}: Props) {
+}: Props, ref) {
   const gridRef = useRef<HTMLDivElement>(null)
   const cols = COLS[layout]
   const panelW = PANEL_W[layout]
@@ -50,23 +54,15 @@ export default function MultiPanelPreview({
     }
   }
 
+  useImperativeHandle(ref, () => ({ exportPNG: handleExport }))
+
   return (
     <div className="flex flex-col h-full">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between gap-4 px-4 py-2 bg-white border-b border-slate-200 shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+      {/* Hint bar */}
+      <div className="flex items-center px-4 py-2 bg-white border-b border-slate-200 shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
         <p className="text-xs text-slate-500 font-medium">
           Multi-panel — click a panel to edit it
         </p>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
-          Export PNG · 300 DPI
-        </button>
       </div>
 
       {/* Workspace */}
@@ -157,4 +153,6 @@ export default function MultiPanelPreview({
       </div>
     </div>
   )
-}
+})
+
+export default MultiPanelPreview

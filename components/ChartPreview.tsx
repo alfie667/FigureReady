@@ -1,5 +1,5 @@
 ﻿'use client'
-import { useEffect, useRef, useState, type Key } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type Key } from 'react'
 import { trackExport } from '@/lib/analytics'
 import { gtagEvent } from '@/lib/ga'
 import { isProUser } from '@/lib/usageLimit'
@@ -273,6 +273,10 @@ interface ChartMouseEvent {
   activeLabel?: string | number
 }
 
+export interface ChartPreviewHandle {
+  triggerExport: (type: 'png' | 'svg') => void
+}
+
 interface Props {
   data: Record<string, unknown>[]
   xCol: string
@@ -296,12 +300,12 @@ interface Props {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function ChartPreview({
+const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
   compact = false, drawInsetActive, onDrawInsetActiveChange, annotOpen,
-}: Props) {
+}: Props, ref) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
   const xLabelDxRef = useRef(styleOverrides.xLabelDx ?? 0)
@@ -344,6 +348,8 @@ export default function ChartPreview({
   useEffect(() => {
     if (annotOpen !== undefined) setAnnotExpanded(annotOpen)
   }, [annotOpen])
+
+  useImperativeHandle(ref, () => ({ triggerExport }))
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
@@ -1167,38 +1173,7 @@ export default function ChartPreview({
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 
-        {/* Main toolbar — Annotate toggle + Export only */}
-        <div className="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b border-slate-200 shrink-0 z-20 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-          <button
-            onClick={() => setAnnotExpanded(v => !v)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-              annotExpanded ? 'bg-slate-200 text-slate-800' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-            Annotate
-            <svg className={`w-3 h-3 transition-transform duration-200 ${annotExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div className="flex items-center gap-2 ml-auto shrink-0">
-            {zoomDomain && (
-              <button onClick={resetZoom} className="px-3 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition-colors">
-                Reset zoom
-              </button>
-            )}
-            <button onClick={() => triggerExport('svg')} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors">
-              <DownloadIcon />SVG
-            </button>
-            <button onClick={() => triggerExport('png')} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm">
-              <DownloadIcon />PNG · 300 DPI
-            </button>
-          </div>
-        </div>
-
-        {/* Annotation tools — collapsible second row */}
+        {/* Annotation tools — shown when Annotate sidebar tab is active */}
         {annotExpanded && (
           <div className="px-4 py-2 bg-[#f8fafc] border-b border-slate-200 shrink-0">
             <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
@@ -1843,4 +1818,6 @@ export default function ChartPreview({
       </div>{/* /flex-col editor */}
     </>
   )
-}
+})
+
+export default ChartPreview

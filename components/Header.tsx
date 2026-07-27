@@ -8,9 +8,18 @@ interface Props {
   hasData: boolean
   onReset: () => void
   onUpgrade?: () => void
+  onExportSVG?: () => void
+  onExportPNG?: () => void
 }
 
-export default function Header({ hasData, onReset }: Props) {
+const DownloadIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+)
+
+export default function Header({ hasData, onReset, onExportSVG, onExportPNG }: Props) {
   const [isPro, setIsPro] = useState(false)
 
   useEffect(() => {
@@ -25,7 +34,7 @@ export default function Header({ hasData, onReset }: Props) {
         </Link>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {isPro && (
           <span className="hidden sm:inline text-xs font-semibold px-2.5 py-1 rounded-full bg-[#dbeafe] text-[#2563eb]">
             Pro
@@ -42,6 +51,24 @@ export default function Header({ hasData, onReset }: Props) {
                 d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
             New figure
+          </button>
+        )}
+
+        {hasData && onExportSVG && (
+          <button
+            onClick={onExportSVG}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            <DownloadIcon />SVG
+          </button>
+        )}
+
+        {hasData && onExportPNG && (
+          <button
+            onClick={onExportPNG}
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm"
+          >
+            <DownloadIcon />PNG · 300 DPI
           </button>
         )}
       </div>

@@ -4,8 +4,8 @@ import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
 import StyleEditor from '@/components/StyleEditor'
-import ChartPreview from '@/components/ChartPreview'
-import MultiPanelPreview from '@/components/MultiPanelPreview'
+import ChartPreview, { type ChartPreviewHandle } from '@/components/ChartPreview'
+import MultiPanelPreview, { type MultiPanelPreviewHandle } from '@/components/MultiPanelPreview'
 import PanelLayoutSelector from '@/components/PanelLayoutSelector'
 import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
@@ -114,6 +114,15 @@ export default function AppPage() {
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [drawInsetMode, setDrawInsetMode] = useState(false)
+
+  const chartPreviewRef = useRef<ChartPreviewHandle>(null)
+  const multiPanelRef = useRef<MultiPanelPreviewHandle>(null)
+
+  const handleExportSVG = () => chartPreviewRef.current?.triggerExport('svg')
+  const handleExportPNG = () => {
+    if (isMultiPanel) multiPanelRef.current?.exportPNG()
+    else chartPreviewRef.current?.triggerExport('png')
+  }
 
   // Active sidebar panel
   const [activeSidePanel, setActiveSidePanel] = useState<string | null>('data')
@@ -728,7 +737,12 @@ export default function AppPage() {
           onClose={() => setSaveTemplateOpen(false)}
         />
       )}
-      <Header hasData={columns.length > 0} onReset={reset} />
+      <Header
+        hasData={columns.length > 0}
+        onReset={reset}
+        onExportSVG={handleExportSVG}
+        onExportPNG={handleExportPNG}
+      />
 
       <div className="flex-1 flex overflow-hidden">
 
@@ -769,6 +783,7 @@ export default function AppPage() {
         <main className="flex-1 flex flex-col overflow-hidden">
           {isMultiPanel && panels.length > 0 ? (
             <MultiPanelPreview
+              ref={multiPanelRef}
               panels={panels}
               layout={panelLayout}
               activePanel={activePanel}
@@ -785,6 +800,7 @@ export default function AppPage() {
             />
           ) : ready ? (
             <ChartPreview
+              ref={chartPreviewRef}
               data={data}
               xCol={xCol}
               yCols={yCols}
