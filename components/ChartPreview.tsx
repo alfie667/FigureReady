@@ -291,6 +291,7 @@ interface Props {
   compact?: boolean
   drawInsetActive?: boolean
   onDrawInsetActiveChange?: (active: boolean) => void
+  annotOpen?: boolean
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -299,7 +300,7 @@ export default function ChartPreview({
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
-  compact = false, drawInsetActive, onDrawInsetActiveChange,
+  compact = false, drawInsetActive, onDrawInsetActiveChange, annotOpen,
 }: Props) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
@@ -338,6 +339,11 @@ export default function ChartPreview({
   useEffect(() => {
     if (drawInsetActive !== undefined) _setDrawInsetMode(drawInsetActive)
   }, [drawInsetActive])
+
+  // Sync external annotOpen prop → local state
+  useEffect(() => {
+    if (annotOpen !== undefined) setAnnotExpanded(annotOpen)
+  }, [annotOpen])
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
