@@ -759,7 +759,7 @@ export default function AppPage() {
                 className={`w-[58px] h-[60px] rounded-2xl flex flex-col items-center justify-center gap-[5px] transition-all duration-150 select-none group ${
                   activeSidePanel === tab.id
                     ? 'bg-[#2563eb] text-white shadow-md shadow-blue-200/60'
-                    : 'text-slate-400 hover:text-slate-800 hover:bg-slate-100'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
                 title={tab.label}
               >

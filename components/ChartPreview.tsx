@@ -1376,43 +1376,88 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                       }}
                     >
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart key={`inset-${iTickSz}-${yAxisW}`} data={data} margin={chartMargin}>
-                          {(styleOverrides.insetShowFrame ?? false) && (
-                            <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
-                              if (!offset) return null
-                              const { top, left, width, height } = offset
-                              return (
-                                <g>
-                                  <line x1={left} y1={top} x2={left + width} y2={top} stroke={axisColor} strokeWidth={0.8} />
-                                  <line x1={left + width} y1={top} x2={left + width} y2={top + height} stroke={axisColor} strokeWidth={0.8} />
-                                </g>
-                              )
-                            }} />
-                          )}
-                          <XAxis dataKey={xCol} type="number"
-                            domain={[xTicks[0], xTicks[xTicks.length - 1]]}
-                            ticks={xTicks} allowDataOverflow minTickGap={0}
-                            tickFormatter={fmtInsetTick}
-                            tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
-                            axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                            tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                            height={16}
-                          />
-                          <YAxis
-                            domain={[yTicks[0], yTicks[yTicks.length - 1]]}
-                            ticks={yTicks} allowDataOverflow minTickGap={0}
-                            tickFormatter={fmtInsetTick}
-                            tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
-                            axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                            tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
-                            width={yAxisW}
-                          />
-                          {yCols.map((col, i) => (
-                            <Line key={col} type="monotone" dataKey={col}
-                              stroke={seriesColor(col, i)} strokeWidth={iLineW}
-                              dot={false} isAnimationActive={false} />
-                          ))}
-                        </LineChart>
+                        {chartType === 'bar' ? (() => {
+                          const insetBarData = processedData.filter(d => {
+                            const x = Number(d.x)
+                            return !isNaN(x) && x >= iXMin && x <= iXMax
+                          })
+                          const frameComponent = (styleOverrides.insetShowFrame ?? false)
+                            ? <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
+                                if (!offset) return null
+                                const { top, left, width, height } = offset
+                                return (
+                                  <g>
+                                    <line x1={left} y1={top} x2={left + width} y2={top} stroke={axisColor} strokeWidth={0.8} />
+                                    <line x1={left + width} y1={top} x2={left + width} y2={top + height} stroke={axisColor} strokeWidth={0.8} />
+                                  </g>
+                                )
+                              }} />
+                            : null
+                          return (
+                            <BarChart key={`inset-bar-${iTickSz}-${yAxisW}`} data={insetBarData.length ? insetBarData : processedData} margin={chartMargin}>
+                              {frameComponent}
+                              <XAxis dataKey="x"
+                                tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
+                                axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                                tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                                height={16}
+                              />
+                              <YAxis
+                                domain={[yTicks[0], yTicks[yTicks.length - 1]]}
+                                ticks={yTicks} allowDataOverflow minTickGap={0}
+                                tickFormatter={fmtInsetTick}
+                                tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
+                                axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                                tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                                width={yAxisW}
+                              />
+                              {yCols.map((col, i) => (
+                                <Bar key={col} dataKey={col}
+                                  fill={seriesColor(col, i)}
+                                  radius={[s.barRadius, s.barRadius, 0, 0]}
+                                  isAnimationActive={false} />
+                              ))}
+                            </BarChart>
+                          )
+                        })() : (
+                          <LineChart key={`inset-line-${iTickSz}-${yAxisW}`} data={data} margin={chartMargin}>
+                            {(styleOverrides.insetShowFrame ?? false) && (
+                              <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
+                                if (!offset) return null
+                                const { top, left, width, height } = offset
+                                return (
+                                  <g>
+                                    <line x1={left} y1={top} x2={left + width} y2={top} stroke={axisColor} strokeWidth={0.8} />
+                                    <line x1={left + width} y1={top} x2={left + width} y2={top + height} stroke={axisColor} strokeWidth={0.8} />
+                                  </g>
+                                )
+                              }} />
+                            )}
+                            <XAxis dataKey={xCol} type="number"
+                              domain={[xTicks[0], xTicks[xTicks.length - 1]]}
+                              ticks={xTicks} allowDataOverflow minTickGap={0}
+                              tickFormatter={fmtInsetTick}
+                              tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
+                              axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                              tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                              height={16}
+                            />
+                            <YAxis
+                              domain={[yTicks[0], yTicks[yTicks.length - 1]]}
+                              ticks={yTicks} allowDataOverflow minTickGap={0}
+                              tickFormatter={fmtInsetTick}
+                              tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
+                              axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                              tickLine={{ stroke: axisColor, strokeWidth: 0.8 }}
+                              width={yAxisW}
+                            />
+                            {yCols.map((col, i) => (
+                              <Line key={col} type="monotone" dataKey={col}
+                                stroke={seriesColor(col, i)} strokeWidth={iLineW}
+                                dot={false} isAnimationActive={false} />
+                            ))}
+                          </LineChart>
+                        )}
                       </ResponsiveContainer>
                     </div>
 
