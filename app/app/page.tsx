@@ -126,6 +126,8 @@ export default function AppPage() {
 
   // Active sidebar panel
   const [activeSidePanel, setActiveSidePanel] = useState<string | null>('data')
+  const [panelWidth, setPanelWidth] = useState(280)
+  const panelResizeRef = useRef(false)
 
   // Multi-panel state
   const [isMultiPanel, setIsMultiPanel] = useState(false)
@@ -138,6 +140,38 @@ export default function AppPage() {
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
   }, [])
+
+  // ── Share via URL ─────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const encoded = params.get('fig')
+      if (!encoded) return
+      const json = decodeURIComponent(escape(atob(encoded)))
+      const cfg = JSON.parse(json)
+      if (cfg.chartType)     setChartType(cfg.chartType)
+      if (cfg.xAxisLabel)    setXAxisLabel(cfg.xAxisLabel)
+      if (cfg.yAxisLabel)    setYAxisLabel(cfg.yAxisLabel)
+      if (cfg.xCol)          setXCol(cfg.xCol)
+      if (cfg.yCols)         setYCols(cfg.yCols)
+      if (cfg.seriesNames)   setSeriesNames(cfg.seriesNames)
+      if (cfg.errorCols)     setErrorCols(cfg.errorCols)
+      if (cfg.styleOverrides) setStyleOverrides(cfg.styleOverrides)
+      if (cfg.annotations)   setAnnotations(cfg.annotations)
+    } catch { /* ignore malformed URLs */ }
+  }, [])
+
+  const handleShareLink = () => {
+    const cfg = {
+      chartType, xAxisLabel, yAxisLabel,
+      xCol, yCols, seriesNames, errorCols,
+      styleOverrides, annotations,
+    }
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(cfg))))
+    const url = `${window.location.origin}${window.location.pathname}?fig=${encoded}`
+    navigator.clipboard.writeText(url)
+  }
 
   // ── Undo history (Ctrl+Z) ────────────────────────────────────────────────────
 
@@ -742,6 +776,7 @@ export default function AppPage() {
         onReset={reset}
         onExportSVG={handleExportSVG}
         onExportPNG={handleExportPNG}
+        onShareLink={handleShareLink}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -773,9 +808,12 @@ export default function AppPage() {
           })}
         </nav>
 
-        {/* Secondary panel — 280px, only when activeSidePanel !== null */}
+        {/* Secondary panel — resizable, only when activeSidePanel !== null */}
         {activeSidePanel && (
-          <aside className="w-[280px] shrink-0 border-r border-slate-200 flex flex-col overflow-hidden bg-white">
+          <aside
+            style={{ width: panelWidth }}
+            className="shrink-0 border-r border-slate-200 flex flex-col overflow-hidden bg-white relative"
+          >
             <div className="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0 flex items-center gap-2.5">
               <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
               <h2 className="text-[13px] font-bold text-slate-800 tracking-tight">
@@ -785,6 +823,28 @@ export default function AppPage() {
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
               {renderPanelContent()}
             </div>
+            {/* Drag handle on right edge */}
+            <div
+              className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[#2563eb]/20 transition-colors z-10"
+              onPointerDown={e => {
+                e.preventDefault()
+                panelResizeRef.current = true
+                const startX = e.clientX
+                const startW = panelWidth
+                const onMove = (ev: PointerEvent) => {
+                  if (!panelResizeRef.current) return
+                  const next = Math.max(220, Math.min(520, startW + ev.clientX - startX))
+                  setPanelWidth(next)
+                }
+                const onUp = () => {
+                  panelResizeRef.current = false
+                  window.removeEventListener('pointermove', onMove)
+                  window.removeEventListener('pointerup', onUp)
+                }
+                window.addEventListener('pointermove', onMove)
+                window.addEventListener('pointerup', onUp)
+              }}
+            />
           </aside>
         )}
 
