@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Script from 'next/script'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
+import { AnalyticsPageView } from '@/components/AnalyticsPageView'
 
 const inter = Inter({ subsets: ['latin'] })
 const plusJakarta = Plus_Jakarta_Sans({
@@ -10,7 +11,8 @@ const plusJakarta = Plus_Jakarta_Sans({
   variable: '--font-plus-jakarta',
 })
 
-const BASE = 'https://figureready.com'
+const BASE  = 'https://figureready.com'
+const GA_ID = 'G-D5DQ01SFSW'
 
 export const metadata: Metadata = {
   title: 'FigureReady',
@@ -30,13 +32,47 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" style={{ colorScheme: 'light' }}>
       <body className={`${inter.className} ${plusJakarta.variable} antialiased bg-white`}>
         {children}
-        <Script src="https://www.googletagmanager.com/gtag/js?id=G-D5DQ01SFSW" strategy="afterInteractive" />
+
+        {/* SPA page_view + UTM/GCLID capture */}
+        <AnalyticsPageView />
+
+        {/*
+          Google Consent Mode v2 — MUST run before the GA4 gtag.js loads.
+          Current defaults: analytics granted (no change to existing behaviour),
+          ads denied (not running GA4 ads). When you add a consent banner,
+          call updateConsent() from lib/analytics.ts to update these values.
+        */}
+        <Script id="consent-mode" strategy="beforeInteractive">{`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('consent', 'default', {
+            analytics_storage: 'granted',
+            ad_storage:        'denied',
+            ad_user_data:      'denied',
+            ad_personalization:'denied',
+            wait_for_update:   500
+          });
+        `}</Script>
+
+        {/* GA4 */}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+          strategy="afterInteractive"
+        />
         <Script id="ga4-init" strategy="afterInteractive">{`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'G-D5DQ01SFSW');
+          if (new URLSearchParams(window.location.search).get('debug_ga4') === '1') {
+            sessionStorage.setItem('ga4_debug', '1');
+          }
+          var _ga_debug =
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            sessionStorage.getItem('ga4_debug') === '1';
+          gtag('config', '${GA_ID}', { send_page_view: true, debug_mode: _ga_debug });
         `}</Script>
+
         <Script src="https://tally.so/widgets/embed.js" strategy="lazyOnload" />
 
         {/* Facebook Pixel */}

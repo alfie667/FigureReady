@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { CheckoutButton } from './CheckoutButton'
+import { CheckoutButton, PricingViewTracker } from './CheckoutButton'
 import { LogoFull } from '@/components/Logo'
 
 export const metadata: Metadata = {
@@ -34,6 +34,7 @@ function CheckIcon({ muted }: { muted?: boolean }) {
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[#f9fafb] text-slate-900 font-sans antialiased">
+      <PricingViewTracker />
 
       {/* Nav */}
       <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-100">
@@ -80,6 +81,7 @@ export default function PricingPage() {
             </ul>
             <CheckoutButton
               href={CHECKOUT_MONTHLY}
+              plan="monthly"
               className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Get started →
@@ -109,6 +111,7 @@ export default function PricingPage() {
             </ul>
             <CheckoutButton
               href={CHECKOUT_YEARLY}
+              plan="yearly"
               className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
             >
               Get Pro →
