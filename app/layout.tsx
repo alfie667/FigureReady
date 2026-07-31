@@ -12,7 +12,7 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 const BASE  = 'https://figureready.com'
-const GA_ID = 'G-46TWDFLZ4Q'
+const GA_ID = 'G-D5DQ01SFSW'
 
 export const metadata: Metadata = {
   title: 'FigureReady',
