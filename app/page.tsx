@@ -59,90 +59,6 @@ function AvatarRow({ centered = false }: { centered?: boolean }) {
 
 // ── Page data ────────────────────────────────────────────────────────────────
 
-const features = [
-  {
-    color: '#2563eb', bg: '#dbeafe',
-    icon: (
-      <>
-        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" strokeWidth="1.5"/>
-        <polyline points="14 2 14 8 20 8" strokeWidth="1.5"/>
-        <line x1="8" y1="13" x2="16" y2="13" strokeWidth="1.5"/>
-        <line x1="8" y1="17" x2="16" y2="17" strokeWidth="1.5"/>
-      </>
-    ),
-    label: 'Your .xlsx as-is',
-    desc: 'No conversion, no export. Drop your file exactly as it is — columns detected in seconds.',
-  },
-  {
-    color: '#ea580c', bg: '#ffedd5',
-    icon: (
-      <>
-        <polyline points="3 18 8 12 13 15 18 7 22 10" strokeWidth="1.5"/>
-        <polyline points="3 21 8 17 13 19 18 14 22 17" strokeWidth="1.5"/>
-      </>
-    ),
-    label: 'Compare samples on one chart',
-    desc: 'Multiple series, dual Y axes, one figure. No copy-pasting between worksheets.',
-  },
-  {
-    color: '#059669', bg: '#d1fae5',
-    icon: (
-      <>
-        <line x1="18" y1="20" x2="18" y2="8"  strokeWidth="1.5"/>
-        <line x1="12" y1="20" x2="12" y2="3"  strokeWidth="1.5"/>
-        <line x1="6"  y1="20" x2="6"  y2="13" strokeWidth="1.5"/>
-        <line x1="3"  y1="20" x2="21" y2="20" strokeWidth="1.5"/>
-        <line x1="15" y1="8"  x2="21" y2="8"  strokeWidth="1.5"/>
-        <line x1="9"  y1="3"  x2="15" y2="3"  strokeWidth="1.5"/>
-        <line x1="3"  y1="13" x2="9"  y2="13" strokeWidth="1.5"/>
-      </>
-    ),
-    label: '±SD and ±SEM in one click',
-    desc: 'Select your error column — bars appear instantly, formatted to journal standards.',
-  },
-  {
-    color: '#7c3aed', bg: '#ede9fe',
-    icon: (
-      <>
-        <path d="M3 20 C5 20 7 17 9 14 C11 11 12 10 12 9 C12 8 13 7 15 5 C17 3 19 3 21 3" strokeWidth="1.5" fill="none"/>
-        <line x1="12" y1="9" x2="12" y2="20" strokeWidth="1" strokeDasharray="2 2"/>
-        <line x1="3" y1="9" x2="12" y2="9" strokeWidth="1" strokeDasharray="2 2"/>
-      </>
-    ),
-    label: 'Dose-response curves done right',
-    desc: 'One click to log scale. Your sigmoid looks exactly like it should in a Nature paper.',
-  },
-  {
-    color: '#db2777', bg: '#fce7f3',
-    icon: (
-      <>
-        <line x1="4"  y1="21" x2="4"  y2="14" strokeWidth="1.5"/>
-        <line x1="4"  y1="6"  x2="4"  y2="3"  strokeWidth="1.5"/>
-        <line x1="12" y1="21" x2="12" y2="12" strokeWidth="1.5"/>
-        <line x1="12" y1="6"  x2="12" y2="3"  strokeWidth="1.5"/>
-        <line x1="20" y1="21" x2="20" y2="16" strokeWidth="1.5"/>
-        <line x1="20" y1="10" x2="20" y2="3"  strokeWidth="1.5"/>
-        <line x1="2"  y1="14" x2="6"  y2="14" strokeWidth="1.5"/>
-        <line x1="10" y1="6"  x2="14" y2="6"  strokeWidth="1.5"/>
-        <line x1="18" y1="16" x2="22" y2="16" strokeWidth="1.5"/>
-      </>
-    ),
-    label: 'Nature, ACS, Cell presets',
-    desc: 'Pick a journal style or tweak font, line weight and colors — all visual, zero Illustrator.',
-  },
-  {
-    color: '#0891b2', bg: '#cffafe',
-    icon: (
-      <>
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeWidth="1.5"/>
-        <polyline points="7 10 12 15 17 10" strokeWidth="1.5"/>
-        <line x1="12" y1="15" x2="12" y2="3" strokeWidth="1.5"/>
-      </>
-    ),
-    label: 'Ready for submission',
-    desc: '300 DPI PNG for upload portals. Editable SVG when reviewers ask for changes.',
-  },
-]
 const steps = [
   { n: '1', title: 'Upload your Excel file',  desc: 'Drag and drop a .xlsx file. Columns detected automatically.', accent: '#2563eb' },
   { n: '2', title: 'Configure your figure',   desc: 'Select axes, chart type, error bars, log scale — all visual, all instant.', accent: '#ea580c' },
@@ -300,26 +216,102 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features ─────────────────────────────────────────────────────── */}
-      <section id="features" className="py-28 bg-slate-50">
+      {/* ── Why researchers choose FigureReady ───────────────────────── */}
+      <section className="py-28 bg-white">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#2563eb' }}>Features</p>
-            <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight mb-4">
-              Stop losing hours on figure formatting.<br className="hidden sm:block" /> Start publishing faster.
-            </h2>
-          </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map(f => (
-              <div key={f.label} className="bg-white rounded-2xl p-7 border border-slate-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: f.bg }}>
-                  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke={f.color} strokeLinecap="round" strokeLinejoin="round">
-                    {f.icon}
-                  </svg>
-                </div>
-                <h3 className="font-bold text-slate-900 mb-2 leading-snug" style={{ fontSize: 19 }}>{f.label}</h3>
-                <p className="text-slate-500 leading-relaxed" style={{ fontSize: 15 }}>{f.desc}</p>
+          <h2 className="text-center text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-20">
+            Why researchers choose FigureReady
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
+            {[
+              { emoji: '⚡', title: '10× Faster', desc: 'Publication-ready figures in seconds, not hours of manual formatting.' },
+              { emoji: '🌐', title: 'Browser-Based', desc: 'No installation, no updates. Works anywhere, any time.' },
+              { emoji: '🎨', title: 'Publication Quality', desc: 'Nature, ACS, Cell — presets built for journals.' },
+              { emoji: '💰', title: '€99 / year', desc: 'Unlimited figures. No per-export pricing.' },
+            ].map(item => (
+              <div key={item.title} className="group flex flex-col gap-3 pt-7 border-t-2 border-slate-100 hover:border-blue-500 transition-colors duration-200">
+                <span className="text-2xl leading-none">{item.emoji}</span>
+                <h3 className="font-bold text-slate-900 text-[17px] leading-snug">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Everything you need ───────────────────────────────────────── */}
+      <section className="py-28 bg-slate-50">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-5 leading-tight">
+                Everything you need for everyday scientific figures
+              </h2>
+              <p className="text-slate-500 leading-relaxed text-[15px]">
+                The tools researchers actually use — nothing more.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+              {['Excel import', 'Publication-ready styling', 'Error bars', 'Significance annotations', 'SVG / PNG export', 'Modern interface', 'Browser-based', 'Insets'].map(f => (
+                <div key={f} className="flex items-center gap-2.5">
+                  <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm text-slate-700 font-medium">{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Why FigureReady? (comparison) ────────────────────────────── */}
+      <section className="py-28 bg-white">
+        <div className="max-w-4xl mx-auto px-6">
+          <h2 className="text-center text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-14">
+            Why FigureReady?
+          </h2>
+          <div className="grid md:grid-cols-2 rounded-2xl overflow-hidden ring-1 ring-slate-200 max-w-2xl mx-auto shadow-sm">
+            <div className="bg-slate-900 p-8">
+              <p className="font-bold text-sm text-white mb-6 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
+                FigureReady
+              </p>
+              {(['Browser-based', 'No installation', 'Modern interface', 'Fast workflow', '€99/year'] as const).map((f, i, arr) => (
+                <div key={f} className={`flex items-center gap-3 py-3 ${i < arr.length - 1 ? 'border-b border-white/[0.08]' : ''}`}>
+                  <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm text-white">{f}</span>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white p-8 border-l border-slate-200">
+              <p className="font-bold text-sm text-slate-400 mb-6">Traditional software</p>
+              {(['Desktop application', 'Installation required', 'Complex interface', 'Long workflow', 'Hundreds of euros/year'] as const).map((f, i, arr) => (
+                <div key={f} className={`flex items-center gap-3 py-3 ${i < arr.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                  <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  <span className="text-sm text-slate-400">{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Perfect for ───────────────────────────────────────────────── */}
+      <section className="py-24 bg-slate-900">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-12">
+            Perfect for
+          </h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {['Biology', 'Medicine', 'Neuroscience', 'Pharmacology', 'Chemistry', 'Life Sciences'].map(field => (
+              <span key={field} className="px-5 py-2.5 rounded-full text-sm font-medium text-slate-300 border border-white/[0.15] hover:border-white/40 hover:text-white transition-colors cursor-default">
+                {field}
+              </span>
             ))}
           </div>
         </div>
@@ -390,34 +382,20 @@ export default function LandingPage() {
       </section>
 
       {/* ── Final CTA ────────────────────────────────────────────────────── */}
-      <section className="bg-slate-50 border-t border-slate-100 py-28">
-        <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center">
-            <h2
-              className="font-black text-slate-900 leading-[1.1] tracking-[-0.04em] mb-8"
-              style={{ fontSize: 'clamp(40px, 6vw, 80px)' }}
-            >
-              Your next figure<br />is
-              {' '}<span style={{ color: '#2563eb' }}>30 seconds</span><br />
-              away.
-            </h2>
-            <div className="mb-4">
-              <AvatarRow centered />
-              <p className="text-xl text-slate-500 leading-relaxed">
-                Trusted by PhD students, postdocs, and researchers worldwide.
-              </p>
-            </div>
-            <p className="text-sm text-slate-400 mb-10">No setup. No account. Works in your browser.</p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <GatedAppLink location="final_cta" className="w-full sm:w-auto px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
-                Upload your Excel →
-              </GatedAppLink>
-              <Link href="/pricing"
-                className="w-full sm:w-auto px-10 py-4 border-2 border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 text-base font-semibold rounded-full transition-colors text-center">
-                See pricing
-              </Link>
-            </div>
-          </div>
+      <section className="py-32 bg-white border-t border-slate-100">
+        <div className="max-w-2xl mx-auto px-6 text-center">
+          <h2
+            className="font-black text-slate-900 leading-[1.1] tracking-[-0.04em] mb-6"
+            style={{ fontSize: 'clamp(36px, 5vw, 62px)' }}
+          >
+            Create your first publication-ready figure today.
+          </h2>
+          <p className="text-slate-500 text-lg mb-10 leading-relaxed">
+            No account required. First export free.
+          </p>
+          <GatedAppLink location="final_cta" className="inline-flex items-center justify-center px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
+            Start Free →
+          </GatedAppLink>
         </div>
       </section>
 
