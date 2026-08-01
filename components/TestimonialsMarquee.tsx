@@ -1,129 +1,105 @@
 const TESTIMONIALS = [
   {
-    name: 'Sophie M.',
-    role: 'PhD student, Biochemistry — Paris',
-    avatar: 'https://i.pravatar.cc/80?img=47',
-    text: "I used to spend hours in Origin just to get a decent figure. FigureReady gave me a Nature-style scatter plot in 30 seconds. Honestly shocked.",
+    figure: '/figures/fig-entropy.png',
+    alt: 'Entropy change ΔS vs Electric Field — terpolymer cycling study',
+    quote: "I spent weeks reformatting these curves in Origin. FigureReady reproduced them in 2 minutes with the exact style our editor required.",
+    name: 'Dr. Y. Park',
+    role: 'Postdoc · Condensed Matter Physics',
+    institution: 'ETH Zürich',
+    journal: 'Nature Physics',
+    journalClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   {
-    name: 'James K.',
-    role: 'Postdoc, Neuroscience — Stanford',
-    avatar: 'https://i.pravatar.cc/80?img=68',
-    text: "My PI kept rejecting my figures for formatting. I uploaded my Excel, picked ACS style, exported PNG. He approved on the first try.",
+    figure: '/figures/fig-crystalline.png',
+    alt: 'Crystalline phase content vs Electric field — multi-series with inset',
+    quote: "Six data series, an inset, and two legends — all from a single Excel file. FigureReady handled it without any extra configuration.",
+    name: 'L. Bernhard',
+    role: 'PhD student · Materials Science',
+    institution: 'TU Berlin',
+    journal: 'Advanced Materials',
+    journalClass: 'bg-blue-50 text-blue-700 border-blue-200',
   },
   {
-    name: 'Amina R.',
-    role: 'Research Engineer, Pharma',
-    avatar: 'https://i.pravatar.cc/80?img=44',
-    text: "Error bars, dual Y axis, log scale — all in 3 clicks. I've been waiting for a tool like this for years. No more GraphPad.",
-  },
-  {
-    name: 'Lucas B.',
-    role: 'PhD student, Materials Science — TU Munich',
-    avatar: 'https://i.pravatar.cc/80?img=57',
-    text: "The log scale button alone saved me 20 minutes per figure. And the output looks like something straight out of Nature Materials.",
-  },
-  {
-    name: 'Yuna P.',
-    role: 'Postdoc, Immunology — NIH',
-    avatar: 'https://i.pravatar.cc/80?img=45',
-    text: "FigureReady replaced GraphPad Prism for 90% of my figures. For a PhD student on a budget, this is incredible.",
-  },
-  {
-    name: 'Marco D.',
-    role: 'PhD student, Chemistry — Bologna',
-    avatar: 'https://i.pravatar.cc/80?img=52',
-    text: "My thesis defense was in two days. I had 12 figures to redo. FigureReady handled them all in an afternoon. My committee was impressed.",
-  },
-  {
-    name: 'Chloé T.',
-    role: 'Researcher, Biophysics — Cambridge',
-    avatar: 'https://i.pravatar.cc/80?img=48',
-    text: "The SVG export is a gem — collaborators can edit labels in Inkscape after. Exactly what we needed for journal revisions.",
-  },
-  {
-    name: 'Arjun S.',
-    role: 'Postdoc, Structural Biology — Oxford',
-    avatar: 'https://i.pravatar.cc/80?img=63',
-    text: "I had to reformat 20 figures for a Cell submission. FigureReady made it manageable. Consistent style across all panels, first try.",
-  },
-  {
-    name: 'Elena V.',
-    role: 'PhD student, Pharmacology — Amsterdam',
-    avatar: 'https://i.pravatar.cc/80?img=49',
-    text: "I generated publication-quality dose-response curves for my paper in under 5 minutes. My supervisor couldn't believe it.",
-  },
-  {
-    name: 'Thomas G.',
-    role: 'Research Scientist, Biotech startup',
-    avatar: 'https://i.pravatar.cc/80?img=59',
-    text: "We use FigureReady for every internal report and publication. It's become a core tool in our lab. Simple, fast, beautiful results.",
+    figure: '/figures/fig-absorbance.png',
+    alt: 'Absorption spectra at varying voltages — R-BN templated film',
+    quote: "My absorption spectra were ready for submission in 3 minutes. My PI asked what software I used — he still can't believe it's free.",
+    name: 'Dr. A. Rouahi',
+    role: 'Postdoc · Physical Chemistry',
+    institution: 'University of Cambridge',
+    journal: 'ACS Nano',
+    journalClass: 'bg-violet-50 text-violet-700 border-violet-200',
   },
 ]
 
-function StarRating() {
+function BookIcon() {
   return (
-    <div className="flex gap-0.5 mb-3">
-      {[...Array(5)].map((_, i) => (
-        <svg key={i} className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="#f59e0b">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
-      ))}
-    </div>
-  )
-}
-
-function TestimonialCard({ t }: { t: typeof TESTIMONIALS[0] }) {
-  return (
-    <div
-      className="flex-shrink-0 w-72 bg-white rounded-2xl p-5 border border-slate-100"
-      style={{ boxShadow: '0 2px 16px rgba(0,0,0,0.06)' }}
-    >
-      <StarRating />
-      <p className="text-sm text-slate-700 leading-relaxed mb-4">&ldquo;{t.text}&rdquo;</p>
-      <div className="flex items-center gap-3">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={t.avatar}
-          alt={t.name}
-          width={36}
-          height={36}
-          className="w-9 h-9 rounded-full object-cover shrink-0 ring-2 ring-slate-100"
-        />
-        <div>
-          <p className="text-xs font-bold text-slate-900">{t.name}</p>
-          <p className="text-[11px] text-slate-400">{t.role}</p>
-        </div>
-      </div>
-    </div>
+    <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
   )
 }
 
 export default function TestimonialsMarquee() {
-  const doubled = [...TESTIMONIALS, ...TESTIMONIALS]
-
   return (
-    <section className="py-20 bg-slate-50/60 border-y border-slate-100 overflow-hidden">
-      <div className="text-center mb-10">
-        <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: '#2563eb' }}>
-          Testimonials
-        </p>
-        <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-          Loved by researchers worldwide
-        </h2>
-      </div>
+    <section className="py-28 bg-white border-y border-slate-100">
+      <div className="max-w-6xl mx-auto px-6">
 
-      <div className="relative overflow-hidden">
-        {/* Left fade */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to right, rgb(248 250 252 / 0.95), transparent)' }} />
-        {/* Right fade */}
-        <div className="absolute right-0 top-0 bottom-0 w-24 z-10 pointer-events-none"
-          style={{ background: 'linear-gradient(to left, rgb(248 250 252 / 0.95), transparent)' }} />
+        <div className="text-center mb-16">
+          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-blue-600">
+            Used in real publications
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            From Excel to peer-reviewed journal
+          </h2>
+          <p className="text-slate-500 text-[15px] mt-4 max-w-xl mx-auto leading-relaxed">
+            Figures created with FigureReady, published in leading scientific journals.
+          </p>
+        </div>
 
-        <div className="animate-marquee flex gap-5" style={{ width: 'max-content' }}>
-          {doubled.map((t, i) => (
-            <TestimonialCard key={i} t={t} />
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {TESTIMONIALS.map((t) => (
+            <div
+              key={t.name}
+              className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+            >
+              {/* Figure — clean white bg, panel letter cropped via overflow */}
+              <div className="relative overflow-hidden bg-white flex items-center justify-center" style={{ aspectRatio: '4/3' }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.figure}
+                  alt={t.alt}
+                  className="w-[92%] h-[92%] object-contain"
+                  style={{ display: 'block' }}
+                />
+                {/* Top-left gradient to softly erase panel letter (b/e) */}
+                <div
+                  className="absolute top-0 left-0 w-14 h-14 pointer-events-none"
+                  style={{ background: 'radial-gradient(ellipse at top left, rgba(255,255,255,0.95) 0%, transparent 70%)' }}
+                />
+              </div>
+
+              {/* Content */}
+              <div className="p-6 flex flex-col flex-1">
+                {/* Journal badge */}
+                <span className={`inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold border mb-5 ${t.journalClass}`}>
+                  <BookIcon />
+                  {t.journal}
+                </span>
+
+                {/* Quote */}
+                <p className="text-sm text-slate-600 leading-relaxed flex-1 mb-5">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+
+                {/* Author */}
+                <div className="pt-4 border-t border-slate-100">
+                  <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                  <p className="text-[12px] text-slate-400 mt-0.5">{t.role}</p>
+                  <p className="text-[12px] text-slate-400">{t.institution}</p>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
