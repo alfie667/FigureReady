@@ -216,104 +216,101 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Why researchers choose FigureReady ───────────────────────── */}
-      <section className="py-28 bg-white">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-center text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-20">
-            Why researchers choose FigureReady
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {[
-              { emoji: '⚡', title: '10× Faster', desc: 'Publication-ready figures in seconds, not hours of manual formatting.' },
-              { emoji: '🌐', title: 'Browser-Based', desc: 'No installation, no updates. Works anywhere, any time.' },
-              { emoji: '🎨', title: 'Publication Quality', desc: 'Nature, ACS, Cell — presets built for journals.' },
-              { emoji: '💰', title: '€99 / year', desc: 'Unlimited figures. No per-export pricing.' },
-            ].map(item => (
-              <div key={item.title} className="group flex flex-col gap-3 pt-7 border-t-2 border-slate-100 hover:border-blue-500 transition-colors duration-200">
-                <span className="text-2xl leading-none">{item.emoji}</span>
-                <h3 className="font-bold text-slate-900 text-[17px] leading-snug">{item.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Everything you need ───────────────────────────────────────── */}
+      {/* ── Why FigureReady — single bento section ───────────────────── */}
       <section className="py-28 bg-slate-50">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-5 leading-tight">
-                Everything you need for everyday scientific figures
-              </h2>
-              <p className="text-slate-500 leading-relaxed text-[15px]">
-                The tools researchers actually use — nothing more.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-4">
-              {['Excel import', 'Publication-ready styling', 'Error bars', 'Significance annotations', 'SVG / PNG export', 'Modern interface', 'Browser-based', 'Insets'].map(f => (
-                <div key={f} className="flex items-center gap-2.5">
-                  <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm text-slate-700 font-medium">{f}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+        <div className="max-w-6xl mx-auto px-6">
 
-      {/* ── Why FigureReady? (comparison) ────────────────────────────── */}
-      <section className="py-28 bg-white">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-center text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-14">
-            Why FigureReady?
-          </h2>
-          <div className="grid md:grid-cols-2 rounded-2xl overflow-hidden ring-1 ring-slate-200 max-w-2xl mx-auto shadow-sm">
-            <div className="bg-slate-900 p-8">
-              <p className="font-bold text-sm text-white mb-6 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-400 inline-block" />
-                FigureReady
-              </p>
-              {(['Browser-based', 'No installation', 'Modern interface', 'Fast workflow', '€99/year'] as const).map((f, i, arr) => (
-                <div key={f} className={`flex items-center gap-3 py-3 ${i < arr.length - 1 ? 'border-b border-white/[0.08]' : ''}`}>
-                  <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-sm text-white">{f}</span>
-                </div>
-              ))}
-            </div>
-            <div className="bg-white p-8 border-l border-slate-200">
-              <p className="font-bold text-sm text-slate-400 mb-6">Traditional software</p>
-              {(['Desktop application', 'Installation required', 'Complex interface', 'Long workflow', 'Hundreds of euros/year'] as const).map((f, i, arr) => (
-                <div key={f} className={`flex items-center gap-3 py-3 ${i < arr.length - 1 ? 'border-b border-slate-100' : ''}`}>
-                  <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  <span className="text-sm text-slate-400">{f}</span>
-                </div>
-              ))}
-            </div>
+          {/* Heading */}
+          <div className="text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-widest mb-3 text-blue-600">Why FigureReady?</p>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+              Built for researchers. Designed for speed.
+            </h2>
           </div>
-        </div>
-      </section>
 
-      {/* ── Perfect for ───────────────────────────────────────────────── */}
-      <section className="py-24 bg-slate-900">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-12">
-            Perfect for
-          </h2>
-          <div className="flex flex-wrap justify-center gap-3">
-            {['Biology', 'Medicine', 'Neuroscience', 'Pharmacology', 'Chemistry', 'Life Sciences'].map(field => (
-              <span key={field} className="px-5 py-2.5 rounded-full text-sm font-medium text-slate-300 border border-white/[0.15] hover:border-white/40 hover:text-white transition-colors cursor-default">
-                {field}
-              </span>
-            ))}
+          {/* Row 1: comparison table (left) + 4 props 2×2 (right) */}
+          <div className="grid lg:grid-cols-2 gap-4 mb-4">
+
+            {/* Comparison */}
+            <div className="rounded-2xl overflow-hidden shadow-sm ring-1 ring-slate-200">
+              <div className="grid grid-cols-2 h-full">
+                <div className="bg-slate-900 p-7">
+                  <p className="font-bold text-sm text-white mb-5 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                    FigureReady
+                  </p>
+                  {(['Browser-based', 'No installation', 'Modern interface', 'Fast workflow', '€99/year'] as const).map((f, i, arr) => (
+                    <div key={f} className={`flex items-center gap-3 py-2.5 ${i < arr.length - 1 ? 'border-b border-white/[0.07]' : ''}`}>
+                      <svg className="w-4 h-4 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span className="text-sm text-white">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-white p-7">
+                  <p className="font-bold text-sm text-slate-400 mb-5">Traditional software</p>
+                  {(['Desktop app', 'Installation required', 'Complex interface', 'Long workflow', 'Hundreds €/year'] as const).map((f, i, arr) => (
+                    <div key={f} className={`flex items-center gap-3 py-2.5 ${i < arr.length - 1 ? 'border-b border-slate-100' : ''}`}>
+                      <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      <span className="text-sm text-slate-400">{f}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 4 value props 2×2 */}
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { emoji: '⚡', title: '10× Faster',          desc: 'Figures in seconds, not hours of formatting.' },
+                { emoji: '🌐', title: 'Browser-Based',        desc: 'No install. Works on any device, anywhere.' },
+                { emoji: '🎨', title: 'Publication Quality',  desc: 'Nature, ACS, Cell — journal presets built in.' },
+                { emoji: '💰', title: '€99 / year',           desc: 'Unlimited figures. No per-export pricing.' },
+              ].map(item => (
+                <div key={item.title} className="bg-white rounded-2xl p-6 shadow-sm ring-1 ring-slate-200 flex flex-col gap-3">
+                  <span className="text-2xl leading-none">{item.emoji}</span>
+                  <h3 className="font-bold text-slate-900 text-[15px] leading-snug">{item.title}</h3>
+                  <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
+
+          {/* Row 2: checklist (left) + perfect for (right) */}
+          <div className="grid lg:grid-cols-[1fr_200px] gap-4">
+
+            {/* Feature checklist */}
+            <div className="bg-white rounded-2xl p-7 shadow-sm ring-1 ring-slate-200">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">What&apos;s included</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-3 gap-x-4">
+                {['Excel import', 'Error bars', 'SVG / PNG export', 'Significance annotations', 'Publication styling', 'Insets', 'Modern interface', 'Browser-based'].map(f => (
+                  <div key={f} className="flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-xs text-slate-600 font-medium">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Perfect for */}
+            <div className="bg-slate-900 rounded-2xl p-7 shadow-sm flex flex-col">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-5">Perfect for</p>
+              <div className="flex flex-col gap-2.5">
+                {['Biology', 'Medicine', 'Neuroscience', 'Pharmacology', 'Chemistry', 'Life Sciences'].map(field => (
+                  <div key={field} className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0" />
+                    <span className="text-sm text-slate-300">{field}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
