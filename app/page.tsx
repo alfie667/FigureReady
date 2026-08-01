@@ -134,13 +134,13 @@ export default function LandingPage() {
         </div>
 
         {/* Demo video */}
-        <div className="border-t border-slate-200 bg-slate-900 py-16 sm:py-24">
+        <div className="border-t border-slate-100 py-16 sm:py-24" style={{ background: 'linear-gradient(160deg, #eef2ff 0%, #f5f8ff 40%, #f0f4ff 100%)' }}>
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <p className="text-center text-xs font-bold uppercase tracking-widest mb-10 text-blue-400">
+            <p className="text-center text-xs font-bold uppercase tracking-widest mb-10 text-blue-600">
               See it in action
             </p>
             {/* macOS-style browser window */}
-            <div className="rounded-xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.7)]">
+            <div className="rounded-xl overflow-hidden ring-1 ring-slate-200 shadow-[0_24px_80px_rgba(99,102,241,0.18),0_8px_32px_rgba(0,0,0,0.10)]">
               {/* Window chrome — dark macOS style */}
               <div className="bg-[#2d2d2d] px-4 py-[10px] flex items-center gap-3 border-b border-white/[0.07]">
                 <div className="flex items-center gap-[6px] shrink-0">
@@ -160,7 +160,7 @@ export default function LandingPage() {
               </div>
               <VideoPlayer src="/demo.mp4" playbackRate={0.7} />
             </div>
-            <p className="text-center text-xs text-slate-500 mt-6">
+            <p className="text-center text-xs text-slate-400 mt-6">
               From Excel file to publication-ready figure — no account, no setup
             </p>
           </div>

@@ -1,5 +1,6 @@
 const TESTIMONIALS = [
   {
+    avatar: 'https://i.pravatar.cc/80?img=47',
     figure: '/figures/fig-entropy.png',
     alt: 'Entropy change ΔS vs Electric Field — terpolymer cycling study',
     quote: "I spent weeks reformatting these curves in Origin. FigureReady reproduced them in 2 minutes with the exact style our editor required.",
@@ -7,9 +8,14 @@ const TESTIMONIALS = [
     role: 'Postdoc · Condensed Matter Physics',
     institution: 'ETH Zürich',
     journal: 'Nature Physics',
-    journalClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    topColor: '#34d399',        // emerald-400
+    figureBg: '#ecfdf5',        // emerald-50
+    journalBg: '#d1fae5',
+    journalText: '#065f46',
+    avatarRing: '#6ee7b7',
   },
   {
+    avatar: 'https://i.pravatar.cc/80?img=57',
     figure: '/figures/fig-crystalline.png',
     alt: 'Crystalline phase content vs Electric field — multi-series with inset',
     quote: "Six data series, an inset, and two legends — all from a single Excel file. FigureReady handled it without any extra configuration.",
@@ -17,9 +23,14 @@ const TESTIMONIALS = [
     role: 'PhD student · Materials Science',
     institution: 'TU Berlin',
     journal: 'Advanced Materials',
-    journalClass: 'bg-blue-50 text-blue-700 border-blue-200',
+    topColor: '#60a5fa',        // blue-400
+    figureBg: '#eff6ff',        // blue-50
+    journalBg: '#dbeafe',
+    journalText: '#1e40af',
+    avatarRing: '#93c5fd',
   },
   {
+    avatar: 'https://i.pravatar.cc/80?img=44',
     figure: '/figures/fig-absorbance.png',
     alt: 'Absorption spectra at varying voltages — R-BN templated film',
     quote: "My absorption spectra were ready for submission in 3 minutes. My PI asked what software I used — he still can't believe it's free.",
@@ -27,7 +38,11 @@ const TESTIMONIALS = [
     role: 'Postdoc · Physical Chemistry',
     institution: 'University of Cambridge',
     journal: 'ACS Nano',
-    journalClass: 'bg-violet-50 text-violet-700 border-violet-200',
+    topColor: '#a78bfa',        // violet-400
+    figureBg: '#f5f3ff',        // violet-50
+    journalBg: '#ede9fe',
+    journalText: '#5b21b6',
+    avatarRing: '#c4b5fd',
   },
 ]
 
@@ -42,7 +57,7 @@ function BookIcon() {
 
 export default function TestimonialsMarquee() {
   return (
-    <section className="py-28 bg-white border-y border-slate-100">
+    <section className="py-28 border-y border-slate-100" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f5f0ff 100%)' }}>
       <div className="max-w-6xl mx-auto px-6">
 
         <div className="text-center mb-16">
@@ -61,28 +76,34 @@ export default function TestimonialsMarquee() {
           {TESTIMONIALS.map((t) => (
             <div
               key={t.name}
-              className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col"
+              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col"
+              style={{ borderTop: `3px solid ${t.topColor}` }}
             >
-              {/* Figure — clean white bg, panel letter cropped via overflow */}
-              <div className="relative overflow-hidden bg-white flex items-center justify-center" style={{ aspectRatio: '4/3' }}>
+              {/* Figure */}
+              <div
+                className="relative overflow-hidden flex items-center justify-center"
+                style={{ aspectRatio: '4/3', background: t.figureBg }}
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={t.figure}
                   alt={t.alt}
-                  className="w-[92%] h-[92%] object-contain"
-                  style={{ display: 'block' }}
+                  className="w-[88%] h-[88%] object-contain"
                 />
-                {/* Top-left gradient to softly erase panel letter (b/e) */}
+                {/* Soft gradient to hide panel letter */}
                 <div
-                  className="absolute top-0 left-0 w-14 h-14 pointer-events-none"
-                  style={{ background: 'radial-gradient(ellipse at top left, rgba(255,255,255,0.95) 0%, transparent 70%)' }}
+                  className="absolute top-0 left-0 w-16 h-16 pointer-events-none"
+                  style={{ background: `radial-gradient(ellipse at top left, ${t.figureBg} 0%, transparent 65%)` }}
                 />
               </div>
 
               {/* Content */}
               <div className="p-6 flex flex-col flex-1">
                 {/* Journal badge */}
-                <span className={`inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold border mb-5 ${t.journalClass}`}>
+                <span
+                  className="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold mb-4"
+                  style={{ background: t.journalBg, color: t.journalText }}
+                >
                   <BookIcon />
                   {t.journal}
                 </span>
@@ -92,11 +113,22 @@ export default function TestimonialsMarquee() {
                   &ldquo;{t.quote}&rdquo;
                 </p>
 
-                {/* Author */}
-                <div className="pt-4 border-t border-slate-100">
-                  <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                  <p className="text-[12px] text-slate-400 mt-0.5">{t.role}</p>
-                  <p className="text-[12px] text-slate-400">{t.institution}</p>
+                {/* Author with avatar */}
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={t.avatar}
+                    alt={t.name}
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-full object-cover shrink-0"
+                    style={{ boxShadow: `0 0 0 2px white, 0 0 0 4px ${t.avatarRing}` }}
+                  />
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{t.role}</p>
+                    <p className="text-[11px] text-slate-400">{t.institution}</p>
+                  </div>
                 </div>
               </div>
             </div>
