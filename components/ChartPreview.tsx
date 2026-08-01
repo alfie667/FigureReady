@@ -1000,7 +1000,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   const doExportPNG = async () => {
     if (!chartRef.current) return
-    trackExport()
+    trackExport('png')
     const { toPng } = await import('html-to-image')
     try {
       const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
@@ -1024,7 +1024,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   const doExportPDF = async () => {
     if (!chartRef.current) return
-    trackExport()
+    trackExport('pdf')
     const { toPng } = await import('html-to-image')
     try {
       const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
@@ -1045,7 +1045,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   const doExportSVG = () => {
     if (!chartRef.current) return
-    trackExport()
+    trackExport('svg')
     const svg = chartRef.current.querySelector('svg')
     if (!svg) return
     const containerRect = chartRef.current.getBoundingClientRect()

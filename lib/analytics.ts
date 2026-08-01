@@ -70,6 +70,10 @@ export function trackUploadCtaClick(location = 'unknown') {
   trackEvent('upload_cta_click', { location })
 }
 
+export function trackAppOpen() {
+  trackEvent('app_open')
+}
+
 export function trackSampleCtaClick() {
   trackEvent('sample_cta_click')
 }
@@ -90,8 +94,8 @@ export function trackChartCreated() {
   incLocal('chartsCreated')
 }
 
-export function trackExport() {
-  trackEvent('export')
+export function trackExport(format?: 'png' | 'svg' | 'pdf') {
+  trackEvent('export', format ? { format } : undefined)
   incLocal('exports')
 }
 

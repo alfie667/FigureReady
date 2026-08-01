@@ -19,7 +19,7 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
-import { trackUpload, trackChartCreated, trackSampleCtaClick, trackSampleDataLoaded } from '@/lib/analytics'
+import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen } from '@/lib/analytics'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { isProUser } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
@@ -146,6 +146,7 @@ export default function AppPage() {
   const [panelAnnotations, setPanelAnnotations] = useState<ChartAnnotation[][]>([[], [], [], []])
 
   useEffect(() => {
+    trackAppOpen()
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
   }, [])
@@ -399,7 +400,6 @@ export default function AppPage() {
   }
 
   const handleSampleData = () => {
-    trackSampleCtaClick()
     const cols = Object.keys(SAMPLE_ROWS[0])
     handleData(cols, SAMPLE_ROWS)
     trackSampleDataLoaded()
