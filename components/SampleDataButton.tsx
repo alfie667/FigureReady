@@ -1,7 +1,8 @@
 'use client'
-import * as XLSX from 'xlsx'
+import { useRouter } from 'next/navigation'
 import { trackSampleCtaClick } from '@/lib/analytics'
 
+// Kept here because app/app/page.tsx imports SAMPLE_ROWS directly
 export const SAMPLE_ROWS = [
   { 'X (Concentration mM)': 0,   'Sample A (Absorbance)': 0.02, 'Sample B (Absorbance)': 0.01 },
   { 'X (Concentration mM)': 0.5, 'Sample A (Absorbance)': 0.18, 'Sample B (Absorbance)': 0.09 },
@@ -16,21 +17,19 @@ export const SAMPLE_ROWS = [
 ]
 
 export default function SampleDataButton({ className }: { className?: string }) {
-  function download() {
+  const router = useRouter()
+
+  function handleClick() {
     trackSampleCtaClick()
-    const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS)
-    ws['!cols'] = [{ wch: 24 }, { wch: 24 }, { wch: 24 }]
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, 'Sample Data')
-    XLSX.writeFile(wb, 'figureready-sample.xlsx')
+    router.push('/app?demo=1')
   }
 
   return (
-    <button onClick={download} className={className}>
+    <button onClick={handleClick} className={className}>
       <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
-      Generate a Demo Figure
+      Try a Live Demo
     </button>
   )
 }

@@ -82,6 +82,10 @@ export function trackSampleDataLoaded() {
   trackEvent('sample_data_loaded')
 }
 
+export function trackDemoFigureCreated() {
+  trackEvent('demo_figure_created')
+}
+
 // ── App events ────────────────────────────────────────────────────────────────
 
 export function trackUpload() {

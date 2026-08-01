@@ -19,7 +19,7 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
-import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen } from '@/lib/analytics'
+import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated } from '@/lib/analytics'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { isProUser } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
@@ -403,7 +403,17 @@ export default function AppPage() {
     const cols = Object.keys(SAMPLE_ROWS[0])
     handleData(cols, SAMPLE_ROWS)
     trackSampleDataLoaded()
+    trackDemoFigureCreated()
   }
+
+  // Auto-load demo when arriving from landing page CTA (?demo=1).
+  // URL param is cleared immediately — no double-fire on refresh or back-navigation.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('demo') !== '1') return
+    window.history.replaceState({}, '', window.location.pathname)
+    handleSampleData()
+  }, [])
 
   const handleSaveTemplate = (name: string) => {
     const base = chartStyles[styleName]
