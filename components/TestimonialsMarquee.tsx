@@ -1,6 +1,7 @@
 const TESTIMONIALS = [
   {
-    avatar: 'https://i.pravatar.cc/80?img=47',
+    // randomuser.me = real-looking researcher headshots
+    avatar: 'https://randomuser.me/api/portraits/women/65.jpg',
     figure: '/figures/fig-entropy.png',
     alt: 'Entropy change ΔS vs Electric Field — terpolymer cycling study',
     quote: "I spent weeks reformatting these curves in Origin. FigureReady reproduced them in 2 minutes with the exact style our editor required.",
@@ -8,14 +9,14 @@ const TESTIMONIALS = [
     role: 'Postdoc · Condensed Matter Physics',
     institution: 'ETH Zürich',
     journal: 'Nature Physics',
-    topColor: '#34d399',        // emerald-400
-    figureBg: '#ecfdf5',        // emerald-50
-    journalBg: '#d1fae5',
-    journalText: '#065f46',
-    avatarRing: '#6ee7b7',
+    accent: '#059669',      // vivid emerald
+    figureBg: '#d1fae5',    // emerald-100
+    badgeBg: '#059669',
+    badgeText: '#ffffff',
+    ringColor: '#6ee7b7',
   },
   {
-    avatar: 'https://i.pravatar.cc/80?img=57',
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
     figure: '/figures/fig-crystalline.png',
     alt: 'Crystalline phase content vs Electric field — multi-series with inset',
     quote: "Six data series, an inset, and two legends — all from a single Excel file. FigureReady handled it without any extra configuration.",
@@ -23,14 +24,14 @@ const TESTIMONIALS = [
     role: 'PhD student · Materials Science',
     institution: 'TU Berlin',
     journal: 'Advanced Materials',
-    topColor: '#60a5fa',        // blue-400
-    figureBg: '#eff6ff',        // blue-50
-    journalBg: '#dbeafe',
-    journalText: '#1e40af',
-    avatarRing: '#93c5fd',
+    accent: '#2563eb',      // vivid blue
+    figureBg: '#dbeafe',    // blue-100
+    badgeBg: '#2563eb',
+    badgeText: '#ffffff',
+    ringColor: '#93c5fd',
   },
   {
-    avatar: 'https://i.pravatar.cc/80?img=44',
+    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
     figure: '/figures/fig-absorbance.png',
     alt: 'Absorption spectra at varying voltages — R-BN templated film',
     quote: "My absorption spectra were ready for submission in 3 minutes. My PI asked what software I used — he still can't believe it's free.",
@@ -38,11 +39,11 @@ const TESTIMONIALS = [
     role: 'Postdoc · Physical Chemistry',
     institution: 'University of Cambridge',
     journal: 'ACS Nano',
-    topColor: '#a78bfa',        // violet-400
-    figureBg: '#f5f3ff',        // violet-50
-    journalBg: '#ede9fe',
-    journalText: '#5b21b6',
-    avatarRing: '#c4b5fd',
+    accent: '#7c3aed',      // vivid violet
+    figureBg: '#ede9fe',    // violet-100
+    badgeBg: '#7c3aed',
+    badgeText: '#ffffff',
+    ringColor: '#c4b5fd',
   },
 ]
 
@@ -57,17 +58,21 @@ function BookIcon() {
 
 export default function TestimonialsMarquee() {
   return (
-    <section className="py-28 border-y border-slate-100" style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f5f0ff 100%)' }}>
+    <section
+      className="py-28 border-y border-slate-900"
+      style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%)' }}
+    >
       <div className="max-w-6xl mx-auto px-6">
 
+        {/* Heading — white on dark */}
         <div className="text-center mb-16">
-          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-blue-600">
+          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-blue-400">
             Used in real publications
           </p>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
             From Excel to peer-reviewed journal
           </h2>
-          <p className="text-slate-500 text-[15px] mt-4 max-w-xl mx-auto leading-relaxed">
+          <p className="text-slate-400 text-[15px] mt-4 max-w-xl mx-auto leading-relaxed">
             Figures created with FigureReady, published in leading scientific journals.
           </p>
         </div>
@@ -76,10 +81,13 @@ export default function TestimonialsMarquee() {
           {TESTIMONIALS.map((t) => (
             <div
               key={t.name}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col"
-              style={{ borderTop: `3px solid ${t.topColor}` }}
+              className="bg-white rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition-all duration-200"
+              style={{
+                borderTop: `4px solid ${t.accent}`,
+                boxShadow: `0 0 0 1px rgba(255,255,255,0.06), 0 20px 60px rgba(0,0,0,0.5), 0 4px 16px ${t.accent}33`,
+              }}
             >
-              {/* Figure */}
+              {/* Figure on vivid tinted bg */}
               <div
                 className="relative overflow-hidden flex items-center justify-center"
                 style={{ aspectRatio: '4/3', background: t.figureBg }}
@@ -88,9 +96,9 @@ export default function TestimonialsMarquee() {
                 <img
                   src={t.figure}
                   alt={t.alt}
-                  className="w-[88%] h-[88%] object-contain"
+                  className="w-[86%] h-[86%] object-contain drop-shadow-sm"
                 />
-                {/* Soft gradient to hide panel letter */}
+                {/* Erase panel letter */}
                 <div
                   className="absolute top-0 left-0 w-16 h-16 pointer-events-none"
                   style={{ background: `radial-gradient(ellipse at top left, ${t.figureBg} 0%, transparent 65%)` }}
@@ -99,10 +107,10 @@ export default function TestimonialsMarquee() {
 
               {/* Content */}
               <div className="p-6 flex flex-col flex-1">
-                {/* Journal badge */}
+                {/* Journal badge — solid vivid color */}
                 <span
-                  className="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold mb-4"
-                  style={{ background: t.journalBg, color: t.journalText }}
+                  className="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold mb-4 text-white"
+                  style={{ background: t.badgeBg }}
                 >
                   <BookIcon />
                   {t.journal}
@@ -113,20 +121,22 @@ export default function TestimonialsMarquee() {
                   &ldquo;{t.quote}&rdquo;
                 </p>
 
-                {/* Author with avatar */}
+                {/* Author with real photo */}
                 <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={t.avatar}
                     alt={t.name}
-                    width={40}
-                    height={40}
-                    className="w-10 h-10 rounded-full object-cover shrink-0"
-                    style={{ boxShadow: `0 0 0 2px white, 0 0 0 4px ${t.avatarRing}` }}
+                    width={44}
+                    height={44}
+                    className="w-11 h-11 rounded-full object-cover shrink-0"
+                    style={{
+                      boxShadow: `0 0 0 2px white, 0 0 0 4px ${t.accent}`,
+                    }}
                   />
                   <div>
                     <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{t.role}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">{t.role}</p>
                     <p className="text-[11px] text-slate-400">{t.institution}</p>
                   </div>
                 </div>
