@@ -174,29 +174,25 @@ export default function LandingPage() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 pt-16 pb-20">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {/* Left — giant title */}
-            <div>
-              <h1
-                className="font-black text-slate-900 leading-[1.1] tracking-[-0.03em]"
-                style={{ fontSize: 'clamp(44px, 6.5vw, 82px)' }}
-              >
-                From <span style={{ color: '#2563eb' }}>Excel</span> to<br />
-                publication-<span style={{ color: '#2563eb' }}>ready figures</span> in seconds.
-              </h1>
-            </div>
-
-            {/* Right — description + avatars + CTA */}
+            {/* Left — title + description + CTAs */}
             <div className="flex flex-col gap-8">
               <div>
-                <p className="text-sm font-bold uppercase tracking-widest text-slate-900 mb-4">Scientific Figure Maker</p>
-                <p className="text-xl text-slate-900 leading-relaxed mb-6">
-                  No Origin. No Prism. Upload your .xlsx and download a journal-quality PNG or SVG in seconds.
+                <p className="text-sm font-bold uppercase tracking-widest text-[#2563eb] mb-4">Scientific Figure Maker</p>
+                <h1
+                  className="font-black text-slate-900 leading-[1.1] tracking-[-0.03em] mb-5"
+                  style={{ fontSize: 'clamp(40px, 5.5vw, 72px)' }}
+                >
+                  From <span style={{ color: '#2563eb' }}>Excel</span> to<br />
+                  publication-<span style={{ color: '#2563eb' }}>ready</span><br />
+                  figures in seconds.
+                </h1>
+                <p className="text-lg text-slate-600 leading-relaxed mb-5">
+                  No Origin. No Prism. Upload your .xlsx and download a journal-quality figure for Nature, ACS, Cell — in seconds.
                 </p>
-                {/* Avatars + social proof */}
                 <AvatarRow />
-                <p className="text-lg font-medium text-slate-900">
+                <p className="text-base font-medium text-slate-700 mt-1">
                   Trusted by PhD students, postdocs, and researchers worldwide.
                 </p>
               </div>
@@ -209,11 +205,23 @@ export default function LandingPage() {
                 <SampleDataButton className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 text-base font-semibold rounded-full transition-colors cursor-pointer" />
               </div>
 
-              {/* Trust signal */}
               <p className="text-xs text-slate-400">
                 Free to use · No account needed · 300 DPI export
               </p>
             </div>
+
+            {/* Right — demo video */}
+            <div className="relative rounded-2xl overflow-hidden shadow-[0_24px_80px_rgba(37,99,235,0.18)] ring-1 ring-slate-200 bg-slate-100">
+              <video
+                src="/demo.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-auto block"
+              />
+            </div>
+
           </div>
         </div>
 
