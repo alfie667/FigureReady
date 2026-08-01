@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { gtagEvent } from '@/lib/ga'
+import { trackUploadCtaClick } from '@/lib/analytics'
 
 interface Props {
   children: React.ReactNode
@@ -14,7 +14,7 @@ export default function GatedAppLink({ children, className, location = 'unknown'
     <Link
       href="/app"
       className={className}
-      onClick={() => gtagEvent('cta_click', { location })}
+      onClick={() => trackUploadCtaClick(location)}
     >
       {children}
     </Link>

@@ -19,7 +19,10 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
-import { trackUpload, trackChartCreated } from '@/lib/analytics'
+import { trackUpload, trackChartCreated, trackSampleCtaClick, trackSampleDataLoaded } from '@/lib/analytics'
+import { SAMPLE_ROWS } from '@/components/SampleDataButton'
+import { isProUser } from '@/lib/usageLimit'
+import PaywallModal from '@/components/PaywallModal'
 import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
 import { parseExcelFile } from '@/lib/parseExcel'
 import { LineThicknessPicker, ToggleSwitch, type NumericPreset } from '@/components/StyleControls'
@@ -117,11 +120,17 @@ export default function AppPage() {
 
   const chartPreviewRef = useRef<ChartPreviewHandle>(null)
   const multiPanelRef = useRef<MultiPanelPreviewHandle>(null)
+  const [multiPanelPaywallOpen, setMultiPanelPaywallOpen] = useState(false)
 
   const handleExportSVG = () => chartPreviewRef.current?.triggerExport('svg')
+  const handleExportPDF = () => chartPreviewRef.current?.triggerExport('pdf')
   const handleExportPNG = () => {
-    if (isMultiPanel) multiPanelRef.current?.exportPNG()
-    else chartPreviewRef.current?.triggerExport('png')
+    if (isMultiPanel) {
+      if (isProUser()) multiPanelRef.current?.exportPNG()
+      else setMultiPanelPaywallOpen(true)
+    } else {
+      chartPreviewRef.current?.triggerExport('png')
+    }
   }
 
   // Active sidebar panel
@@ -387,6 +396,13 @@ export default function AppPage() {
 
   const focusUpload = () => {
     document.getElementById('file-upload')?.click()
+  }
+
+  const handleSampleData = () => {
+    trackSampleCtaClick()
+    const cols = Object.keys(SAMPLE_ROWS[0])
+    handleData(cols, SAMPLE_ROWS)
+    trackSampleDataLoaded()
   }
 
   const handleSaveTemplate = (name: string) => {
@@ -775,6 +791,7 @@ export default function AppPage() {
         hasData={columns.length > 0}
         onReset={reset}
         onExportSVG={handleExportSVG}
+        onExportPDF={handleExportPDF}
         onExportPNG={handleExportPNG}
         onShareLink={handleShareLink}
       />
@@ -893,7 +910,7 @@ export default function AppPage() {
             />
           ) : (
             <div className="flex-1 flex items-center justify-center bg-[#eff6ff]">
-              <EmptyState onUploadClick={focusUpload} />
+              <EmptyState onUploadClick={focusUpload} onSampleClick={handleSampleData} />
             </div>
           )}
         </main>
@@ -901,6 +918,14 @@ export default function AppPage() {
       </div>
 
       <FeedbackButton />
+
+      {multiPanelPaywallOpen && (
+        <PaywallModal
+          mode="blocked"
+          previewDataUrl={null}
+          onClose={() => setMultiPanelPaywallOpen(false)}
+        />
+      )}
     </div>
   )
 }

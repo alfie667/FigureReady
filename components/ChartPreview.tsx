@@ -1,8 +1,8 @@
 ﻿'use client'
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type Key } from 'react'
-import { trackExport } from '@/lib/analytics'
+import { trackExport, trackFirstFreeExport, trackFreeExportUsed, trackPaywallShown } from '@/lib/analytics'
 import { gtagEvent } from '@/lib/ga'
-import { isProUser } from '@/lib/usageLimit'
+import { isProUser, hasUsedFreeExport, recordFreeExport } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
 import {
   LineChart, Line,
@@ -232,6 +232,28 @@ function crc32(data: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0
 }
 
+function addWatermark(dataUrl: string): Promise<string> {
+  return new Promise(resolve => {
+    const img = new Image()
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0)
+      const fontSize = Math.max(11, Math.round(img.width * 0.022))
+      ctx.font = `${fontSize}px Arial, sans-serif`
+      ctx.fillStyle = 'rgba(120, 120, 120, 0.55)'
+      ctx.textAlign = 'right'
+      ctx.textBaseline = 'bottom'
+      const pad = Math.round(fontSize * 0.8)
+      ctx.fillText('Generated with FigureReady', img.width - pad, img.height - pad)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.src = dataUrl
+  })
+}
+
 function injectPngDpi(dataUrl: string, dpi: number): string {
   const binary = atob(dataUrl.split(',')[1])
   const src = new Uint8Array(binary.length)
@@ -274,7 +296,7 @@ interface ChartMouseEvent {
 }
 
 export interface ChartPreviewHandle {
-  triggerExport: (type: 'png' | 'svg') => void
+  triggerExport: (type: 'png' | 'svg' | 'pdf') => void
 }
 
 interface Props {
@@ -328,6 +350,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const setSelectedId = (id: string | null) => { selectedIdRef.current = id; _setSelectedId(id) }
 
   const [paywallOpen, setPaywallOpen] = useState(false)
+  const [paywallMode, setPaywallMode] = useState<'after_free' | 'blocked'>('blocked')
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
 
@@ -935,24 +958,44 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // ─── Export ──────────────────────────────────────────────────────────────────
 
-  const triggerExport = async (type: 'png' | 'svg') => {
+  async function capturePreview(): Promise<string | null> {
+    if (!chartRef.current) return null
+    try {
+      const { toPng } = await import('html-to-image')
+      return await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 0.4 })
+    } catch { return null }
+  }
+
+  async function openPaywall(mode: 'after_free' | 'blocked') {
+    const preview = await capturePreview()
+    setPreviewDataUrl(preview)
+    setPaywallMode(mode)
+    setPaywallOpen(true)
+  }
+
+  const triggerExport = async (type: 'png' | 'svg' | 'pdf') => {
     gtagEvent('download_click', { file_type: type })
+
     if (isProUser()) {
-      if (type === 'png') doExportPNG()
-      else doExportSVG()
+      if (type === 'png') await doExportPNG()
+      else if (type === 'svg') doExportSVG()
+      else if (type === 'pdf') await doExportPDF()
       return
     }
-    // Capture low-res preview for paywall background
-    let preview: string | null = null
-    if (chartRef.current) {
-      try {
-        const { toPng } = await import('html-to-image')
-        preview = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 0.4 })
-      } catch { /* ignore */ }
+
+    // Free user: one free PNG export
+    if (type === 'png' && !hasUsedFreeExport()) {
+      await doExportFreePNG()
+      recordFreeExport()
+      trackFirstFreeExport()
+      await openPaywall('after_free')
+      return
     }
-    setPreviewDataUrl(preview)
-    gtagEvent('paywall_shown', { file_type: type })
-    setPaywallOpen(true)
+
+    // Quota exhausted or non-PNG format attempted
+    trackFreeExportUsed()
+    trackPaywallShown(type)
+    await openPaywall('blocked')
   }
 
   const doExportPNG = async () => {
@@ -965,6 +1008,39 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
     } catch (err) { console.error('PNG export failed:', err) }
+  }
+
+  const doExportFreePNG = async () => {
+    if (!chartRef.current) return
+    const { toPng } = await import('html-to-image')
+    try {
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 150 / 96 })
+      const withDpi = injectPngDpi(raw, 150)
+      const watermarked = await addWatermark(withDpi)
+      const a = document.createElement('a')
+      a.href = watermarked; a.download = 'figureready-free.png'; a.click()
+    } catch (err) { console.error('Free PNG export failed:', err) }
+  }
+
+  const doExportPDF = async () => {
+    if (!chartRef.current) return
+    trackExport()
+    const { toPng } = await import('html-to-image')
+    try {
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
+      const { jsPDF } = await import('jspdf')
+      const img = new Image()
+      img.src = raw
+      await new Promise<void>(r => { img.onload = () => r() })
+      const pxW = img.naturalWidth
+      const pxH = img.naturalHeight
+      const mmW = (pxW / 300) * 25.4
+      const mmH = (pxH / 300) * 25.4
+      const orientation: 'portrait' | 'landscape' = mmW > mmH ? 'landscape' : 'portrait'
+      const pdf = new jsPDF({ orientation, unit: 'mm', format: [mmW, mmH] })
+      pdf.addImage(raw, 'PNG', 0, 0, mmW, mmH)
+      pdf.save('figureready.pdf')
+    } catch (err) { console.error('PDF export failed:', err) }
   }
 
   const doExportSVG = () => {
@@ -1169,7 +1245,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   return (
     <>
-      {paywallOpen && <PaywallModal previewDataUrl={previewDataUrl} onClose={() => setPaywallOpen(false)} />}
+      {paywallOpen && <PaywallModal mode={paywallMode} previewDataUrl={previewDataUrl} onClose={() => setPaywallOpen(false)} />}
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 

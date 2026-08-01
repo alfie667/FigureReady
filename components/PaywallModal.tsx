@@ -1,17 +1,23 @@
-﻿'use client'
+'use client'
 import { useState } from 'react'
+import { trackBeginCheckout } from '@/lib/analytics'
 
 const CHECKOUT_MONTHLY = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
 const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1'
 
 interface Props {
+  /** after_free: user just received their free export and is prompted to upgrade.
+   *  blocked:    user has exhausted their free quota and must upgrade to export. */
+  mode: 'after_free' | 'blocked'
   previewDataUrl: string | null
   onClose: () => void
 }
 
-export default function PaywallModal({ previewDataUrl, onClose }: Props) {
+export default function PaywallModal({ mode, previewDataUrl, onClose }: Props) {
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
   const checkoutUrl = plan === 'monthly' ? CHECKOUT_MONTHLY : CHECKOUT_YEARLY
+
+  const isAfterFree = mode === 'after_free'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -28,7 +34,7 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
           ×
         </button>
 
-        {/* Blurred figure preview */}
+        {/* Preview banner */}
         <div className="relative h-44 overflow-hidden bg-slate-100 select-none">
           {previewDataUrl ? (
             <img
@@ -42,23 +48,58 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-[#dbeafe] to-slate-100" />
           )}
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/25">
-            <div className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center mb-2 shadow-lg">
-              <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
+
+          {isAfterFree ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-emerald-900/20">
+              <div className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center mb-2 shadow-lg">
+                <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-white text-sm font-semibold drop-shadow-md">Downloaded · 150 DPI · watermark</p>
             </div>
-            <p className="text-white text-sm font-semibold drop-shadow-md">Your figure is ready to download</p>
-          </div>
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/25">
+              <div className="w-11 h-11 rounded-full bg-white/90 flex items-center justify-center mb-2 shadow-lg">
+                <svg className="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <p className="text-white text-sm font-semibold drop-shadow-md">Your figure is ready to download</p>
+            </div>
+          )}
         </div>
 
         {/* Content */}
         <div className="p-6">
-          <h2 className="text-xl font-extrabold text-slate-900 mb-1">Unlock & Download</h2>
-          <p className="text-sm text-slate-500 mb-5">
-            Get your PNG (300 DPI) and SVG with editable layers — publication-ready for Nature, ACS, Cell, and more.
-          </p>
+          {isAfterFree ? (
+            <>
+              <h2 className="text-xl font-extrabold text-slate-900 mb-1">Upgrade for the full version</h2>
+              <p className="text-sm text-slate-500 mb-5">
+                You&apos;ve used your 1 free export. Go Pro for unlimited exports, 300 DPI, SVG, PDF, and no watermark.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-xl font-extrabold text-slate-900 mb-1">Unlock &amp; Download</h2>
+              <p className="text-sm text-slate-500 mb-5">
+                Get PNG (300 DPI), SVG with editable layers, and PDF — publication-ready for Nature, ACS, Cell, and more.
+              </p>
+            </>
+          )}
+
+          {/* Pro features */}
+          <div className="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 mb-5 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-600">
+            {['Unlimited exports', 'No watermark', 'PNG · 300 DPI', 'SVG + PDF'].map(f => (
+              <div key={f} className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                {f}
+              </div>
+            ))}
+          </div>
 
           {/* Plan toggle */}
           <div className="grid grid-cols-2 gap-3 mb-5">
@@ -89,11 +130,12 @@ export default function PaywallModal({ previewDataUrl, onClose }: Props) {
 
           <a
             href={checkoutUrl}
+            onClick={() => trackBeginCheckout(plan)}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl transition-colors shadow-md text-sm"
           >
-            Unlock & Download →
+            {isAfterFree ? 'Upgrade to Pro →' : 'Unlock & Download →'}
           </a>
           <p className="text-center text-xs text-slate-400 mt-3">
             Secure payment · Cancel anytime · Return here after payment to download

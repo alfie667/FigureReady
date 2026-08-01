@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { gtagEvent } from '@/lib/ga'
+import { trackUploadCtaClick } from '@/lib/analytics'
 
 // ── Chart geometry ───────────────────────────────────────────────────────────
 
@@ -237,7 +238,7 @@ export default function InteractiveDemo() {
               href="/app"
               className="px-8 py-3 rounded-full text-white font-bold text-sm shadow-md hover:opacity-90 transition-opacity"
               style={{ background: '#2563eb' }}
-              onClick={() => gtagEvent('cta_click', { location: 'demo' })}
+              onClick={() => trackUploadCtaClick('demo')}
             >
               Try with your own Excel file →
             </a>

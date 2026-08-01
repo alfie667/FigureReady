@@ -50,6 +50,34 @@ export function updateConsent(granted: boolean) {
   })
 }
 
+// ── Free / paywall events ─────────────────────────────────────────────────────
+
+export function trackFirstFreeExport() {
+  trackEvent('first_free_export')
+}
+
+export function trackFreeExportUsed() {
+  trackEvent('free_export_used')
+}
+
+export function trackPaywallShown(fileType?: string) {
+  trackEvent('paywall_shown', fileType ? { file_type: fileType } : undefined)
+}
+
+// ── CTA / funnel events ───────────────────────────────────────────────────────
+
+export function trackUploadCtaClick(location = 'unknown') {
+  trackEvent('upload_cta_click', { location })
+}
+
+export function trackSampleCtaClick() {
+  trackEvent('sample_cta_click')
+}
+
+export function trackSampleDataLoaded() {
+  trackEvent('sample_data_loaded')
+}
+
 // ── App events ────────────────────────────────────────────────────────────────
 
 export function trackUpload() {

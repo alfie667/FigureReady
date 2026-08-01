@@ -1,8 +1,8 @@
 'use client'
 import * as XLSX from 'xlsx'
-import { gtagEvent } from '@/lib/ga'
+import { trackSampleCtaClick } from '@/lib/analytics'
 
-const rows = [
+export const SAMPLE_ROWS = [
   { 'X (Concentration mM)': 0,   'Sample A (Absorbance)': 0.02, 'Sample B (Absorbance)': 0.01 },
   { 'X (Concentration mM)': 0.5, 'Sample A (Absorbance)': 0.18, 'Sample B (Absorbance)': 0.09 },
   { 'X (Concentration mM)': 1.0, 'Sample A (Absorbance)': 0.31, 'Sample B (Absorbance)': 0.14 },
@@ -17,8 +17,8 @@ const rows = [
 
 export default function SampleDataButton({ className }: { className?: string }) {
   function download() {
-    gtagEvent('sample_file_click')
-    const ws = XLSX.utils.json_to_sheet(rows)
+    trackSampleCtaClick()
+    const ws = XLSX.utils.json_to_sheet(SAMPLE_ROWS)
     ws['!cols'] = [{ wch: 24 }, { wch: 24 }, { wch: 24 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Sample Data')
@@ -30,7 +30,7 @@ export default function SampleDataButton({ className }: { className?: string }) 
       <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
       </svg>
-      Try with sample data
+      Generate a Demo Figure
     </button>
   )
 }

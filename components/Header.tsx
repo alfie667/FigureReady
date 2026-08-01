@@ -10,6 +10,7 @@ interface Props {
   onUpgrade?: () => void
   onExportSVG?: () => void
   onExportPNG?: () => void
+  onExportPDF?: () => void
   onShareLink?: () => void
 }
 
@@ -20,7 +21,7 @@ const DownloadIcon = () => (
   </svg>
 )
 
-export default function Header({ hasData, onReset, onExportSVG, onExportPNG, onShareLink }: Props) {
+export default function Header({ hasData, onReset, onExportSVG, onExportPNG, onExportPDF, onShareLink }: Props) {
   const [isPro, setIsPro] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -95,12 +96,21 @@ export default function Header({ hasData, onReset, onExportSVG, onExportPNG, onS
           </button>
         )}
 
+        {hasData && onExportPDF && (
+          <button
+            onClick={onExportPDF}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
+          >
+            <DownloadIcon />PDF
+          </button>
+        )}
+
         {hasData && onExportPNG && (
           <button
             onClick={onExportPNG}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#2563eb] text-white text-xs font-bold hover:bg-[#1d4ed8] transition-colors shadow-sm"
           >
-            <DownloadIcon />PNG · 300 DPI
+            <DownloadIcon />{isPro ? 'PNG · 300 DPI' : 'Export PNG'}
           </button>
         )}
       </div>

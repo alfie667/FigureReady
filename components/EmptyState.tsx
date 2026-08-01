@@ -1,5 +1,6 @@
 interface Props {
   onUploadClick?: () => void
+  onSampleClick?: () => void
 }
 
 const BarChartThumb = () => (
@@ -66,7 +67,7 @@ const EXAMPLES = [
   { thumb: <LineThumb />,    chart: 'Line graph',    style: 'ACS style' },
 ]
 
-export default function EmptyState({ onUploadClick }: Props) {
+export default function EmptyState({ onUploadClick, onSampleClick }: Props) {
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-10 px-6 py-12 text-center">
 
@@ -89,18 +90,31 @@ export default function EmptyState({ onUploadClick }: Props) {
       </div>
 
       {/* CTA */}
-      {onUploadClick && (
-        <div className="flex flex-col items-center gap-2.5">
-          <button
-            onClick={onUploadClick}
-            className="flex items-center gap-2.5 px-8 py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold rounded-2xl transition-all duration-200 shadow-lg shadow-[#2563eb]/30 hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-            </svg>
-            Upload your Excel file
-          </button>
+      {(onUploadClick || onSampleClick) && (
+        <div className="flex flex-col items-center gap-3">
+          {onUploadClick && (
+            <button
+              onClick={onUploadClick}
+              className="flex items-center gap-2.5 px-8 py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold rounded-2xl transition-all duration-200 shadow-lg shadow-[#2563eb]/30 hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              Upload your Excel file
+            </button>
+          )}
+          {onSampleClick && (
+            <button
+              onClick={onSampleClick}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-[#2563eb] transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Generate a Demo Figure
+            </button>
+          )}
           <p className="text-xs text-slate-400">.xlsx · no account required · free</p>
         </div>
       )}
