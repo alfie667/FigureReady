@@ -4,6 +4,7 @@ import GatedAppLink from '@/components/GatedAppLink'
 import SampleDataButton from '@/components/SampleDataButton'
 import TestimonialsMarquee from '@/components/TestimonialsMarquee'
 import { LogoFull, LogoSmall } from '@/components/Logo'
+import { VideoPlayer } from '@/components/VideoPlayer'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Free Scientific Figure Maker from Excel',
@@ -217,23 +218,34 @@ export default function LandingPage() {
         </div>
 
         {/* Demo video */}
-        <div className="border-t border-slate-100 bg-slate-50">
-          <div className="max-w-4xl mx-auto px-6 py-12">
-            <p className="text-center text-xs font-bold uppercase tracking-widest mb-8" style={{ color: '#2563eb' }}>
-              Try it now — no account needed
+        <div className="border-t border-slate-200 bg-slate-900 py-16 sm:py-24">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <p className="text-center text-xs font-bold uppercase tracking-widest mb-10 text-blue-400">
+              See it in action
             </p>
-            <div className="rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-200 bg-white">
-              <video
-                src="/demo.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-full h-auto block"
-              />
+            {/* macOS-style browser window */}
+            <div className="rounded-xl overflow-hidden ring-1 ring-white/10 shadow-[0_30px_100px_rgba(0,0,0,0.7)]">
+              {/* Window chrome — dark macOS style */}
+              <div className="bg-[#2d2d2d] px-4 py-[10px] flex items-center gap-3 border-b border-white/[0.07]">
+                <div className="flex items-center gap-[6px] shrink-0">
+                  <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                  <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                  <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+                </div>
+                <div className="flex-1 flex justify-center">
+                  <div className="bg-[#3d3d3d] rounded-md px-3 py-[5px] text-[12px] text-slate-400 flex items-center gap-1.5 min-w-[220px] justify-center">
+                    <svg className="w-[11px] h-[11px] shrink-0 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    figureready.com/app
+                  </div>
+                </div>
+                <div className="w-[52px] shrink-0" />
+              </div>
+              <VideoPlayer src="/demo.mp4" playbackRate={0.7} />
             </div>
-            <p className="text-center text-xs text-slate-400 mt-6">
-              Upload your .xlsx and get a publication-ready figure in seconds
+            <p className="text-center text-xs text-slate-500 mt-6">
+              From Excel file to publication-ready figure — no account, no setup
             </p>
           </div>
         </div>
