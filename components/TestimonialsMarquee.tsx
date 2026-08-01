@@ -39,11 +39,11 @@ const TESTIMONIALS = [
     role: 'Postdoc · Physical Chemistry',
     institution: 'University of Cambridge',
     journal: 'ACS Nano',
-    accent: '#0891b2',      // vivid cyan
-    figureBg: '#cffafe',    // cyan-100
-    badgeBg: '#0891b2',
+    accent: '#ea580c',      // vivid orange
+    figureBg: '#ffedd5',    // orange-100
+    badgeBg: '#ea580c',
     badgeText: '#ffffff',
-    ringColor: '#67e8f9',
+    ringColor: '#fdba74',
   },
 ]
 
