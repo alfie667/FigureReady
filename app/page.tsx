@@ -1,7 +1,6 @@
 ﻿import type { Metadata } from 'next'
 import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
-import SampleDataButton from '@/components/SampleDataButton'
 import TestimonialsMarquee from '@/components/TestimonialsMarquee'
 import { LogoFull, LogoSmall } from '@/components/Logo'
 import { VideoPlayer } from '@/components/VideoPlayer'
@@ -81,7 +80,7 @@ export default function LandingPage() {
             <Link href="/pricing" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">Roadmap</Link>
           </div>
-          <GatedAppLink location="nav" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-700 text-white text-sm font-bold rounded-full transition-colors">
+          <GatedAppLink location="nav" href="/app?demo=1" className="px-5 py-2.5 bg-slate-900 hover:bg-slate-700 text-white text-sm font-bold rounded-full transition-colors">
             Try it free →
           </GatedAppLink>
         </div>
@@ -119,10 +118,9 @@ export default function LandingPage() {
 
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <GatedAppLink location="hero" className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
-                  Upload your Excel →
+                <GatedAppLink location="hero" href="/app?demo=1" className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
+                  Begin Using →
                 </GatedAppLink>
-                <SampleDataButton className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 text-base font-semibold rounded-full transition-colors cursor-pointer" />
               </div>
 
               {/* Trust signal */}
@@ -293,7 +291,7 @@ export default function LandingPage() {
           <p className="text-slate-500 text-lg mb-10 leading-relaxed">
             No account required. First export free.
           </p>
-          <GatedAppLink location="final_cta" className="inline-flex items-center justify-center px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
+          <GatedAppLink location="final_cta" href="/app?demo=1" className="inline-flex items-center justify-center px-10 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
             Start Free →
           </GatedAppLink>
         </div>

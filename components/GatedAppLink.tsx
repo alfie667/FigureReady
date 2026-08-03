@@ -7,12 +7,13 @@ interface Props {
   children: React.ReactNode
   className?: string
   location?: string
+  href?: string
 }
 
-export default function GatedAppLink({ children, className, location = 'unknown' }: Props) {
+export default function GatedAppLink({ children, className, location = 'unknown', href = '/app' }: Props) {
   return (
     <Link
-      href="/app"
+      href={href}
       className={className}
       onClick={() => trackUploadCtaClick(location)}
     >

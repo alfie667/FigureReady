@@ -9,7 +9,6 @@ import MultiPanelPreview, { type MultiPanelPreviewHandle } from '@/components/Mu
 import PanelLayoutSelector from '@/components/PanelLayoutSelector'
 import EmptyState from '@/components/EmptyState'
 import Header from '@/components/Header'
-import WelcomeModal from '@/components/WelcomeModal'
 import FeedbackButton from '@/components/FeedbackButton'
 import SaveTemplateModal from '@/components/SaveTemplateModal'
 import TemplateSelector from '@/components/TemplateSelector'
@@ -103,6 +102,7 @@ const PANEL_LABELS_MAP: Record<string, string> = {
 }
 
 export default function AppPage() {
+  const [isDemoMode, setIsDemoMode] = useState(false)
   const [columns, setColumns] = useState<string[]>([])
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [xCol, setXCol] = useState('')
@@ -375,6 +375,7 @@ export default function AppPage() {
     setAnnotations([])
     setIsMultiPanel(false)
     setPanels([])
+    setIsDemoMode(false)
 
     trackUpload()
     trackChartCreated()
@@ -393,6 +394,7 @@ export default function AppPage() {
     setAnnotations([])
     setIsMultiPanel(false)
     setPanels([])
+    setIsDemoMode(false)
   }
 
   const focusUpload = () => {
@@ -402,8 +404,19 @@ export default function AppPage() {
   const handleSampleData = () => {
     const cols = Object.keys(SAMPLE_ROWS[0])
     handleData(cols, SAMPLE_ROWS)
+    setIsDemoMode(true)
     trackSampleDataLoaded()
     trackDemoFigureCreated()
+  }
+
+  const handleFileFromBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    try {
+      const { columns: cols, rows } = await parseExcelFile(file)
+      if (rows.length > 0) handleData(cols, rows)
+    } catch { /* silently ignore parse errors */ }
   }
 
   // Auto-load demo when arriving from landing page CTA (?demo=1).
@@ -790,7 +803,6 @@ export default function AppPage() {
 
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
-      <WelcomeModal />
       {saveTemplateOpen && (
         <SaveTemplateModal
           onSave={handleSaveTemplate}
@@ -805,6 +817,23 @@ export default function AppPage() {
         onExportPNG={handleExportPNG}
         onShareLink={handleShareLink}
       />
+
+      {isDemoMode && (
+        <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center justify-between gap-4 shrink-0">
+          <p className="text-xs text-blue-700 min-w-0">
+            <span className="font-semibold">You&apos;re editing a sample dataset.</span>{' '}
+            <span className="hidden sm:inline">Upload your own Excel file to create figures from your own data.</span>
+          </p>
+          <label className="shrink-0 flex items-center gap-1.5 px-4 py-1.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-xs font-bold rounded-full transition-colors shadow-sm cursor-pointer whitespace-nowrap">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            Upload your Excel
+            <input type="file" accept=".xlsx" className="sr-only" onChange={handleFileFromBanner} />
+          </label>
+        </div>
+      )}
 
       <div className="flex-1 flex overflow-hidden">
 
