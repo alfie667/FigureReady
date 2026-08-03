@@ -119,7 +119,7 @@ export default function LandingPage() {
               {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-3 items-center">
                 <GatedAppLink location="hero" href="/app?demo=1" className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md shrink-0">
-                  Begin Using →
+                  Start Creating Figures →
                 </GatedAppLink>
                 <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-slate-100 shadow-sm">
                   <div className="w-16 h-11 shrink-0">
