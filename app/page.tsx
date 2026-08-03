@@ -184,31 +184,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Institutions ─────────────────────────────────────────────────── */}
-      <section className="border-y border-slate-100 py-14 bg-white">
-        <div className="max-w-6xl mx-auto px-6">
-          <p className="text-center text-sm text-slate-400 mb-10 tracking-wide">
-            Trusted by researchers from leading institutions:
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-14 gap-y-5">
-            {[
-              'Imperial College London',
-              'University of Tokyo',
-              'University of Michigan',
-              'Seoul National University',
-              'Harvard University',
-              'ETH Zürich',
-              'MIT',
-              'CNRS',
-              'Max Planck Institute',
-            ].map(name => (
-              <span key={name} className="text-slate-300 font-semibold text-sm tracking-wide whitespace-nowrap select-none">
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ── How it works ─────────────────────────────────────────────────── */}
       <section id="how-it-works" className="py-28 bg-white">
