@@ -117,10 +117,37 @@ export default function LandingPage() {
               </div>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                <GatedAppLink location="hero" href="/app?demo=1" className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md">
+              <div className="flex flex-col sm:flex-row gap-3 items-center">
+                <GatedAppLink location="hero" href="/app?demo=1" className="inline-flex items-center justify-center px-8 py-4 bg-slate-900 hover:bg-slate-700 text-white text-base font-bold rounded-full transition-colors shadow-md shrink-0">
                   Begin Using →
                 </GatedAppLink>
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  <div className="w-16 h-11 shrink-0">
+                    <svg viewBox="0 0 120 80" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                      <rect width="120" height="80" fill="white"/>
+                      <line x1="20" y1="8" x2="20" y2="62" stroke="#1a1a1a" strokeWidth="1.2"/>
+                      <line x1="20" y1="62" x2="112" y2="62" stroke="#1a1a1a" strokeWidth="1.2"/>
+                      <polyline points="20,58 38,46 56,32 74,20 92,14 110,10" fill="none" stroke="#2563eb" strokeWidth="1.8" strokeLinejoin="round"/>
+                      <circle cx="20" cy="58" r="2.5" fill="#2563eb"/>
+                      <circle cx="38" cy="46" r="2.5" fill="#2563eb"/>
+                      <circle cx="56" cy="32" r="2.5" fill="#2563eb"/>
+                      <circle cx="74" cy="20" r="2.5" fill="#2563eb"/>
+                      <circle cx="92" cy="14" r="2.5" fill="#2563eb"/>
+                      <circle cx="110" cy="10" r="2.5" fill="#2563eb"/>
+                      <polyline points="20,60 38,54 56,48 74,40 92,34 110,28" fill="none" stroke="#d01c8b" strokeWidth="1.8" strokeLinejoin="round"/>
+                      <rect x="17.5" y="57.5" width="5" height="5" fill="#d01c8b"/>
+                      <rect x="35.5" y="51.5" width="5" height="5" fill="#d01c8b"/>
+                      <rect x="53.5" y="45.5" width="5" height="5" fill="#d01c8b"/>
+                      <rect x="71.5" y="37.5" width="5" height="5" fill="#d01c8b"/>
+                      <rect x="89.5" y="31.5" width="5" height="5" fill="#d01c8b"/>
+                      <rect x="107.5" y="25.5" width="5" height="5" fill="#d01c8b"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 leading-tight">Publication-ready</p>
+                    <p className="text-[11px] text-slate-400 leading-tight mt-0.5">ACS · Nature · Cell</p>
+                  </div>
+                </div>
               </div>
 
               {/* Trust signal */}
