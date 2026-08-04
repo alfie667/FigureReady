@@ -133,8 +133,11 @@ export default function AppPage() {
     }
   }
 
-  // Active sidebar panel
-  const [activeSidePanel, setActiveSidePanel] = useState<string | null>('data')
+  // Active sidebar panel — closed by default on mobile
+  const [activeSidePanel, setActiveSidePanel] = useState<string | null>(() =>
+    typeof window !== 'undefined' && window.innerWidth < 768 ? null : 'data'
+  )
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [panelWidth, setPanelWidth] = useState(280)
   const panelResizeRef = useRef(false)
 
@@ -837,8 +840,8 @@ export default function AppPage() {
 
       <div className="flex-1 flex overflow-hidden">
 
-        {/* Icon bar — 72px wide, Figma-style */}
-        <nav className="w-[72px] shrink-0 border-r border-slate-100 flex flex-col items-center py-3 gap-0.5 bg-white">
+        {/* Icon bar — 72px wide, Figma-style — hidden on mobile */}
+        <nav className="hidden md:flex w-[72px] shrink-0 border-r border-slate-100 flex-col items-center py-3 gap-0.5 bg-white">
           {SIDEBAR_TABS.flatMap((tab, i) => {
             const sep = (i === 2 || i === 4)
               ? [<div key={`sep-${i}`} className="w-9 h-px bg-slate-100 my-1.5 shrink-0" />]
@@ -864,11 +867,11 @@ export default function AppPage() {
           })}
         </nav>
 
-        {/* Secondary panel — resizable, only when activeSidePanel !== null */}
+        {/* Secondary panel — resizable, desktop only */}
         {activeSidePanel && (
           <aside
             style={{ width: panelWidth }}
-            className="shrink-0 border-r border-slate-200 flex flex-col overflow-hidden bg-white relative"
+            className="hidden md:flex shrink-0 border-r border-slate-200 flex-col overflow-hidden bg-white relative"
           >
             <div className="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0 flex items-center gap-2.5">
               <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
@@ -905,7 +908,7 @@ export default function AppPage() {
         )}
 
         {/* Canvas */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden pb-14 md:pb-0">
           {isMultiPanel && panels.length > 0 ? (
             <MultiPanelPreview
               ref={multiPanelRef}
@@ -955,6 +958,52 @@ export default function AppPage() {
         </main>
 
       </div>
+
+      {/* ── Mobile bottom tab bar ─────────────────────────────────────────── */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40 flex items-center justify-around px-1 py-1 safe-area-inset-bottom">
+        {SIDEBAR_TABS.map(tab => {
+          const active = activeSidePanel === tab.id && mobilePanelOpen
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                if (active) { setMobilePanelOpen(false); return }
+                setActiveSidePanel(tab.id)
+                setMobilePanelOpen(true)
+              }}
+              className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-xl transition-colors min-w-0 flex-1 ${
+                active ? 'text-[#2563eb]' : 'text-slate-500'
+              }`}
+            >
+              <div className="w-5 h-5 shrink-0">{tab.icon}</div>
+              <span className="text-[9px] font-semibold leading-none truncate w-full text-center">{tab.label}</span>
+            </button>
+          )
+        })}
+      </nav>
+
+      {/* ── Mobile panel sheet ────────────────────────────────────────────── */}
+      {mobilePanelOpen && activeSidePanel && (
+        <div className="md:hidden fixed inset-x-0 bottom-[52px] z-30 bg-white border-t border-slate-200 rounded-t-2xl shadow-2xl flex flex-col" style={{ maxHeight: '60vh' }}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
+              <h2 className="text-sm font-bold text-slate-800">{PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}</h2>
+            </div>
+            <button
+              onClick={() => setMobilePanelOpen(false)}
+              className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-5">
+            {renderPanelContent()}
+          </div>
+        </div>
+      )}
 
       <FeedbackButton />
 

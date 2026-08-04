@@ -1258,16 +1258,17 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
         {/* Light workspace */}
         <div className="flex-1 overflow-auto bg-[#eff6ff]">
-          <div className="min-h-full flex items-center justify-center p-6 lg:p-10">
-            <div className="overflow-x-auto">
+          <div className="min-h-full flex items-center justify-center p-3 sm:p-6 lg:p-10">
+            <div className="w-full overflow-hidden md:overflow-x-auto">
               <div
                 ref={chartRef}
-                className="relative bg-white p-8 rounded-3xl"
+                className="relative bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl mx-auto"
                 style={{
                   boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
                   cursor: drawInsetMode ? 'crosshair' : isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
+                  maxWidth: '100%',
                   userSelect: 'none',
                 }}
                 onContextMenu={e => e.preventDefault()}
