@@ -909,50 +909,79 @@ export default function AppPage() {
 
         {/* Canvas */}
         <main className="flex-1 flex flex-col overflow-hidden pb-14 md:pb-0">
-          {isMultiPanel && panels.length > 0 ? (
-            <MultiPanelPreview
-              ref={multiPanelRef}
-              panels={panels}
-              layout={panelLayout}
-              activePanel={activePanel}
-              styleName={styleName}
-              panelAnnotations={panelAnnotations}
-              onAnnotationsChange={(idx, anns) =>
-                setPanelAnnotations(prev => prev.map((a, i) => i === idx ? anns : a))
-              }
-              onStyleChange={(idx, patch) =>
-                updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
-              }
-              onPanelClick={setActivePanel}
-              onSaveTemplate={() => setSaveTemplateOpen(true)}
-            />
-          ) : ready ? (
-            <ChartPreview
-              ref={chartPreviewRef}
-              data={data}
-              xCol={xCol}
-              yCols={yCols}
-              seriesNames={seriesNames}
-              errorCols={errorCols}
-              xAxisLabel={xAxisLabel}
-              yAxisLabel={yAxisLabel}
-              chartType={chartType}
-              styleName={styleName}
-              styleOverrides={styleOverrides}
-              annotations={annotations}
-              onAnnotationsChange={setAnnotations}
-              onStyleChange={(patch) => {
-                setStyleOverrides(prev => ({ ...prev, ...patch }))
-                if (patch.insetDefined === false) setDrawInsetMode(false)
-              }}
-              onSaveTemplate={() => setSaveTemplateOpen(true)}
-              drawInsetActive={drawInsetMode}
-              onDrawInsetActiveChange={setDrawInsetMode}
-              annotOpen={activeSidePanel === 'annotate'}
-            />
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-[#eff6ff]">
-              <EmptyState onUploadClick={focusUpload} onSampleClick={handleSampleData} />
+          {/* Figure zone — always visible, grows to fill space above inline panel */}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {isMultiPanel && panels.length > 0 ? (
+              <MultiPanelPreview
+                ref={multiPanelRef}
+                panels={panels}
+                layout={panelLayout}
+                activePanel={activePanel}
+                styleName={styleName}
+                panelAnnotations={panelAnnotations}
+                onAnnotationsChange={(idx, anns) =>
+                  setPanelAnnotations(prev => prev.map((a, i) => i === idx ? anns : a))
+                }
+                onStyleChange={(idx, patch) =>
+                  updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
+                }
+                onPanelClick={setActivePanel}
+                onSaveTemplate={() => setSaveTemplateOpen(true)}
+              />
+            ) : ready ? (
+              <ChartPreview
+                ref={chartPreviewRef}
+                data={data}
+                xCol={xCol}
+                yCols={yCols}
+                seriesNames={seriesNames}
+                errorCols={errorCols}
+                xAxisLabel={xAxisLabel}
+                yAxisLabel={yAxisLabel}
+                chartType={chartType}
+                styleName={styleName}
+                styleOverrides={styleOverrides}
+                annotations={annotations}
+                onAnnotationsChange={setAnnotations}
+                onStyleChange={(patch) => {
+                  setStyleOverrides(prev => ({ ...prev, ...patch }))
+                  if (patch.insetDefined === false) setDrawInsetMode(false)
+                }}
+                onSaveTemplate={() => setSaveTemplateOpen(true)}
+                drawInsetActive={drawInsetMode}
+                onDrawInsetActiveChange={setDrawInsetMode}
+                annotOpen={activeSidePanel === 'annotate'}
+              />
+            ) : (
+              <div className="flex-1 flex items-center justify-center bg-[#eff6ff]">
+                <EmptyState onUploadClick={focusUpload} onSampleClick={handleSampleData} />
+              </div>
+            )}
+          </div>
+
+          {/* Mobile inline settings panel — docked below figure, never overlaps it */}
+          {mobilePanelOpen && activeSidePanel && (
+            <div
+              className="md:hidden shrink-0 flex flex-col bg-white border-t border-slate-200 overflow-hidden"
+              style={{ maxHeight: '45vh' }}
+            >
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
+                  <h2 className="text-sm font-bold text-slate-800">{PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}</h2>
+                </div>
+                <button
+                  onClick={() => setMobilePanelOpen(false)}
+                  className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-5">
+                {renderPanelContent()}
+              </div>
             </div>
           )}
         </main>
@@ -981,29 +1010,6 @@ export default function AppPage() {
           )
         })}
       </nav>
-
-      {/* ── Mobile panel sheet ────────────────────────────────────────────── */}
-      {mobilePanelOpen && activeSidePanel && (
-        <div className="md:hidden fixed inset-x-0 bottom-[52px] z-30 bg-white border-t border-slate-200 rounded-t-2xl shadow-2xl flex flex-col" style={{ maxHeight: '60vh' }}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
-              <h2 className="text-sm font-bold text-slate-800">{PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}</h2>
-            </div>
-            <button
-              onClick={() => setMobilePanelOpen(false)}
-              className="w-7 h-7 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-5">
-            {renderPanelContent()}
-          </div>
-        </div>
-      )}
 
       <FeedbackButton />
 

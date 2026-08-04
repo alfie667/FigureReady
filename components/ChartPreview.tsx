@@ -374,6 +374,20 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   useImperativeHandle(ref, () => ({ triggerExport }))
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
+
+  // Track card width to compute proportional chart height on mobile
+  const [cardWidth, setCardWidth] = useState(0)
+  useEffect(() => {
+    const el = chartRef.current
+    if (!el) return
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width
+      if (w) setCardWidth(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   const [pointTooltip, setPointTooltip] = useState<{
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
   } | null>(null)
@@ -620,6 +634,10 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   )
   const figureWidth = styleOverrides.figureWidth
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
+  // On mobile: scale chart height proportionally when card is narrower than its design width
+  const effectiveChartHeight = cardWidth > 0 && cardWidth < (figureWidth ?? 700)
+    ? Math.round(cardWidth * (figureHeight / (figureWidth ?? 700)))
+    : figureHeight
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
   const xLabel = {
     content: (props: Record<string, unknown>) => (
@@ -1277,7 +1295,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                 onClick={handleContainerClick}
               >
             {/* Chart */}
-            <ResponsiveContainer width="100%" height={figureHeight}>
+            <ResponsiveContainer width="100%" height={effectiveChartHeight}>
               {renderChart() as React.ReactElement}
             </ResponsiveContainer>
 
