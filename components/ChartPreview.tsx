@@ -297,6 +297,8 @@ interface ChartMouseEvent {
 
 export interface ChartPreviewHandle {
   triggerExport: (type: 'png' | 'svg' | 'pdf') => void
+  addAnnotation: (type: string, options?: Record<string, unknown>) => void
+  insertSymbol: (sym: string) => void
 }
 
 interface Props {
@@ -361,6 +363,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const [drawPt2, setDrawPt2] = useState<{ x: number; y: number } | null>(null)
   const [insetSelected, setInsetSelected] = useState(false)
   const [annotExpanded, setAnnotExpanded] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   // Sync external drawInsetActive prop → local state
   useEffect(() => {
@@ -372,7 +375,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     if (annotOpen !== undefined) setAnnotExpanded(annotOpen)
   }, [annotOpen])
 
-  useImperativeHandle(ref, () => ({ triggerExport }))
+  useImperativeHandle(ref, () => ({ triggerExport, addAnnotation, insertSymbol }))
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
 
   // Track card width to detect mobile (card narrower than design width)
@@ -627,12 +630,6 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const boldLabels = styleOverrides.boldLabels ?? false
   const tickFontWeight = boldLabels ? 'bold' : 'normal'
   const titleFontWeight = boldLabels ? 'bold' : s.labelFontWeight
-  const xTickStyle = { fontSize: xTickSize, fontFamily, fill: axisColor, fontWeight: tickFontWeight }
-  const yTickStyle = { fontSize: yTickSize, fontFamily, fill: axisColor, fontWeight: tickFontWeight }
-  const axisLine = { stroke: axisColor, strokeWidth: axisWidth }
-  const margin = s.margin
-  const xLabelStyle = { fontFamily, fontSize: xTitleSize, fontWeight: titleFontWeight, fill: axisColor }
-  const yLabelStyle = { fontFamily, fontSize: yTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const legendFontSize = styleOverrides.legendFontSize ?? s.tickFontSize
   const legendPosition = styleOverrides.legendPosition ?? 'top'
   const legendEnabled = (styleOverrides.showLegend ?? yCols.length > 1) && yCols.length > 1
@@ -657,7 +654,20 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const mobileChartHeight = viewportH > 0
     ? Math.max(220, Math.min(300, Math.round(viewportH * 0.30)))
     : 260
-  const effectiveChartHeight = isMobileCard ? mobileChartHeight : figureHeight
+  // Mobile preview-only: scale down typography so the Y-axis label fits in the compact height.
+  // isExporting = true restores full size during DOM capture — exports are always full-quality.
+  const previewOnly = isMobileCard && !isExporting
+  const effectiveChartHeight = previewOnly ? mobileChartHeight : figureHeight
+  const effectiveXTitleSize = previewOnly ? Math.min(xTitleSize, 13) : xTitleSize
+  const effectiveYTitleSize = previewOnly ? Math.min(yTitleSize, 13) : yTitleSize
+  const effectiveXTickSize  = previewOnly ? Math.min(xTickSize,  11) : xTickSize
+  const effectiveYTickSize  = previewOnly ? Math.min(yTickSize,  11) : yTickSize
+  const xTickStyle  = { fontSize: effectiveXTickSize,  fontFamily, fill: axisColor, fontWeight: tickFontWeight }
+  const yTickStyle  = { fontSize: effectiveYTickSize,  fontFamily, fill: axisColor, fontWeight: tickFontWeight }
+  const axisLine    = { stroke: axisColor, strokeWidth: axisWidth }
+  const margin      = s.margin
+  const xLabelStyle = { fontFamily, fontSize: effectiveXTitleSize, fontWeight: titleFontWeight, fill: axisColor }
+  const yLabelStyle = { fontFamily, fontSize: effectiveYTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
   const xLabel = {
     content: (props: Record<string, unknown>) => (
@@ -1016,7 +1026,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
     if (isProUser()) {
       if (type === 'png') await doExportPNG()
-      else if (type === 'svg') doExportSVG()
+      else if (type === 'svg') await doExportSVG()
       else if (type === 'pdf') await doExportPDF()
       return
     }
@@ -1039,6 +1049,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const doExportPNG = async () => {
     if (!chartRef.current) return
     trackExport('png')
+    setIsExporting(true)
+    await new Promise(r => setTimeout(r, 80))
     const { toPng } = await import('html-to-image')
     try {
       const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
@@ -1046,10 +1058,13 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
     } catch (err) { console.error('PNG export failed:', err) }
+    finally { setIsExporting(false) }
   }
 
   const doExportFreePNG = async () => {
     if (!chartRef.current) return
+    setIsExporting(true)
+    await new Promise(r => setTimeout(r, 80))
     const { toPng } = await import('html-to-image')
     try {
       const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 150 / 96 })
@@ -1058,11 +1073,14 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       const a = document.createElement('a')
       a.href = watermarked; a.download = 'figureready-free.png'; a.click()
     } catch (err) { console.error('Free PNG export failed:', err) }
+    finally { setIsExporting(false) }
   }
 
   const doExportPDF = async () => {
     if (!chartRef.current) return
     trackExport('pdf')
+    setIsExporting(true)
+    await new Promise(r => setTimeout(r, 80))
     const { toPng } = await import('html-to-image')
     try {
       const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
@@ -1079,11 +1097,14 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       pdf.addImage(raw, 'PNG', 0, 0, mmW, mmH)
       pdf.save('figureready.pdf')
     } catch (err) { console.error('PDF export failed:', err) }
+    finally { setIsExporting(false) }
   }
 
-  const doExportSVG = () => {
+  const doExportSVG = async () => {
     if (!chartRef.current) return
     trackExport('svg')
+    setIsExporting(true)
+    await new Promise(r => setTimeout(r, 80))
     const svg = chartRef.current.querySelector('svg')
     if (!svg) return
     const containerRect = chartRef.current.getBoundingClientRect()
@@ -1215,6 +1236,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     const a = document.createElement('a')
     a.href = url; a.download = 'figureready.svg'; a.click()
     URL.revokeObjectURL(url)
+    setIsExporting(false)
   }
 
   // ─── Handle panel ────────────────────────────────────────────────────────────
@@ -1287,9 +1309,9 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       {/* ── Full-height editor layout ──────────────────────────────────────── */}
       <div className="flex flex-col" style={{ height: '100%' }}>
 
-        {/* Annotation tools — shown when Annotate sidebar tab is active */}
+        {/* Annotation toolbar — desktop only; mobile sees it inside the Annotate panel */}
         {annotExpanded && (
-          <div className="px-4 py-2 bg-[#f8fafc] border-b border-slate-200 shrink-0">
+          <div className="hidden md:block px-4 py-2 bg-[#f8fafc] border-b border-slate-200 shrink-0">
             <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
           </div>
         )}

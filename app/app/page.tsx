@@ -25,6 +25,7 @@ import PaywallModal from '@/components/PaywallModal'
 import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
 import { parseExcelFile } from '@/lib/parseExcel'
 import { LineThicknessPicker, ToggleSwitch, type NumericPreset } from '@/components/StyleControls'
+import AnnotationToolbar from '@/components/AnnotationToolbar'
 
 const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
 const insetLinePresets: NumericPreset[] = [
@@ -133,10 +134,9 @@ export default function AppPage() {
     }
   }
 
-  // Active sidebar panel — closed by default on mobile
-  const [activeSidePanel, setActiveSidePanel] = useState<string | null>(() =>
-    typeof window !== 'undefined' && window.innerWidth < 768 ? null : 'data'
-  )
+  // Active sidebar panel — always null on SSR to avoid hydration mismatch;
+  // useEffect below opens 'data' on desktop after mount.
+  const [activeSidePanel, setActiveSidePanel] = useState<string | null>(null)
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [panelWidth, setPanelWidth] = useState(280)
   const panelResizeRef = useRef(false)
@@ -152,6 +152,7 @@ export default function AppPage() {
     trackAppOpen()
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
+    if (window.innerWidth >= 768) setActiveSidePanel('data')
   }, [])
 
   // ── Share via URL ─────────────────────────────────────────────────────────────
@@ -671,23 +672,17 @@ export default function AppPage() {
       case 'annotate':
         return (
           <div className="space-y-4">
-            <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
+            {/* Compact tool row — mobile only; desktop sees the toolbar above the chart */}
+            <div className="md:hidden -mx-3 px-3 overflow-x-auto no-scrollbar">
+              <AnnotationToolbar
+                onAdd={(type, opts) => chartPreviewRef.current?.addAnnotation(type, opts)}
+                onInsertSymbol={(sym) => chartPreviewRef.current?.insertSymbol(sym)}
+              />
+            </div>
+            {/* Desktop hint */}
+            <div className="hidden md:block rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
               <p className="text-xs font-semibold text-[#1d4ed8]">Annotation tools expanded</p>
               <p className="text-[11px] text-blue-500 mt-0.5">Use the toolbar above the chart to add annotations</p>
-            </div>
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Available tools</p>
-              {[
-                { label: 'Lines & arrows', desc: 'Straight, dashed, double-headed' },
-                { label: 'Shapes', desc: 'Rectangle and ellipse overlays' },
-                { label: 'Text', desc: 'Click on the chart to place text' },
-                { label: 'Symbols', desc: 'α β γ δ ± × ∞ and more' },
-              ].map(tool => (
-                <div key={tool.label} className="flex flex-col px-3 py-2 rounded-lg bg-white border border-slate-100">
-                  <span className="text-xs font-medium text-slate-700">{tool.label}</span>
-                  <span className="text-[11px] text-slate-400">{tool.desc}</span>
-                </div>
-              ))}
             </div>
             {annotations.length > 0 && (
               <div className="space-y-1.5">
