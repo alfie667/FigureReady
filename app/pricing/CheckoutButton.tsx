@@ -1,6 +1,6 @@
 'use client'
 import { useEffect } from 'react'
-import { trackBeginCheckout, trackPricingView, type PlanType } from '@/lib/analytics'
+import { trackBeginCheckout, trackPricingView, trackUpgradeClicked, type PlanType } from '@/lib/analytics'
 
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
@@ -30,6 +30,7 @@ export function CheckoutButton({
 }) {
   function handleClick(e: React.MouseEvent<HTMLAnchorElement>) {
     e.preventDefault()
+    trackUpgradeClicked('pricing_page')
     window.fbq?.('track', 'InitiateCheckout')
     const destination = buildPolarUrl(href)
     // Navigate only after GA4 confirms begin_checkout was sent (max 1.5 s wait)

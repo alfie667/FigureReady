@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { trackBeginCheckout } from '@/lib/analytics'
+import { useEffect, useState } from 'react'
+import { trackBeginCheckout, trackPricingView, trackUpgradeClicked } from '@/lib/analytics'
 
 const CHECKOUT_MONTHLY = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
 const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1'
@@ -18,6 +18,8 @@ export default function PaywallModal({ mode, previewDataUrl, onClose }: Props) {
   const checkoutUrl = plan === 'monthly' ? CHECKOUT_MONTHLY : CHECKOUT_YEARLY
 
   const isAfterFree = mode === 'after_free'
+
+  useEffect(() => { trackPricingView() }, [])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -130,7 +132,7 @@ export default function PaywallModal({ mode, previewDataUrl, onClose }: Props) {
 
           <a
             href={checkoutUrl}
-            onClick={() => trackBeginCheckout(plan)}
+            onClick={() => { trackUpgradeClicked('export_dialog'); trackBeginCheckout(plan) }}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl transition-colors shadow-md text-sm"

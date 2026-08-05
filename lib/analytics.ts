@@ -99,7 +99,7 @@ export function trackChartCreated() {
 }
 
 export function trackExport(format?: 'png' | 'svg' | 'pdf') {
-  trackEvent('export', format ? { format } : undefined)
+  trackEvent('export_clicked', format ? { format } : undefined)
   incLocal('exports')
 }
 
@@ -108,7 +108,11 @@ export function trackFeedback() {
 }
 
 export function trackPricingView() {
-  trackEvent('pricing_view')
+  trackEvent('pricing_viewed')
+}
+
+export function trackUpgradeClicked(location: string) {
+  trackEvent('upgrade_clicked', { location })
 }
 
 // ── Checkout events ───────────────────────────────────────────────────────────
@@ -118,10 +122,31 @@ const PLAN_META: Record<PlanType, { item_id: string; item_name: string; price: n
   yearly:  { item_id: 'figureready_pro_yearly',  item_name: 'FigureReady Pro Yearly',  price: 99 },
 }
 
+const CHECKOUT_PENDING_KEY = 'fr_checkout_pending'
+
+export function setPendingCheckout(plan: PlanType) {
+  if (typeof window !== 'undefined') sessionStorage.setItem(CHECKOUT_PENDING_KEY, plan)
+}
+
+export function clearPendingCheckout() {
+  if (typeof window !== 'undefined') sessionStorage.removeItem(CHECKOUT_PENDING_KEY)
+}
+
+export function getPendingCheckout(): PlanType | null {
+  if (typeof window === 'undefined') return null
+  return sessionStorage.getItem(CHECKOUT_PENDING_KEY) as PlanType | null
+}
+
+export function trackCheckoutCancelled(plan: PlanType) {
+  trackEvent('checkout_cancelled', { plan, currency: 'EUR', value: PLAN_META[plan].price })
+}
+
 // onDone is called once GA4 confirms the hit was sent (or after 1.5 s fallback).
 // Pass the navigation callback here so the redirect never races the event.
 export function trackBeginCheckout(plan: PlanType, onDone?: () => void) {
   const { item_id, item_name, price } = PLAN_META[plan]
+
+  setPendingCheckout(plan)
 
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
     onDone?.(); return
@@ -154,6 +179,8 @@ export function trackPurchase(params: {
   const key = PURCHASE_DEDUP_PREFIX + params.transactionId
   if (localStorage.getItem(key)) return        // already fired for this checkout
   localStorage.setItem(key, '1')
+
+  clearPendingCheckout()
 
   const { item_id, item_name } = PLAN_META[params.plan] ?? PLAN_META.monthly
   trackEvent('purchase', {
