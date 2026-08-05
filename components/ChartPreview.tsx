@@ -384,8 +384,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     const el = chartRef.current
     if (!el) return
     const ro = new ResizeObserver(entries => {
-      const w = entries[0]?.contentRect.width
-      if (w) setCardWidth(w)
+      const w = Math.round(entries[0]?.contentRect.width ?? 0)
+      if (w > 0) setCardWidth(prev => (prev === w ? prev : w))
     })
     ro.observe(el)
     return () => ro.disconnect()
@@ -393,19 +393,27 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // Track dynamic viewport height to approximate clamp(220px, 30dvh, 300px) on mobile.
   // Uses visualViewport when available — it tracks Safari's dynamic chrome correctly.
+  // Debounced: visualViewport.resize fires on every scroll pixel on iOS, causing a
+  // rapid re-render cascade (viewportH → height change → ResizeObserver → cardWidth → …)
+  // that exhausts mobile memory. 150 ms debounce + equality guard breaks the loop.
   const [viewportH, setViewportH] = useState(0)
   useEffect(() => {
+    const getH = () => Math.round(window.visualViewport?.height ?? window.innerHeight)
+    setViewportH(getH())
+    let timer: ReturnType<typeof setTimeout>
     const update = () => {
-      setViewportH(window.visualViewport?.height ?? window.innerHeight)
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        setViewportH(prev => { const h = getH(); return prev === h ? prev : h })
+      }, 150)
     }
-    update()
     const vv = window.visualViewport
     if (vv) {
       vv.addEventListener('resize', update)
-      return () => vv.removeEventListener('resize', update)
+      return () => { vv.removeEventListener('resize', update); clearTimeout(timer) }
     }
     window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    return () => { window.removeEventListener('resize', update); clearTimeout(timer) }
   }, [])
 
   const [pointTooltip, setPointTooltip] = useState<{
@@ -666,6 +674,9 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const yTickStyle  = { fontSize: effectiveYTickSize,  fontFamily, fill: axisColor, fontWeight: tickFontWeight }
   const axisLine    = { stroke: axisColor, strokeWidth: axisWidth }
   const margin      = s.margin
+  // Mobile preview-only: widen the bottom margin so the X-axis title clears the SVG boundary.
+  // isExporting restores the original margin — exports always use full desktop margins.
+  const effectiveMargin = previewOnly ? { ...margin, bottom: Math.max(margin.bottom, 30) } : margin
   const xLabelStyle = { fontFamily, fontSize: effectiveXTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const yLabelStyle = { fontFamily, fontSize: effectiveYTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
@@ -904,7 +915,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const renderChart = () => {
     if (chartType === 'scatter') {
       return (
-        <ScatterChart margin={margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+        <ScatterChart margin={effectiveMargin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
           {plotBackground}
           {grid}
           <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
@@ -929,7 +940,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
     if (chartType === 'bar') {
       return (
-        <BarChart data={processedData} margin={margin}>
+        <BarChart data={processedData} margin={effectiveMargin}>
           {plotBackground}
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} height={65} />
@@ -973,7 +984,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     } : undefined
 
     return (
-      <LineChart data={processedData} margin={hasRightAxis ? { ...margin, right: 90 } : margin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+      <LineChart data={processedData} margin={hasRightAxis ? { ...effectiveMargin, right: 90 } : effectiveMargin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
         {plotBackground}
         {grid}
         <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
@@ -1317,14 +1328,16 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
         )}
 
         {/* Light workspace */}
-        <div className="flex-1 overflow-auto bg-[#eff6ff]">
+        <div className="flex-1 overflow-auto bg-[#F7F8FC] md:bg-[#eff6ff]">
           <div className="min-h-full flex items-center justify-center p-3 sm:p-6 lg:p-10">
             <div className="w-full overflow-hidden md:overflow-x-auto">
               <div
                 ref={chartRef}
-                className="relative bg-white p-3 sm:p-8 rounded-2xl sm:rounded-3xl mx-auto"
+                className="relative bg-white p-3 sm:p-8 rounded-[18px] md:rounded-3xl mx-auto border border-[#E7EAF0] md:border-0"
                 style={{
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
+                  boxShadow: isMobileCard
+                    ? '0 1px 4px rgba(0,0,0,0.06), 0 2px 16px rgba(0,0,0,0.08)'
+                    : '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
                   cursor: drawInsetMode ? 'crosshair' : isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
                   width: figureWidth ? `${figureWidth}px` : '700px',
@@ -1616,8 +1629,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
               )
             })()}
 
-            {/* Draggable legend overlay */}
-            {legendEnabled && (
+            {/* Draggable legend overlay — hidden on mobile preview; compact strip in page.tsx is used instead */}
+            {legendEnabled && !previewOnly && (
               <DraggableLegend
                 yCols={yCols}
                 seriesNames={seriesNames}

@@ -50,7 +50,7 @@ export default function FileUploader({ onData }: Props) {
         onDrop={handleDrop}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
-        className={`flex flex-col items-center justify-center rounded-3xl p-10 cursor-pointer transition-all select-none ${
+        className={`flex flex-col items-center justify-center rounded-3xl p-5 md:p-10 cursor-pointer transition-all select-none ${
           isDragging
             ? 'bg-[#dbeafe] scale-[1.01]'
             : 'bg-[#eff6ff] hover:bg-[#dbeafe]'
@@ -63,7 +63,7 @@ export default function FileUploader({ onData }: Props) {
           onChange={handleChange}
           className="sr-only"
         />
-        <div className="w-14 h-14 rounded-2xl bg-white/60 flex items-center justify-center mb-4">
+        <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-white/60 flex items-center justify-center mb-2 md:mb-4">
           <svg className="w-6 h-6 text-[#2563eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
               d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />

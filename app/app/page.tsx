@@ -800,7 +800,7 @@ export default function AppPage() {
   }
 
   return (
-    <div className="h-screen bg-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-[#F7F8FC] md:bg-white flex flex-col overflow-hidden">
       {saveTemplateOpen && (
         <SaveTemplateModal
           onSave={handleSaveTemplate}
@@ -956,14 +956,14 @@ export default function AppPage() {
 
           {/* Editor-only compact legend strip — mobile only, never affects exports */}
           {ready && currentYCols.length > 0 && (
-            <div className="md:hidden shrink-0 flex items-center gap-3 px-3 py-1.5 border-t border-slate-100 bg-white overflow-x-auto no-scrollbar">
+            <div className="md:hidden shrink-0 flex items-center gap-2 px-3 py-2 bg-[#F7F8FC] border-t border-[#E7EAF0] overflow-x-auto no-scrollbar">
               {currentYCols.map((col, i) => {
                 const color = currentStyleOverrides.seriesColors?.[col] ?? chartStyles[styleName].colors[i % chartStyles[styleName].colors.length]
                 const label = currentSeriesNames[col] ?? col
                 return (
-                  <div key={col} className="flex items-center gap-1.5 shrink-0" title={label}>
-                    <span className="w-5 h-0.5 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
-                    <span className="text-[10px] font-medium text-slate-600 max-w-[80px] truncate leading-none">{label}</span>
+                  <div key={col} className="flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-full bg-white border border-[#E7EAF0] shadow-sm" title={label}>
+                    <span className="w-2 h-2 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
+                    <span className="text-[10px] font-medium text-slate-600 max-w-[72px] truncate leading-none">{label}</span>
                   </div>
                 )
               })}
@@ -973,10 +973,10 @@ export default function AppPage() {
           {/* Mobile inline settings panel — docked below figure, never overlaps it */}
           {mobilePanelOpen && activeSidePanel && (
             <div
-              className="md:hidden shrink-0 flex flex-col bg-white border-t border-slate-200 overflow-hidden"
-              style={{ maxHeight: '40vh' }}
+              className="md:hidden shrink-0 flex flex-col bg-white rounded-t-2xl overflow-hidden border-t border-[#E7EAF0]"
+              style={{ maxHeight: '40vh', boxShadow: '0 -4px 20px rgba(0,0,0,0.08)' }}
             >
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 shrink-0">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-[#F0F4FF] border-b border-[#E0E8FF] shrink-0">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
                   <h2 className="text-sm font-bold text-slate-800">{PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}</h2>
