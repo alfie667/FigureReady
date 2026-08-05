@@ -910,7 +910,7 @@ export default function AppPage() {
         {/* Canvas */}
         <main className="flex-1 flex flex-col overflow-hidden">
           {/* Figure zone — always visible, grows to fill space above inline panel */}
-          <div className="flex-1 overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-hidden flex flex-col min-h-[200px] md:min-h-0">
             {isMultiPanel && panels.length > 0 ? (
               <MultiPanelPreview
                 ref={multiPanelRef}
@@ -959,11 +959,27 @@ export default function AppPage() {
             )}
           </div>
 
+          {/* Editor-only compact legend strip — mobile only, never affects exports */}
+          {ready && currentYCols.length > 0 && (
+            <div className="md:hidden shrink-0 flex items-center gap-3 px-3 py-1.5 border-t border-slate-100 bg-white overflow-x-auto no-scrollbar">
+              {currentYCols.map((col, i) => {
+                const color = currentStyleOverrides.seriesColors?.[col] ?? chartStyles[styleName].colors[i % chartStyles[styleName].colors.length]
+                const label = currentSeriesNames[col] ?? col
+                return (
+                  <div key={col} className="flex items-center gap-1.5 shrink-0" title={label}>
+                    <span className="w-5 h-0.5 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
+                    <span className="text-[10px] font-medium text-slate-600 max-w-[80px] truncate leading-none">{label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Mobile inline settings panel — docked below figure, never overlaps it */}
           {mobilePanelOpen && activeSidePanel && (
             <div
               className="md:hidden shrink-0 flex flex-col bg-white border-t border-slate-200 overflow-hidden"
-              style={{ maxHeight: '45vh' }}
+              style={{ maxHeight: '40vh' }}
             >
               <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 shrink-0">
                 <div className="flex items-center gap-2">
@@ -979,7 +995,7 @@ export default function AppPage() {
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-5">
+              <div className="flex-1 overflow-y-auto overscroll-contain overflow-x-hidden p-3 space-y-3">
                 {renderPanelContent()}
               </div>
             </div>

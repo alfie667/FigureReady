@@ -375,7 +375,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   useImperativeHandle(ref, () => ({ triggerExport }))
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
 
-  // Track card width to compute proportional chart height on mobile
+  // Track card width to detect mobile (card narrower than design width)
   const [cardWidth, setCardWidth] = useState(0)
   useEffect(() => {
     const el = chartRef.current
@@ -386,6 +386,23 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     })
     ro.observe(el)
     return () => ro.disconnect()
+  }, [])
+
+  // Track dynamic viewport height to approximate clamp(220px, 30dvh, 300px) on mobile.
+  // Uses visualViewport when available — it tracks Safari's dynamic chrome correctly.
+  const [viewportH, setViewportH] = useState(0)
+  useEffect(() => {
+    const update = () => {
+      setViewportH(window.visualViewport?.height ?? window.innerHeight)
+    }
+    update()
+    const vv = window.visualViewport
+    if (vv) {
+      vv.addEventListener('resize', update)
+      return () => vv.removeEventListener('resize', update)
+    }
+    window.addEventListener('resize', update)
+    return () => window.removeEventListener('resize', update)
   }, [])
 
   const [pointTooltip, setPointTooltip] = useState<{
@@ -634,10 +651,13 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   )
   const figureWidth = styleOverrides.figureWidth
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
-  // On mobile: scale chart height proportionally when card is narrower than its design width
-  const effectiveChartHeight = cardWidth > 0 && cardWidth < (figureWidth ?? 700)
-    ? Math.round(cardWidth * (figureHeight / (figureWidth ?? 700)))
-    : figureHeight
+  // Mobile: use clamp(220px, 30dvh, 300px) approximated via visualViewport.
+  // Desktop (card >= design width): use the full configured figureHeight for the export-quality preview.
+  const isMobileCard = cardWidth > 0 && cardWidth < (figureWidth ?? 700)
+  const mobileChartHeight = viewportH > 0
+    ? Math.max(220, Math.min(300, Math.round(viewportH * 0.30)))
+    : 260
+  const effectiveChartHeight = isMobileCard ? mobileChartHeight : figureHeight
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
   const xLabel = {
     content: (props: Record<string, unknown>) => (
@@ -1280,7 +1300,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
             <div className="w-full overflow-hidden md:overflow-x-auto">
               <div
                 ref={chartRef}
-                className="relative bg-white p-4 sm:p-8 rounded-2xl sm:rounded-3xl mx-auto"
+                className="relative bg-white p-3 sm:p-8 rounded-2xl sm:rounded-3xl mx-auto"
                 style={{
                   boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
