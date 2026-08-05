@@ -996,6 +996,11 @@ export default function AppPage() {
             </div>
           )}
 
+          {/* Temporary build badge — mobile only, remove after cache confirmed */}
+          <div className="md:hidden shrink-0 text-center py-0.5">
+            <span className="text-[8px] text-slate-300 font-mono select-all">build:83e3259</span>
+          </div>
+
           {/* Spacer: reserves exact height for fixed bottom nav + iOS safe-area-inset-bottom */}
           <div
             className="md:hidden shrink-0"
