@@ -70,6 +70,7 @@ export default function Header({ hasData, onReset, onExportSVG, onExportPNG, onE
   }, [mobileMenuOpen])
 
   return (
+    <>
     <header className="relative flex items-center justify-between h-11 md:h-14 px-3 md:px-6 border-b border-slate-200/80 bg-white shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
 
       {/* Logo — full wordmark on desktop, compact on mobile */}
@@ -195,5 +196,10 @@ export default function Header({ hasData, onReset, onExportSVG, onExportPNG, onE
         )}
       </div>
     </header>
+    <div className="md:hidden flex items-center gap-2 px-3 py-1.5 bg-slate-50 border-b border-slate-200/80 text-[11px] text-slate-500 leading-snug">
+      <span>📱</span>
+      <span>Quick edits work great on mobile. For precise annotation and advanced editing, we recommend using a desktop.</span>
+    </div>
+    </>
   )
 }

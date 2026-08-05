@@ -332,6 +332,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 }: Props, ref) {
   const chartRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef<DragState | null>(null)
+  const pendingDragRef = useRef<{ drag: DragState; x0: number; y0: number } | null>(null)
   const xLabelDxRef = useRef(styleOverrides.xLabelDx ?? 0)
   const xLabelDyRef = useRef(styleOverrides.xLabelDy ?? 0)
   const yLabelDxRef = useRef(styleOverrides.yLabelDx ?? 0)
@@ -355,6 +356,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const [paywallMode, setPaywallMode] = useState<'after_free' | 'blocked'>('blocked')
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
   const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
+  const [isTouch] = useState(() => typeof window !== 'undefined' && navigator.maxTouchPoints > 0)
 
   // ─── Inset draw state ────────────────────────────────────────────────────────
   const [drawInsetMode, _setDrawInsetMode] = useState(false)
@@ -808,6 +810,19 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     }
   }
 
+  const commitDrag = (drag: DragState) => {
+    draggingRef.current = drag
+    setIsDraggingAnnotation(true)
+  }
+
+  const stageDrag = (e: React.PointerEvent, drag: DragState) => {
+    if (isTouch) {
+      pendingDragRef.current = { drag, x0: e.clientX, y0: e.clientY }
+    } else {
+      commitDrag(drag)
+    }
+  }
+
   const startTextDrag = (e: React.PointerEvent, ann: TextAnnotation) => {
     if (editingIdRef.current === ann.id) return
     e.stopPropagation()
@@ -815,8 +830,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     setPointTooltip(null)
     if (!chartRef.current) return
     const { xPct, yPct } = getPct(e)
-    draggingRef.current = { kind: 'text', id: ann.id, offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct }
-    setIsDraggingAnnotation(true)
+    stageDrag(e, { kind: 'text', id: ann.id, offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct })
   }
 
   const startArrowBodyDrag = (e: React.PointerEvent, ann: { id: string; x1Pct: number; y1Pct: number; x2Pct: number; y2Pct: number }) => {
@@ -825,19 +839,13 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     setPointTooltip(null)
     if (!chartRef.current) return
     const { xPct, yPct } = getPct(e)
-    draggingRef.current = {
-      kind: 'arrow-body', id: ann.id,
-      dx1: xPct - ann.x1Pct, dy1: yPct - ann.y1Pct,
-      dx2: xPct - ann.x2Pct, dy2: yPct - ann.y2Pct,
-    }
-    setIsDraggingAnnotation(true)
+    stageDrag(e, { kind: 'arrow-body', id: ann.id, dx1: xPct - ann.x1Pct, dy1: yPct - ann.y1Pct, dx2: xPct - ann.x2Pct, dy2: yPct - ann.y2Pct })
   }
 
   const startArrowEndDrag = (e: React.PointerEvent, id: string, endpoint: 1 | 2) => {
     e.stopPropagation()
     setPointTooltip(null)
-    draggingRef.current = { kind: 'arrow-end', id, endpoint }
-    setIsDraggingAnnotation(true)
+    stageDrag(e, { kind: 'arrow-end', id, endpoint })
   }
 
   const startRectBodyDrag = (e: React.PointerEvent, ann: { id: string; xPct: number; yPct: number; widthPct: number; heightPct: number }) => {
@@ -846,11 +854,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     setPointTooltip(null)
     if (!chartRef.current) return
     const { xPct, yPct } = getPct(e)
-    draggingRef.current = {
-      kind: 'rect-body', id: ann.id,
-      offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct,
-    }
-    setIsDraggingAnnotation(true)
+    stageDrag(e, { kind: 'rect-body', id: ann.id, offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct })
   }
 
   const startRectCornerDrag = (e: React.PointerEvent, ann: { id: string; xPct: number; yPct: number; widthPct: number; heightPct: number }, corner: 'nw' | 'ne' | 'sw' | 'se') => {
@@ -861,13 +865,22 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       sw: { xPct: ann.xPct + ann.widthPct, yPct: ann.yPct },
       se: { xPct: ann.xPct,                yPct: ann.yPct },
     }[corner]
-    draggingRef.current = { kind: 'rect-corner', id: ann.id, anchorXPct: anchor.xPct, anchorYPct: anchor.yPct }
-    setIsDraggingAnnotation(true)
+    stageDrag(e, { kind: 'rect-corner', id: ann.id, anchorXPct: anchor.xPct, anchorYPct: anchor.yPct })
   }
 
   // ─── Container pointer handlers ──────────────────────────────────────────────
 
   const handleContainerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (pendingDragRef.current) {
+      const dx = e.clientX - pendingDragRef.current.x0
+      const dy = e.clientY - pendingDragRef.current.y0
+      if (Math.sqrt(dx * dx + dy * dy) > 6) {
+        commitDrag(pendingDragRef.current.drag)
+        pendingDragRef.current = null
+      } else {
+        return
+      }
+    }
     const drag = draggingRef.current
     const container = chartRef.current
     if (!drag || !container) return
@@ -899,6 +912,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   }
 
   const handleContainerPointerUp = () => {
+    pendingDragRef.current = null
     draggingRef.current = null
     setIsDraggingAnnotation(false)
   }
@@ -1252,14 +1266,14 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // ─── Handle panel ────────────────────────────────────────────────────────────
 
-  const HANDLE_SIZE = 10
+  const HANDLE_SIZE = isTouch ? 28 : 10
   const cornerHandleStyle = (cursor: string): React.CSSProperties => ({
     position: 'absolute',
     width: HANDLE_SIZE,
     height: HANDLE_SIZE,
     background: 'white',
     border: '1.5px solid #3b82f6',
-    borderRadius: 2,
+    borderRadius: isTouch ? 6 : 2,
     cursor,
     zIndex: 20,
     transform: 'translate(-50%, -50%)',
@@ -1679,7 +1693,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     <line
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
-                      stroke="transparent" strokeWidth={14}
+                      stroke="transparent" strokeWidth={isTouch ? 28 : 14}
                       style={{ pointerEvents: 'all', cursor: 'move' }}
                       onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
                       onPointerDown={e => startArrowBodyDrag(e, ann)}
@@ -1694,15 +1708,17 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     />
                     {isSel && (
                       <>
+                        {isTouch && <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 1)} />}
                         <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
-                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
                           onPointerDown={e => startArrowEndDrag(e, ann.id, 1)}
                         />
+                        {isTouch && <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 2)} />}
                         <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
-                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
                           onPointerDown={e => startArrowEndDrag(e, ann.id, 2)}
                         />
@@ -1722,7 +1738,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     <line
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
-                      stroke="transparent" strokeWidth={14}
+                      stroke="transparent" strokeWidth={isTouch ? 28 : 14}
                       style={{ pointerEvents: 'all', cursor: 'move' }}
                       onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
                       onPointerDown={e => startArrowBodyDrag(e, ann)}
@@ -1738,15 +1754,17 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     />
                     {isSel && (
                       <>
+                        {isTouch && <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 1)} />}
                         <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
-                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
                           onPointerDown={e => startArrowEndDrag(e, ann.id, 1)}
                         />
+                        {isTouch && <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 2)} />}
                         <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
-                          style={{ pointerEvents: 'all', cursor: 'crosshair' }}
+                          style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
                           onPointerDown={e => startArrowEndDrag(e, ann.id, 2)}
                         />
@@ -1796,7 +1814,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     background: ann.fillColor ? toRgba(ann.fillColor, ann.fillOpacity ?? 0.3) : 'transparent',
                     boxSizing: 'border-box',
                     cursor: 'move',
-                    touchAction: 'none',
+                    touchAction: isTouch && !isSel ? 'pan-y' : 'none',
                     zIndex: 5,
                   }}
                   onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
@@ -1837,7 +1855,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     background: ann.fillColor ? toRgba(ann.fillColor, ann.fillOpacity ?? 0.3) : 'transparent',
                     boxSizing: 'border-box',
                     cursor: 'move',
-                    touchAction: 'none',
+                    touchAction: isTouch && !isSel ? 'pan-y' : 'none',
                     zIndex: 5,
                   }}
                   onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
@@ -1877,7 +1895,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     left: `${ann.xPct}%`, top: `${ann.yPct}%`,
                     transform: 'translate(-50%, -50%)',
                     cursor: isEdit ? 'text' : 'grab',
-                    touchAction: 'none',
+                    touchAction: isTouch && !isSel ? 'pan-y' : 'none',
                     zIndex: 6,
                   }}
                   onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
