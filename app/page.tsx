@@ -3,6 +3,7 @@ import Link from 'next/link'
 import GatedAppLink from '@/components/GatedAppLink'
 import { LogoFull, LogoSmall } from '@/components/Logo'
 import { VideoPlayer } from '@/components/VideoPlayer'
+import LandingCheckoutButton from '@/components/LandingCheckoutButton'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Free Scientific Figure Maker from Excel',
@@ -241,10 +242,12 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href="https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8"
-                className="block text-center py-3 px-4 border-2 border-slate-200 hover:border-slate-900 hover:text-slate-900 rounded-full text-sm font-bold text-slate-600 transition-colors">
+              <LandingCheckoutButton
+                plan="monthly"
+                className="block w-full text-center py-3 px-4 border-2 border-slate-200 hover:border-slate-900 hover:text-slate-900 rounded-full text-sm font-bold text-slate-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 Get started →
-              </a>
+              </LandingCheckoutButton>
             </div>
 
             <div className="bg-slate-900 rounded-2xl p-8 flex flex-col relative shadow-xl">
@@ -267,10 +270,12 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <a href="https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1"
-                className="block text-center py-3 px-4 bg-white rounded-full text-sm font-bold text-slate-900 hover:bg-slate-100 transition-colors">
+              <LandingCheckoutButton
+                plan="yearly"
+                className="block w-full text-center py-3 px-4 bg-white rounded-full text-sm font-bold text-slate-900 hover:bg-slate-100 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 Get started →
-              </a>
+              </LandingCheckoutButton>
             </div>
           </div>
         </div>

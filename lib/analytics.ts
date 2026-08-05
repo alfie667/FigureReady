@@ -10,6 +10,30 @@ export interface AnalyticsData {
 
 export type PlanType = 'monthly' | 'yearly'
 
+export type CheckoutLocation =
+  | 'pricing_page'
+  | 'landing_pricing'
+  | 'paywall_modal'
+  | 'upgrade_modal'
+
+export type CheckoutTrigger =
+  | 'pricing_card'
+  | 'export_limit'
+  | 'upgrade_button'
+  | 'unknown'
+
+export interface PendingCheckout {
+  plan: PlanType
+  value: number
+  currency: 'EUR'
+  location: CheckoutLocation
+  trigger: CheckoutTrigger
+  started_at: string
+  figure_created: boolean | null
+  file_uploaded: boolean | null
+  sample_only: boolean | null
+}
+
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void
@@ -20,8 +44,8 @@ declare global {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-// Checked at call time (not compile time) so ?debug_ga4=1 works in production.
-function isDebugMode(): boolean {
+// Checked at call time so ?debug_ga4=1 works in production.
+export function isDebugMode(): boolean {
   if (process.env.NODE_ENV !== 'production') return true
   if (process.env.NEXT_PUBLIC_GA_DEBUG === 'true') return true
   if (typeof window === 'undefined') return false
@@ -38,7 +62,7 @@ export function trackEvent(name: string, params?: Record<string, unknown>) {
   })
 }
 
-// ── Consent Mode v2 — call this from a future consent banner ─────────────────
+// ── Consent Mode v2 ───────────────────────────────────────────────────────────
 
 export function updateConsent(granted: boolean) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
@@ -111,61 +135,47 @@ export function trackPricingView() {
   trackEvent('pricing_viewed')
 }
 
-export function trackUpgradeClicked(location: string) {
-  trackEvent('upgrade_clicked', { location })
-}
+// ── Checkout plan metadata ────────────────────────────────────────────────────
 
-// ── Checkout events ───────────────────────────────────────────────────────────
-
-const PLAN_META: Record<PlanType, { item_id: string; item_name: string; price: number }> = {
+export const PLAN_META: Record<PlanType, { item_id: string; item_name: string; price: number }> = {
   monthly: { item_id: 'figureready_pro_monthly', item_name: 'FigureReady Pro Monthly', price: 12 },
   yearly:  { item_id: 'figureready_pro_yearly',  item_name: 'FigureReady Pro Yearly',  price: 99 },
 }
 
-const CHECKOUT_PENDING_KEY = 'fr_checkout_pending'
+// ── Pending checkout (sessionStorage) ────────────────────────────────────────
 
-export function setPendingCheckout(plan: PlanType) {
-  if (typeof window !== 'undefined') sessionStorage.setItem(CHECKOUT_PENDING_KEY, plan)
-}
+export const CHECKOUT_PENDING_KEY = 'fr_checkout_pending'
 
-export function clearPendingCheckout() {
+export function clearPendingCheckout(): void {
   if (typeof window !== 'undefined') sessionStorage.removeItem(CHECKOUT_PENDING_KEY)
 }
 
-export function getPendingCheckout(): PlanType | null {
-  if (typeof window === 'undefined') return null
-  return sessionStorage.getItem(CHECKOUT_PENDING_KEY) as PlanType | null
+// ── Checkout funnel events ────────────────────────────────────────────────────
+
+export function trackPlanSelected(params: {
+  plan: PlanType
+  value: number
+  currency: string
+  location: CheckoutLocation
+  trigger: CheckoutTrigger
+}) {
+  trackEvent('plan_selected', params)
 }
 
-export function trackCheckoutCancelled(plan: PlanType) {
-  trackEvent('checkout_cancelled', { plan, currency: 'EUR', value: PLAN_META[plan].price })
-}
-
-// onDone is called once GA4 confirms the hit was sent (or after 1.5 s fallback).
-// Pass the navigation callback here so the redirect never races the event.
-export function trackBeginCheckout(plan: PlanType, onDone?: () => void) {
-  const { item_id, item_name, price } = PLAN_META[plan]
-
-  setPendingCheckout(plan)
-
-  if (typeof window === 'undefined' || typeof window.gtag !== 'function') {
-    onDone?.(); return
-  }
-
-  let fired = false
-  const finish = () => { if (!fired) { fired = true; onDone?.() } }
-
-  window.gtag('event', 'begin_checkout', {
-    ...(isDebugMode() && { debug_mode: true }),
-    currency:       'EUR',
-    value:          price,
-    event_callback: finish,   // called when GA4 confirms the hit
-    items: [{ item_id, item_name, price, quantity: 1 }],
+export function trackCheckoutCancelled(pending: PendingCheckout) {
+  trackEvent('checkout_cancelled', {
+    plan:           pending.plan,
+    value:          pending.value,
+    currency:       pending.currency,
+    location:       pending.location,
+    trigger:        pending.trigger,
+    figure_created: pending.figure_created,
+    file_uploaded:  pending.file_uploaded,
+    sample_only:    pending.sample_only,
   })
-
-  // Safety net: redirect even if GA4 never calls back (adblocker, timeout…)
-  setTimeout(finish, 1500)
 }
+
+// ── purchase (server-verified, deduped) ──────────────────────────────────────
 
 const PURCHASE_DEDUP_PREFIX = 'ga4_purchase_fired_'
 
@@ -177,7 +187,7 @@ export function trackPurchase(params: {
 }) {
   if (typeof window === 'undefined') return
   const key = PURCHASE_DEDUP_PREFIX + params.transactionId
-  if (localStorage.getItem(key)) return        // already fired for this checkout
+  if (localStorage.getItem(key)) return
   localStorage.setItem(key, '1')
 
   clearPendingCheckout()
@@ -185,18 +195,13 @@ export function trackPurchase(params: {
   const { item_id, item_name } = PLAN_META[params.plan] ?? PLAN_META.monthly
   trackEvent('purchase', {
     transaction_id: params.transactionId,
-    value: params.value,
-    currency: params.currency,
-    items: [{
-      item_id,
-      item_name,
-      price: params.value,
-      quantity: 1,
-    }],
+    value:          params.value,
+    currency:       params.currency,
+    items: [{ item_id, item_name, item_category: 'subscription', price: params.value, quantity: 1 }],
   })
 }
 
-// ── Local counters (admin panel) ──────────────────────────────────────────────
+// ── Local counters ────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'figureready-analytics'
 

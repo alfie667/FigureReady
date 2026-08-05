@@ -1,9 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { trackBeginCheckout, trackPricingView, trackUpgradeClicked } from '@/lib/analytics'
-
-const CHECKOUT_MONTHLY = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
-const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1'
+import { trackPricingView } from '@/lib/analytics'
+import { startCheckout } from '@/lib/checkout'
 
 interface Props {
   /** after_free: user just received their free export and is prompted to upgrade.
@@ -11,11 +9,14 @@ interface Props {
   mode: 'after_free' | 'blocked'
   previewDataUrl: string | null
   onClose: () => void
+  figureCreated?: boolean | null
+  fileUploaded?: boolean | null
+  sampleOnly?: boolean | null
 }
 
-export default function PaywallModal({ mode, previewDataUrl, onClose }: Props) {
+export default function PaywallModal({ mode, previewDataUrl, onClose, figureCreated = null, fileUploaded = null, sampleOnly = null }: Props) {
   const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
-  const checkoutUrl = plan === 'monthly' ? CHECKOUT_MONTHLY : CHECKOUT_YEARLY
+  const [loading, setLoading] = useState(false)
 
   const isAfterFree = mode === 'after_free'
 
@@ -130,15 +131,20 @@ export default function PaywallModal({ mode, previewDataUrl, onClose }: Props) {
             </button>
           </div>
 
-          <a
-            href={checkoutUrl}
-            onClick={() => { trackUpgradeClicked('export_dialog'); trackBeginCheckout(plan) }}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block w-full text-center py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl transition-colors shadow-md text-sm"
+          <button
+            disabled={loading}
+            onClick={() => {
+              if (loading) return
+              setLoading(true)
+              startCheckout(
+                { plan, location: 'paywall_modal', trigger: 'export_limit', figureCreated, fileUploaded, sampleOnly },
+                { newTab: true, onComplete: () => setLoading(false) }
+              )
+            }}
+            className="block w-full text-center py-3.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-bold rounded-xl transition-colors shadow-md text-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isAfterFree ? 'Upgrade to Pro →' : 'Unlock & Download →'}
-          </a>
+            {loading ? 'Opening…' : isAfterFree ? 'Upgrade to Pro →' : 'Unlock & Download →'}
+          </button>
           <p className="text-center text-xs text-slate-400 mt-3">
             Secure payment · Cancel anytime · Return here after payment to download
           </p>

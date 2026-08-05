@@ -1,12 +1,27 @@
 'use client'
-
-const CHECKOUT_URL = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
+import { useState } from 'react'
+import { startCheckout } from '@/lib/checkout'
 
 interface Props {
   onClose: () => void
+  figureCreated?: boolean | null
+  fileUploaded?: boolean | null
+  sampleOnly?: boolean | null
 }
 
-export default function UpgradeModal({ onClose }: Props) {
+export default function UpgradeModal({ onClose, figureCreated = null, fileUploaded = null, sampleOnly = null }: Props) {
+  const [plan, setPlan] = useState<'monthly' | 'yearly'>('yearly')
+  const [loading, setLoading] = useState(false)
+
+  function handleCheckout() {
+    if (loading) return
+    setLoading(true)
+    startCheckout(
+      { plan, location: 'upgrade_modal', trigger: 'upgrade_button', figureCreated, fileUploaded, sampleOnly },
+      { newTab: false }
+    )
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
@@ -23,7 +38,7 @@ export default function UpgradeModal({ onClose }: Props) {
           </p>
         </div>
 
-        <div className="rounded-xl border-2 border-slate-100 bg-slate-50 p-4 mb-4 text-sm text-slate-600 space-y-1.5">
+        <div className="rounded-xl border-2 border-slate-100 bg-slate-50 p-4 mb-5 text-sm text-slate-600 space-y-1.5">
           {['Unlimited exports', 'PNG 300 DPI · SVG · PDF', 'No watermark', 'Priority support'].map(f => (
             <div key={f} className="flex items-center gap-2">
               <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,16 +49,44 @@ export default function UpgradeModal({ onClose }: Props) {
           ))}
         </div>
 
-        <a
-          href={CHECKOUT_URL}
-          className="flex items-center justify-between w-full px-5 py-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl transition-colors mb-3"
+        {/* Plan toggle */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <button
+            onClick={() => setPlan('monthly')}
+            className={`rounded-xl border-2 p-3 text-left transition-all ${
+              plan === 'monthly' ? 'border-[#2563eb] bg-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Monthly</p>
+            <p className="text-xl font-extrabold text-slate-900">12€</p>
+            <p className="text-xs text-slate-400">/month</p>
+          </button>
+          <button
+            onClick={() => setPlan('yearly')}
+            className={`rounded-xl border-2 p-3 text-left relative transition-all ${
+              plan === 'yearly' ? 'border-[#2563eb] bg-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <span className="absolute -top-2 right-2 px-2 py-0.5 bg-green-500 text-white text-[9px] font-bold rounded-full">
+              Save 31%
+            </span>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Yearly</p>
+            <p className="text-xl font-extrabold text-slate-900">99€</p>
+            <p className="text-xs text-slate-400">/year · ~8€/mo</p>
+          </button>
+        </div>
+
+        <button
+          onClick={handleCheckout}
+          disabled={loading}
+          className="flex items-center justify-between w-full px-5 py-4 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl transition-colors mb-3 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          <span className="font-semibold">Upgrade to Pro</span>
+          <span className="font-semibold">{loading ? 'Redirecting…' : 'Upgrade to Pro'}</span>
           <div className="text-right">
-            <p className="font-bold text-sm">12€/month</p>
-            <p className="text-xs text-[#93c5fd]">or 99€/year</p>
+            <p className="font-bold text-sm">{plan === 'monthly' ? '12€/month' : '99€/year'}</p>
+            <p className="text-xs text-[#93c5fd]">{plan === 'monthly' ? 'or 99€/year' : '~8€/month'}</p>
           </div>
-        </a>
+        </button>
 
         <button
           onClick={onClose}

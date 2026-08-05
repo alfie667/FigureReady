@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { trackEvent, trackCheckoutCancelled, getPendingCheckout, clearPendingCheckout, type PlanType } from '@/lib/analytics'
+import { trackEvent, trackCheckoutCancelled } from '@/lib/analytics'
+import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
 import { isProUser } from '@/lib/usageLimit'
 
 /**
@@ -10,6 +11,7 @@ import { isProUser } from '@/lib/usageLimit'
  *   the redirect to Polar and are available on /success.
  * – Fires page_view on every SPA route change (skips the first render because
  *   GA4's gtag('config', ...) already fires page_view on initial load).
+ * – Detects abandoned checkout (checkout_cancelled) via fr_checkout_pending.
  */
 export function AnalyticsPageView() {
   const pathname = usePathname()
@@ -25,10 +27,10 @@ export function AnalyticsPageView() {
   }, [])
 
   // Detect abandoned checkout — fires checkout_cancelled when user returns without purchasing.
-  // Covers both: (a) browser-back from same-tab Polar redirect, (b) new-tab checkout closed.
+  // Covers: (a) same-tab browser-back from Polar, (b) new-tab Polar closed and user resumes.
   useEffect(() => {
     function checkAbandoned() {
-      const pending = getPendingCheckout() as PlanType | null
+      const pending = getPendingCheckout()
       if (pending && !isProUser() && !window.location.pathname.startsWith('/success')) {
         trackCheckoutCancelled(pending)
         clearPendingCheckout()
@@ -42,8 +44,6 @@ export function AnalyticsPageView() {
   }, [])
 
   // SPA page_view — skip initial render (GA4 config already fires it).
-  // page_location + page_title are required for GA4 to attribute engagement_time_msec
-  // correctly per page. Without them, user_engagement shows 0 s for SPA navigations.
   useEffect(() => {
     if (isFirst.current) { isFirst.current = false; return }
     trackEvent('page_view', {

@@ -8,8 +8,6 @@ export const metadata: Metadata = {
   description: 'Start free. Upgrade to Pro for unlimited figures, PNG + SVG + TIFF 300 dpi export, and no watermark.',
 }
 
-const CHECKOUT_MONTHLY = 'https://buy.polar.sh/polar_cl_VGeVJ2XK6HM9vWagdGyajurF8CZKTptFpUqSX4Ljhc8'
-const CHECKOUT_YEARLY  = 'https://buy.polar.sh/polar_cl_flJ14D6H057GZslZY6hQBdRbz7Mk6Kd4fnfaA2056F1'
 
 const proFeatures = [
   'Unlimited figures',
@@ -80,9 +78,8 @@ export default function PricingPage() {
               ))}
             </ul>
             <CheckoutButton
-              href={CHECKOUT_MONTHLY}
               plan="monthly"
-              className="block text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              className="block w-full text-center py-2.5 px-4 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Get started →
             </CheckoutButton>
@@ -110,9 +107,8 @@ export default function PricingPage() {
               ))}
             </ul>
             <CheckoutButton
-              href={CHECKOUT_YEARLY}
               plan="yearly"
-              className="block text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors"
+              className="block w-full text-center py-2.5 px-4 bg-white rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Get Pro →
             </CheckoutButton>
