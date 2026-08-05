@@ -196,7 +196,7 @@ export default function Header({ hasData, onReset, onExportSVG, onExportPNG, onE
         )}
       </div>
     </header>
-    <div className="md:hidden flex items-center gap-2 px-3 py-1.5 bg-slate-50 border-b border-slate-200/80 text-[11px] text-slate-500 leading-snug">
+    <div className="md:hidden shrink-0 flex items-center gap-2 px-3 py-1.5 bg-slate-50 border-b border-slate-200/80 text-[11px] text-slate-500 leading-snug">
       <span>📱</span>
       <span>Quick edits work great on mobile. For precise annotation and advanced editing, we recommend using a desktop.</span>
     </div>
