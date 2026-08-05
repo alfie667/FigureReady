@@ -399,14 +399,18 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   // rapid re-render cascade (viewportH → height change → ResizeObserver → cardWidth → …)
   // that exhausts mobile memory. 150 ms debounce + equality guard breaks the loop.
   const [viewportH, setViewportH] = useState(0)
+  const [viewportW, setViewportW] = useState(0)
   useEffect(() => {
     const getH = () => Math.round(window.visualViewport?.height ?? window.innerHeight)
+    const getW = () => Math.round(window.innerWidth)
     setViewportH(getH())
+    setViewportW(getW())
     let timer: ReturnType<typeof setTimeout>
     const update = () => {
       clearTimeout(timer)
       timer = setTimeout(() => {
         setViewportH(prev => { const h = getH(); return prev === h ? prev : h })
+        setViewportW(getW())
       }, 150)
     }
     const vv = window.visualViewport
@@ -660,13 +664,19 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const figureHeight = styleOverrides.figureHeight ?? s.chartHeight
   // Mobile: use clamp(220px, 30dvh, 300px) approximated via visualViewport.
   // Desktop (card >= design width): use the full configured figureHeight for the export-quality preview.
-  const isMobileCard = cardWidth > 0 && cardWidth < (figureWidth ?? 700)
+  // contentRect.width excludes padding (sm:p-8 = 32px × 2 = 64px less than outer width),
+  // so we account for it to avoid falsely flagging a full-size desktop card as "mobile".
+  const CARD_PADDING = 64
+  const isMobileCard = cardWidth > 0 && (cardWidth + CARD_PADDING) < (figureWidth ?? 700)
+  // isPhone: true only on handheld devices (narrow viewport width < 768px).
+  // Laptops/desktops with a narrow panel are NOT phones — they keep full chart height.
+  const isPhone = viewportW > 0 && viewportW < 768
   const mobileChartHeight = viewportH > 0
     ? Math.max(220, Math.min(300, Math.round(viewportH * 0.30)))
     : 260
-  // Mobile preview-only: scale down typography so the Y-axis label fits in the compact height.
-  // isExporting = true restores full size during DOM capture — exports are always full-quality.
-  const previewOnly = isMobileCard && !isExporting
+  // previewOnly: compact mode for actual phones only — never for desktops.
+  // isExporting = true always restores full size during DOM capture.
+  const previewOnly = isPhone && !isExporting
   const effectiveChartHeight = previewOnly ? mobileChartHeight : figureHeight
   const effectiveXTitleSize = previewOnly ? Math.min(xTitleSize, 13) : xTitleSize
   const effectiveYTitleSize = previewOnly ? Math.min(yTitleSize, 13) : yTitleSize
