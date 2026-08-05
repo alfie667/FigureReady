@@ -908,7 +908,7 @@ export default function AppPage() {
         )}
 
         {/* Canvas */}
-        <main className="flex-1 flex flex-col overflow-hidden pb-14 md:pb-0">
+        <main className="flex-1 flex flex-col overflow-hidden">
           {/* Figure zone — always visible, grows to fill space above inline panel */}
           <div className="flex-1 overflow-hidden flex flex-col">
             {isMultiPanel && panels.length > 0 ? (
@@ -984,31 +984,43 @@ export default function AppPage() {
               </div>
             </div>
           )}
+
+          {/* Spacer: reserves exact height for fixed bottom nav + iOS safe-area-inset-bottom */}
+          <div
+            className="md:hidden shrink-0"
+            style={{ height: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
+            aria-hidden="true"
+          />
         </main>
 
       </div>
 
       {/* ── Mobile bottom tab bar ─────────────────────────────────────────── */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40 flex items-center justify-around px-1 py-1 safe-area-inset-bottom">
-        {SIDEBAR_TABS.map(tab => {
-          const active = activeSidePanel === tab.id && mobilePanelOpen
-          return (
-            <button
-              key={tab.id}
-              onClick={() => {
-                if (active) { setMobilePanelOpen(false); return }
-                setActiveSidePanel(tab.id)
-                setMobilePanelOpen(true)
-              }}
-              className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-xl transition-colors min-w-0 flex-1 ${
-                active ? 'text-[#2563eb]' : 'text-slate-500'
-              }`}
-            >
-              <div className="w-5 h-5 shrink-0">{tab.icon}</div>
-              <span className="text-[9px] font-semibold leading-none truncate w-full text-center">{tab.label}</span>
-            </button>
-          )
-        })}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur border-t border-slate-200 z-40"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div className="flex items-center justify-around px-1 py-1">
+          {SIDEBAR_TABS.map(tab => {
+            const active = activeSidePanel === tab.id && mobilePanelOpen
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (active) { setMobilePanelOpen(false); return }
+                  setActiveSidePanel(tab.id)
+                  setMobilePanelOpen(true)
+                }}
+                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 rounded-xl transition-colors min-w-0 flex-1 ${
+                  active ? 'text-[#2563eb]' : 'text-slate-500'
+                }`}
+              >
+                <div className="w-5 h-5 shrink-0">{tab.icon}</div>
+                <span className="text-[9px] font-semibold leading-none truncate w-full text-center">{tab.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </nav>
 
       <FeedbackButton />

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
@@ -13,6 +13,12 @@ const plusJakarta = Plus_Jakarta_Sans({
 
 const BASE  = 'https://figureready.com'
 const GA_ID = 'G-D5DQ01SFSW'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+}
 
 export const metadata: Metadata = {
   title: 'FigureReady',
