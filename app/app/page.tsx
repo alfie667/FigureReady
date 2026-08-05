@@ -18,7 +18,8 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
-import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated } from '@/lib/analytics'
+import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated, trackCheckoutReturnedWithoutPurchase } from '@/lib/analytics'
+import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { isProUser } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
@@ -153,6 +154,29 @@ export default function AppPage() {
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
     if (window.innerWidth >= 768) setActiveSidePanel('data')
+
+    // Same-tab return: user navigated to Polar then hit back — pending checkout
+    // still in localStorage since success page never loaded to clear it.
+    const pending = getPendingCheckout()
+    if (pending) {
+      trackCheckoutReturnedWithoutPurchase(pending)
+      clearPendingCheckout()
+    }
+  }, [])
+
+  // New-tab return: app stays loaded while Polar opens in a new tab.
+  // When the user closes Polar and refocuses the app, detect the abandoned checkout.
+  useEffect(() => {
+    const onFocus = () => {
+      const pending = getPendingCheckout()
+      if (!pending) return
+      const secondsAway = (Date.now() - new Date(pending.started_at).getTime()) / 1000
+      if (secondsAway < 5) return // too fast — user didn't actually visit Polar
+      trackCheckoutReturnedWithoutPurchase(pending)
+      clearPendingCheckout()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   // ── Share via URL ─────────────────────────────────────────────────────────────
@@ -381,7 +405,6 @@ export default function AppPage() {
     setPanels([])
     setIsDemoMode(false)
 
-    trackUpload()
     trackChartCreated()
   }
 
@@ -419,7 +442,7 @@ export default function AppPage() {
     e.target.value = ''
     try {
       const { columns: cols, rows } = await parseExcelFile(file)
-      if (rows.length > 0) handleData(cols, rows)
+      if (rows.length > 0) { handleData(cols, rows); trackUpload() }
     } catch { /* silently ignore parse errors */ }
   }
 
@@ -488,7 +511,7 @@ export default function AppPage() {
       case 'data':
         return (
           <div className="space-y-5">
-            <FileUploader onData={handleData} />
+            <FileUploader onData={(cols, rows) => { handleData(cols, rows); trackUpload() }} />
 
             {columns.length > 0 && (
               <div className="space-y-5">

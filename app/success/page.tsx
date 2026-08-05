@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { activatePro } from '@/lib/usageLimit'
-import { trackPurchase, type PlanType } from '@/lib/analytics'
+import { trackPurchase, trackPurchaseSuccess, type PlanType } from '@/lib/analytics'
+import { getPendingCheckout } from '@/lib/checkout'
 
 declare global {
   interface Window { fbq?: (...args: unknown[]) => void }
@@ -38,11 +39,26 @@ export default function SuccessPage() {
 
         activatePro()
 
+        // Read pending checkout BEFORE trackPurchase clears it
+        const pending = getPendingCheckout()
+
         trackPurchase({
           transactionId: data.transactionId,
           value:         data.value,
           currency:      data.currency,
           plan:          data.plan,
+        })
+
+        trackPurchaseSuccess({
+          transactionId:  data.transactionId,
+          plan:           data.plan,
+          value:          data.value,
+          currency:       data.currency,
+          location:       pending?.location       ?? null,
+          trigger:        pending?.trigger        ?? null,
+          figure_created: pending?.figure_created ?? null,
+          file_uploaded:  pending?.file_uploaded  ?? null,
+          sample_only:    pending?.sample_only    ?? null,
         })
 
         // Client-side FB pixel (server-side event already fired via webhook)

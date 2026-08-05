@@ -1,6 +1,8 @@
 import {
   trackEvent,
   trackPlanSelected,
+  trackCheckoutOpened,
+  deviceParams,
   clearPendingCheckout,
   isDebugMode,
   PLAN_META,
@@ -36,7 +38,7 @@ export const POLAR_URLS: Record<PlanType, string> = {
 export function getPendingCheckout(): PendingCheckout | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = sessionStorage.getItem(CHECKOUT_PENDING_KEY)
+    const raw = localStorage.getItem(CHECKOUT_PENDING_KEY)
     return raw ? (JSON.parse(raw) as PendingCheckout) : null
   } catch {
     return null
@@ -84,17 +86,22 @@ export function startCheckout(
 
   // ── 1. upgrade_clicked ─────────────────────────────────────────────────────
   trackEvent('upgrade_clicked', {
+    ...deviceParams(),
     location,
     trigger,
     plan,
-    page_path:      window.location.pathname,
     figure_created: figureCreated,
     file_uploaded:  fileUploaded,
     sample_only:    sampleOnly,
   })
 
   // ── 2. plan_selected ───────────────────────────────────────────────────────
-  trackPlanSelected({ plan, value, currency: 'EUR', location, trigger })
+  trackPlanSelected({
+    plan, value, currency: 'EUR', location, trigger,
+    figure_created: figureCreated,
+    file_uploaded:  fileUploaded,
+    sample_only:    sampleOnly,
+  })
 
   // ── 3. Store pending checkout (structured JSON) ────────────────────────────
   const pending: PendingCheckout = {
@@ -105,7 +112,9 @@ export function startCheckout(
     file_uploaded:  fileUploaded,
     sample_only:    sampleOnly,
   }
-  sessionStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify(pending))
+  // localStorage (not sessionStorage) so the pending record is visible across
+  // tabs — the success page can clear it even when Polar opens in a new tab.
+  localStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify(pending))
 
   // ── 4. FB pixel ────────────────────────────────────────────────────────────
   window.fbq?.('track', 'InitiateCheckout')
@@ -113,13 +122,21 @@ export function startCheckout(
   const destination = buildPolarUrl(plan)
   const debug = isDebugMode()
 
-  const beginCheckoutPayload = {
-    ...(debug && { debug_mode: true }),
-    currency:       'EUR',
-    value,
+  const checkoutContext = {
     plan,
     location,
     trigger,
+    figure_created: figureCreated,
+    file_uploaded:  fileUploaded,
+    sample_only:    sampleOnly,
+  }
+
+  const beginCheckoutPayload = {
+    ...(debug && { debug_mode: true }),
+    ...deviceParams(),
+    currency: 'EUR',
+    value,
+    ...checkoutContext,
     items: [{
       item_id,
       item_name,
@@ -133,6 +150,7 @@ export function startCheckout(
     // ── 5a. New tab: fire begin_checkout synchronously then open Polar ────────
     window.gtag?.('event', 'begin_checkout', beginCheckoutPayload)
     window.open(destination, '_blank', 'noopener,noreferrer')
+    trackCheckoutOpened(checkoutContext)
     checkoutInFlight = false
     opts.onComplete?.()
   } else {
@@ -142,6 +160,8 @@ export function startCheckout(
       if (redirected) return
       redirected = true
       checkoutInFlight = false
+      // checkout_opened fires via sendBeacon — survives same-tab navigation
+      trackCheckoutOpened(checkoutContext)
       window.location.href = destination
     }
 

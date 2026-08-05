@@ -74,18 +74,35 @@ export function updateConsent(granted: boolean) {
   })
 }
 
+// ── Device context ────────────────────────────────────────────────────────────
+
+export function deviceParams(): Record<string, unknown> {
+  if (typeof window === 'undefined') return {}
+  return {
+    device_type:  window.innerWidth < 768 ? 'mobile' : 'desktop',
+    screen_width: window.innerWidth,
+    page_path:    window.location.pathname,
+  }
+}
+
 // ── Free / paywall events ─────────────────────────────────────────────────────
 
 export function trackFirstFreeExport() {
-  trackEvent('first_free_export')
+  trackEvent('first_free_export', deviceParams())
 }
 
 export function trackFreeExportUsed() {
-  trackEvent('free_export_used')
+  trackEvent('free_export_used', deviceParams())
 }
 
-export function trackPaywallShown(fileType?: string) {
-  trackEvent('paywall_shown', fileType ? { file_type: fileType } : undefined)
+export function trackPaywallShown(params: {
+  mode: 'after_free' | 'blocked'
+  file_type?: string
+  figure_created?: boolean | null
+  file_uploaded?: boolean | null
+  sample_only?: boolean | null
+}) {
+  trackEvent('paywall_shown', { ...deviceParams(), ...params })
 }
 
 // ── CTA / funnel events ───────────────────────────────────────────────────────
@@ -147,7 +164,7 @@ export const PLAN_META: Record<PlanType, { item_id: string; item_name: string; p
 export const CHECKOUT_PENDING_KEY = 'fr_checkout_pending'
 
 export function clearPendingCheckout(): void {
-  if (typeof window !== 'undefined') sessionStorage.removeItem(CHECKOUT_PENDING_KEY)
+  if (typeof window !== 'undefined') localStorage.removeItem(CHECKOUT_PENDING_KEY)
 }
 
 // ── Checkout funnel events ────────────────────────────────────────────────────
@@ -158,8 +175,60 @@ export function trackPlanSelected(params: {
   currency: string
   location: CheckoutLocation
   trigger: CheckoutTrigger
+  figure_created?: boolean | null
+  file_uploaded?: boolean | null
+  sample_only?: boolean | null
 }) {
-  trackEvent('plan_selected', params)
+  trackEvent('plan_selected', { ...deviceParams(), ...params })
+}
+
+export function trackCheckoutOpened(params: {
+  plan: PlanType
+  location: CheckoutLocation
+  trigger: CheckoutTrigger
+  figure_created?: boolean | null
+  file_uploaded?: boolean | null
+  sample_only?: boolean | null
+}) {
+  trackEvent('checkout_opened', { ...deviceParams(), ...params })
+}
+
+export function trackCheckoutReturnedWithoutPurchase(pending: PendingCheckout) {
+  trackEvent('checkout_returned_without_purchase', {
+    ...deviceParams(),
+    plan:           pending.plan,
+    location:       pending.location,
+    trigger:        pending.trigger,
+    figure_created: pending.figure_created,
+    file_uploaded:  pending.file_uploaded,
+    sample_only:    pending.sample_only,
+    time_away_s:    Math.round((Date.now() - new Date(pending.started_at).getTime()) / 1000),
+  })
+}
+
+export function trackPurchaseSuccess(params: {
+  transactionId: string
+  plan: PlanType
+  value: number
+  currency: string
+  location?: string | null
+  trigger?: string | null
+  figure_created?: boolean | null
+  file_uploaded?: boolean | null
+  sample_only?: boolean | null
+}) {
+  trackEvent('purchase_success', {
+    ...deviceParams(),
+    transaction_id: params.transactionId,
+    plan:           params.plan,
+    value:          params.value,
+    currency:       params.currency,
+    location:       params.location ?? null,
+    trigger:        params.trigger  ?? null,
+    figure_created: params.figure_created ?? null,
+    file_uploaded:  params.file_uploaded  ?? null,
+    sample_only:    params.sample_only    ?? null,
+  })
 }
 
 export function trackCheckoutCancelled(pending: PendingCheckout) {

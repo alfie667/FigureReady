@@ -1071,13 +1071,14 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       await doExportFreePNG()
       recordFreeExport()
       trackFirstFreeExport()
+      trackPaywallShown({ mode: 'after_free', file_type: type })
       await openPaywall('after_free')
       return
     }
 
     // Quota exhausted or non-PNG format attempted
     trackFreeExportUsed()
-    trackPaywallShown(type)
+    trackPaywallShown({ mode: 'blocked', file_type: type })
     await openPaywall('blocked')
   }
 
