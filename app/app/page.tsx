@@ -21,7 +21,8 @@ import type { MarkerShape } from '@/lib/markerShapes'
 import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated, trackCheckoutReturnedWithoutPurchase } from '@/lib/analytics'
 import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
-import { isProUser } from '@/lib/usageLimit'
+import { getCachedEntitlement, refreshEntitlement, hasLegacyProFlag } from '@/lib/usageLimit'
+import RestoreAccessForm from '@/components/RestoreAccessForm'
 import PaywallModal from '@/components/PaywallModal'
 import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
 import { parseExcelFile } from '@/lib/parseExcel'
@@ -105,6 +106,7 @@ const PANEL_LABELS_MAP: Record<string, string> = {
 
 export default function AppPage() {
   const [isDemoMode, setIsDemoMode] = useState(false)
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false)
   const [columns, setColumns] = useState<string[]>([])
   const [data, setData] = useState<Record<string, unknown>[]>([])
   const [xCol, setXCol] = useState('')
@@ -128,7 +130,7 @@ export default function AppPage() {
   const handleExportPDF = () => chartPreviewRef.current?.triggerExport('pdf')
   const handleExportPNG = () => {
     if (isMultiPanel) {
-      if (isProUser()) multiPanelRef.current?.exportPNG()
+      if (getCachedEntitlement().isPro) multiPanelRef.current?.exportPNG()
       else setMultiPanelPaywallOpen(true)
     } else {
       chartPreviewRef.current?.triggerExport('png')
@@ -154,6 +156,11 @@ export default function AppPage() {
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
     if (window.innerWidth >= 768) setActiveSidePanel('data')
+
+    // Fetch server-side entitlement; show restore prompt for users with the old localStorage flag
+    refreshEntitlement().then(e => {
+      if (!e.isPro && hasLegacyProFlag()) setShowRestorePrompt(true)
+    })
 
     // Same-tab return: user navigated to Polar then hit back — pending checkout
     // still in localStorage since success page never loaded to clear it.
@@ -838,6 +845,31 @@ export default function AppPage() {
         onExportPNG={handleExportPNG}
         onShareLink={handleShareLink}
       />
+
+      {showRestorePrompt && (
+        <div className="bg-amber-50 border-b border-amber-100 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="text-xs text-amber-800 font-medium">
+              Your Pro access needs to be restored. Enter your subscription email to get a sign-in link.
+            </span>
+            <div className="shrink-0 w-48">
+              <RestoreAccessForm compact onSent={() => setShowRestorePrompt(false)} />
+            </div>
+          </div>
+          <button
+            onClick={() => setShowRestorePrompt(false)}
+            className="shrink-0 text-amber-500 hover:text-amber-700"
+            aria-label="Dismiss"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {isDemoMode && (
         <div className="bg-blue-50 border-b border-blue-100 px-4 py-2 flex items-center justify-between gap-4 shrink-0">

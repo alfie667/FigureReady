@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CheckoutButton, PricingViewTracker } from './CheckoutButton'
 import { LogoFull } from '@/components/Logo'
+import RestoreAccessForm from '@/components/RestoreAccessForm'
 
 export const metadata: Metadata = {
   title: 'Pricing — FigureReady',
@@ -114,6 +115,15 @@ export default function PricingPage() {
             </CheckoutButton>
           </div>
 
+        </div>
+
+        {/* Restore access */}
+        <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-semibold text-slate-800 mb-1">Already a subscriber?</p>
+          <p className="text-xs text-slate-500 mb-4">
+            Enter your subscription email and we will send you a sign-in link to restore your Pro access.
+          </p>
+          <RestoreAccessForm />
         </div>
 
         {/* Trust bar */}

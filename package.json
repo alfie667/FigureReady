@@ -8,8 +8,10 @@
     "start": "next start"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "@polar-sh/sdk": "^0.48.1",
     "html-to-image": "^1.11.11",
+    "jose": "^6.2.8",
     "jspdf": "^4.2.1",
     "next": "^14.2.0",
     "react": "^18.3.0",
