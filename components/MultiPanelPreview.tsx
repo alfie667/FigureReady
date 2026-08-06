@@ -43,14 +43,21 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
 
   const handleExport = async () => {
     if (!gridRef.current) return
+    const el = gridRef.current
+    const parent = el.parentElement
+    const prevOverflow = parent ? parent.style.overflow : ''
+    if (parent) parent.style.overflow = 'visible'
+    await new Promise(r => setTimeout(r, 100))
     try {
-      const url = await toPng(gridRef.current, { pixelRatio: 300 / 96, backgroundColor: 'white', style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
+      const url = await toPng(el, { pixelRatio: 300 / 96, backgroundColor: 'white', style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
       const a = document.createElement('a')
       a.href = url
       a.download = 'figure-multipanel.png'
       a.click()
     } catch (e) {
       console.error('Export failed', e)
+    } finally {
+      if (parent) parent.style.overflow = prevOverflow
     }
   }
 

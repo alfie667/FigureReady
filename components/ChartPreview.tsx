@@ -1041,6 +1041,39 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // ─── Export ──────────────────────────────────────────────────────────────────
 
+  // Temporarily pins the chart to explicit pixel dimensions so html-to-image
+  // captures the full chart at the intended width (bypasses maxWidth:100% and
+  // parent overflow:hidden that would otherwise crop the right side).
+  async function captureChartPng(pixelRatio: number): Promise<string> {
+    const el = chartRef.current!
+    const targetWidth = figureWidth || 700
+
+    const prevWidth    = el.style.width
+    const prevMaxWidth = el.style.maxWidth
+    const parent       = el.parentElement
+    const prevOverflow = parent ? parent.style.overflow : ''
+
+    el.style.width    = `${targetWidth}px`
+    el.style.maxWidth = 'none'
+    if (parent) parent.style.overflow = 'visible'
+
+    // ResizeObserver fires asynchronously — give Recharts time to re-render.
+    await new Promise(r => setTimeout(r, 150))
+
+    const { toPng } = await import('html-to-image')
+    try {
+      return await toPng(el, {
+        backgroundColor: 'white',
+        pixelRatio,
+        style: { boxShadow: 'none', borderRadius: '0', border: 'none' },
+      })
+    } finally {
+      el.style.width    = prevWidth
+      el.style.maxWidth = prevMaxWidth
+      if (parent) parent.style.overflow = prevOverflow
+    }
+  }
+
   async function capturePreview(): Promise<string | null> {
     if (!chartRef.current) return null
     try {
@@ -1086,10 +1119,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     if (!chartRef.current) return
     trackExport('png')
     setIsExporting(true)
-    await new Promise(r => setTimeout(r, 80))
-    const { toPng } = await import('html-to-image')
     try {
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96, style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
+      const raw = await captureChartPng(300 / 96)
       const dataUrl = injectPngDpi(raw, 300)
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
@@ -1100,10 +1131,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const doExportFreePNG = async () => {
     if (!chartRef.current) return
     setIsExporting(true)
-    await new Promise(r => setTimeout(r, 80))
-    const { toPng } = await import('html-to-image')
     try {
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 150 / 96, style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
+      const raw = await captureChartPng(150 / 96)
       const withDpi = injectPngDpi(raw, 150)
       const watermarked = await addWatermark(withDpi)
       const a = document.createElement('a')
@@ -1116,10 +1145,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     if (!chartRef.current) return
     trackExport('pdf')
     setIsExporting(true)
-    await new Promise(r => setTimeout(r, 80))
-    const { toPng } = await import('html-to-image')
     try {
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96, style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
+      const raw = await captureChartPng(300 / 96)
       const { jsPDF } = await import('jspdf')
       const img = new Image()
       img.src = raw
