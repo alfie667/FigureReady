@@ -29,6 +29,7 @@ export interface PendingCheckout {
   location: CheckoutLocation
   trigger: CheckoutTrigger
   started_at: string
+  checkout_opened_at?: string   // set just before the Polar tab opens / same-tab redirect fires
   figure_created: boolean | null
   file_uploaded: boolean | null
   sample_only: boolean | null
@@ -40,6 +41,28 @@ declare global {
     dataLayer?: unknown[]
     fbq?: (...args: unknown[]) => void
   }
+}
+
+// ── Internal Neon logging ─────────────────────────────────────────────────────
+// Fire-and-forget: POST to /api/analytics/event for the /admin/funnel dashboard.
+// keepalive: true ensures the request survives same-tab page navigations.
+
+function logFunnelEvent(payload: {
+  event_name:   string
+  plan?:        string | null
+  source?:      string | null
+  device_type?: string | null
+  screen_width?: number | null
+  duration_s?:  number | null
+  abandon_type?: string | null
+}): void {
+  if (typeof window === 'undefined') return
+  fetch('/api/analytics/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {})
 }
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -190,19 +213,47 @@ export function trackCheckoutOpened(params: {
   file_uploaded?: boolean | null
   sample_only?: boolean | null
 }) {
-  trackEvent('checkout_opened', { ...deviceParams(), ...params })
+  const dev = deviceParams()
+  trackEvent('checkout_opened', { ...dev, ...params })
+  logFunnelEvent({
+    event_name:  'checkout_opened',
+    plan:        params.plan,
+    source:      params.location,
+    device_type: dev.device_type as string,
+    screen_width: dev.screen_width as number,
+  })
 }
 
 export function trackCheckoutReturnedWithoutPurchase(pending: PendingCheckout) {
+  const openedAt  = pending.checkout_opened_at ?? pending.started_at
+  const durationS = Math.round((Date.now() - new Date(openedAt).getTime()) / 1000)
+  const abandonmentType =
+    durationS < 10  ? 'immediate' :
+    durationS > 60  ? 'high_intent' :
+    'normal'
+
+  const dev = deviceParams()
+
   trackEvent('checkout_returned_without_purchase', {
-    ...deviceParams(),
-    plan:           pending.plan,
-    location:       pending.location,
-    trigger:        pending.trigger,
-    figure_created: pending.figure_created,
-    file_uploaded:  pending.file_uploaded,
-    sample_only:    pending.sample_only,
-    time_away_s:    Math.round((Date.now() - new Date(pending.started_at).getTime()) / 1000),
+    ...dev,
+    selected_plan:     pending.plan,
+    checkout_source:   pending.location,
+    trigger:           pending.trigger,
+    time_away_seconds: durationS,
+    abandonment_type:  abandonmentType,
+    figure_created:    pending.figure_created,
+    file_uploaded:     pending.file_uploaded,
+    sample_only:       pending.sample_only,
+  })
+
+  logFunnelEvent({
+    event_name:  'checkout_returned_without_purchase',
+    plan:        pending.plan,
+    source:      pending.location,
+    device_type: dev.device_type as string,
+    screen_width: dev.screen_width as number,
+    duration_s:  durationS,
+    abandon_type: abandonmentType,
   })
 }
 
@@ -232,15 +283,39 @@ export function trackPurchaseSuccess(params: {
 }
 
 export function trackCheckoutCancelled(pending: PendingCheckout) {
+  const openedAt  = pending.checkout_opened_at ?? pending.started_at
+  const durationS = Math.round((Date.now() - new Date(openedAt).getTime()) / 1000)
+  const abandonmentType =
+    durationS < 10  ? 'immediate' :
+    durationS > 60  ? 'high_intent' :
+    'normal'
+
+  const dev = deviceParams()
+
   trackEvent('checkout_cancelled', {
-    plan:           pending.plan,
-    value:          pending.value,
-    currency:       pending.currency,
-    location:       pending.location,
-    trigger:        pending.trigger,
-    figure_created: pending.figure_created,
-    file_uploaded:  pending.file_uploaded,
-    sample_only:    pending.sample_only,
+    ...dev,
+    selected_plan:     pending.plan,
+    checkout_source:   pending.location,
+    trigger:           pending.trigger,
+    value:             pending.value,
+    currency:          pending.currency,
+    time_away_seconds: durationS,
+    abandonment_type:  abandonmentType,
+    figure_created:    pending.figure_created,
+    file_uploaded:     pending.file_uploaded,
+    sample_only:       pending.sample_only,
+  })
+
+  // Log to Neon under the same event name as the other abandonment path so the
+  // dashboard aggregates both detection paths (app mount vs bfcache/browser-back).
+  logFunnelEvent({
+    event_name:  'checkout_returned_without_purchase',
+    plan:        pending.plan,
+    source:      pending.location,
+    device_type: dev.device_type as string,
+    screen_width: dev.screen_width as number,
+    duration_s:  durationS,
+    abandon_type: abandonmentType,
   })
 }
 
@@ -262,11 +337,18 @@ export function trackPurchase(params: {
   clearPendingCheckout()
 
   const { item_id, item_name } = PLAN_META[params.plan] ?? PLAN_META.monthly
+  const dev = deviceParams()
   trackEvent('purchase', {
     transaction_id: params.transactionId,
     value:          params.value,
     currency:       params.currency,
     items: [{ item_id, item_name, item_category: 'subscription', price: params.value, quantity: 1 }],
+  })
+  logFunnelEvent({
+    event_name:  'purchase',
+    plan:        params.plan,
+    device_type: dev.device_type as string,
+    screen_width: dev.screen_width as number,
   })
 }
 

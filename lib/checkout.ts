@@ -149,6 +149,8 @@ export function startCheckout(
   if (opts.newTab) {
     // ── 5a. New tab: fire begin_checkout synchronously then open Polar ────────
     window.gtag?.('event', 'begin_checkout', beginCheckoutPayload)
+    // Stamp the exact moment the Polar tab opens so abandonment duration is accurate.
+    localStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify({ ...pending, checkout_opened_at: new Date().toISOString() }))
     window.open(destination, '_blank', 'noopener,noreferrer')
     trackCheckoutOpened(checkoutContext)
     checkoutInFlight = false
@@ -160,6 +162,8 @@ export function startCheckout(
       if (redirected) return
       redirected = true
       checkoutInFlight = false
+      // Stamp the exact redirect moment before navigating away.
+      localStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify({ ...pending, checkout_opened_at: new Date().toISOString() }))
       // checkout_opened fires via sendBeacon — survives same-tab navigation
       trackCheckoutOpened(checkoutContext)
       window.location.href = destination
