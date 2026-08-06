@@ -1089,7 +1089,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     await new Promise(r => setTimeout(r, 80))
     const { toPng } = await import('html-to-image')
     try {
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96, style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
       const dataUrl = injectPngDpi(raw, 300)
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
@@ -1103,7 +1103,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     await new Promise(r => setTimeout(r, 80))
     const { toPng } = await import('html-to-image')
     try {
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 150 / 96 })
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 150 / 96, style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
       const withDpi = injectPngDpi(raw, 150)
       const watermarked = await addWatermark(withDpi)
       const a = document.createElement('a')
@@ -1119,7 +1119,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     await new Promise(r => setTimeout(r, 80))
     const { toPng } = await import('html-to-image')
     try {
-      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96 })
+      const raw = await toPng(chartRef.current, { backgroundColor: 'white', pixelRatio: 300 / 96, style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
       const { jsPDF } = await import('jspdf')
       const img = new Image()
       img.src = raw

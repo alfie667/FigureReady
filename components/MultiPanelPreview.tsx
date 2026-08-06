@@ -44,7 +44,7 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
   const handleExport = async () => {
     if (!gridRef.current) return
     try {
-      const url = await toPng(gridRef.current, { pixelRatio: 300 / 96, backgroundColor: 'white' })
+      const url = await toPng(gridRef.current, { pixelRatio: 300 / 96, backgroundColor: 'white', style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
       const a = document.createElement('a')
       a.href = url
       a.download = 'figure-multipanel.png'
