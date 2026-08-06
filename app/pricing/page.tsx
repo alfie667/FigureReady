@@ -58,6 +58,17 @@ export default function PricingPage() {
 
       {/* Plans */}
       <section className="max-w-3xl mx-auto px-6 pb-20">
+
+        {/* Social proof */}
+        <div className="text-center mb-8">
+          <p className="text-xs text-slate-400 uppercase tracking-wider mb-3">Styles built for</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {['Nature', 'ACS', 'Cell', 'Science', 'IEEE', 'PLOS ONE'].map(j => (
+              <span key={j} className="px-3 py-1 rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-500">{j}</span>
+            ))}
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-6">
 
           {/* Monthly */}
@@ -68,7 +79,6 @@ export default function PricingPage() {
                 <span className="text-4xl font-extrabold text-slate-900">12€</span>
                 <span className="text-slate-400 text-sm mb-1.5">/month</span>
               </div>
-              <p className="text-xs text-slate-400">Cancel anytime</p>
             </div>
             <ul className="space-y-2.5 flex-1 mb-6">
               {proFeatures.map(f => (
@@ -84,6 +94,12 @@ export default function PricingPage() {
             >
               Get started →
             </CheckoutButton>
+            <div className="mt-4 pt-4 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-400">
+              <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              7-day money-back guarantee · cancel anytime from your Polar portal
+            </div>
           </div>
 
           {/* Yearly */}
@@ -113,9 +129,21 @@ export default function PricingPage() {
             >
               Get Pro →
             </CheckoutButton>
+            <div className="mt-4 pt-4 border-t border-blue-500 flex items-start gap-2 text-xs text-blue-200">
+              <svg className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              7-day money-back guarantee · cancel anytime from your Polar portal
+            </div>
           </div>
 
         </div>
+
+        {/* Renewal transparency */}
+        <p className="mt-5 text-xs text-slate-400 text-center leading-relaxed">
+          Monthly plan renews on the same date each month. Yearly plan billed once per year, renews annually.{' '}
+          Manage or cancel from the Polar customer portal — the link is sent to your email after purchase.
+        </p>
 
         {/* Restore access */}
         <div className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
@@ -146,45 +174,39 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="max-w-2xl mx-auto px-6 pb-20">
         <h2 className="text-lg font-bold text-slate-900 mb-6 text-center">Frequently asked questions</h2>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {[
             {
+              defaultOpen: true,
               q: 'Can I cancel anytime?',
-              a: 'Yes, absolutely. You can cancel your subscription at any time from your Polar customer portal — no questions asked, no cancellation fee.',
+              a: 'Yes. Cancel in one click from your Polar customer portal — the link is in your purchase confirmation email. Your Pro access continues until the end of the paid period. No data is deleted when you cancel.',
             },
             {
-              q: 'How do I cancel my subscription?',
-              a: 'After your purchase, you receive a confirmation email from Polar. Click the link in that email to access your customer portal, then click "Cancel subscription". Your access continues until the end of your current billing period.',
-            },
-            {
-              q: 'What happens after I cancel?',
-              a: 'You keep full Pro access until the end of your paid period. After that, your account automatically reverts to the free plan — no data is deleted.',
+              q: 'How do I cancel?',
+              a: 'Open the Polar customer portal link from your purchase confirmation email and click "Cancel subscription". No form, no phone call.',
             },
             {
               q: 'Do you offer refunds?',
-              a: 'If you are not satisfied, contact us at contact@figure-ready.com within 7 days of your purchase and we will issue a full refund, no questions asked.',
+              a: '7-day money-back guarantee, no questions asked. Email contact@figure-ready.com within 7 days of purchase and we will refund you in full.',
             },
             {
               q: 'Will I be charged automatically?',
-              a: 'Yes. Monthly plans renew every month, yearly plans renew every year. You will receive an email reminder before each renewal. You can cancel at any time before the renewal date.',
-            },
-            {
-              q: 'What payment methods are accepted?',
-              a: 'All major credit and debit cards (Visa, Mastercard, American Express) via Polar, a secure and trusted payment platform.',
-            },
-            {
-              q: 'What counts as a figure?',
-              a: 'Each exported PNG, SVG or TIFF file counts as one figure. Previewing inside the app is always unlimited and free.',
+              a: 'Yes. Monthly plans renew each month on the same date; yearly plans renew once per year. You will receive a reminder email before each renewal and can cancel before it fires.',
             },
             {
               q: 'Is my data private?',
-              a: 'Yes. Your Excel files are processed entirely in your browser and never uploaded to any server. We have no access to your data.',
+              a: 'Yes. Your Excel files are processed entirely in your browser and never sent to any server. FigureReady has no access to your data.',
             },
-          ].map(({ q, a }) => (
-            <div key={q} className="rounded-xl border border-slate-200 bg-white p-5">
-              <p className="text-sm font-semibold text-slate-900 mb-1">{q}</p>
-              <p className="text-sm text-slate-500">{a}</p>
-            </div>
+          ].map(({ q, a, defaultOpen }) => (
+            <details key={q} open={defaultOpen} className="group rounded-xl border border-slate-200 bg-white overflow-hidden">
+              <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer list-none [&::-webkit-details-marker]:hidden select-none">
+                <span className="text-sm font-semibold text-slate-900">{q}</span>
+                <svg className="w-4 h-4 shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <p className="px-5 pb-5 text-sm text-slate-500 leading-relaxed">{a}</p>
+            </details>
           ))}
         </div>
 

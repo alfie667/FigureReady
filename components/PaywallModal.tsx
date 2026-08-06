@@ -145,9 +145,16 @@ export default function PaywallModal({ mode, previewDataUrl, onClose, figureCrea
           >
             {loading ? 'Opening…' : isAfterFree ? 'Upgrade to Pro →' : 'Unlock & Download →'}
           </button>
-          <p className="text-center text-xs text-slate-400 mt-3">
-            Secure payment · Cancel anytime · Return here after payment to download
-          </p>
+          <div className="mt-3 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-center gap-1.5 mb-1.5">
+              {['VISA', 'MC', 'AMEX'].map(b => (
+                <span key={b} className="px-1.5 py-0.5 rounded border border-slate-200 text-[10px] font-bold text-slate-400 tracking-wide">{b}</span>
+              ))}
+            </div>
+            <p className="text-center text-xs text-slate-400">
+              Secure checkout via Polar · Cancel anytime · 7-day refund
+            </p>
+          </div>
         </div>
       </div>
     </div>
