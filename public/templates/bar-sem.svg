@@ -1,0 +1,68 @@
+<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="280" height="200" fill="white"/>
+
+  <!-- Y-axis label -->
+  <text x="10" y="98" text-anchor="middle" font-size="12" fill="#000" font-family="Arial, Helvetica, sans-serif" transform="rotate(-90,10,98)">Mean ± SEM</text>
+
+  <!-- X-axis label -->
+  <text x="152" y="197" text-anchor="middle" font-size="12" fill="#000" font-family="Arial, Helvetica, sans-serif">Group</text>
+
+  <!-- Frame -->
+  <rect x="42" y="15" width="222" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
+
+  <!-- Y tick marks (inward) -->
+  <line x1="42" y1="175" x2="47" y2="175" stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="143" x2="47" y2="143" stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="111" x2="47" y2="111" stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="79"  x2="47" y2="79"  stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="47"  x2="47" y2="47"  stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="15"  x2="47" y2="15"  stroke="#000" stroke-width="1"/>
+
+  <!-- Y tick labels (0–10 in steps of 2) -->
+  <!-- y_px = 175 - val*16 -->
+  <text x="38" y="178" text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">0</text>
+  <text x="38" y="146" text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">2</text>
+  <text x="38" y="114" text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">4</text>
+  <text x="38" y="82"  text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">6</text>
+  <text x="38" y="50"  text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">8</text>
+  <text x="38" y="18"  text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">10</text>
+
+  <!-- 4 bars, each 38px wide, centers at x=75,130,185,240 -->
+  <!-- y_bottom=175 always, y_top = 175 - val*16 -->
+
+  <!-- Bar A: val=6.4 → y_top=175-102.4=72.6≈73 -->
+  <rect x="56" y="73" width="38" height="102" fill="#6b7280" stroke="#000" stroke-width="0.8"/>
+  <!-- Error bar A: SEM=0.9 → ±14.4px → top=58, bottom=88 -->
+  <line x1="75" y1="59" x2="75" y2="88" stroke="#000" stroke-width="1.2"/>
+  <line x1="68" y1="59" x2="82" y2="59" stroke="#000" stroke-width="1.2"/>
+  <line x1="68" y1="88" x2="82" y2="88" stroke="#000" stroke-width="1.2"/>
+  <!-- X label A -->
+  <text x="75"  y="186" text-anchor="middle" font-size="11" fill="#000" font-family="Arial, Helvetica, sans-serif">A</text>
+
+  <!-- Bar B: val=4.2 → y_top=175-67.2=107.8≈108 -->
+  <rect x="111" y="108" width="38" height="67" fill="#6b7280" stroke="#000" stroke-width="0.8"/>
+  <!-- Error bar B: SEM=0.6 → ±9.6px → top=98, bottom=118 -->
+  <line x1="130" y1="98"  x2="130" y2="118" stroke="#000" stroke-width="1.2"/>
+  <line x1="123" y1="98"  x2="137" y2="98"  stroke="#000" stroke-width="1.2"/>
+  <line x1="123" y1="118" x2="137" y2="118" stroke="#000" stroke-width="1.2"/>
+  <!-- X label B -->
+  <text x="130" y="186" text-anchor="middle" font-size="11" fill="#000" font-family="Arial, Helvetica, sans-serif">B</text>
+
+  <!-- Bar C: val=7.8 → y_top=175-124.8=50.2≈50 -->
+  <rect x="166" y="50" width="38" height="125" fill="#6b7280" stroke="#000" stroke-width="0.8"/>
+  <!-- Error bar C: SEM=1.1 → ±17.6px → top=32, bottom=68 -->
+  <line x1="185" y1="32"  x2="185" y2="68"  stroke="#000" stroke-width="1.2"/>
+  <line x1="178" y1="32"  x2="192" y2="32"  stroke="#000" stroke-width="1.2"/>
+  <line x1="178" y1="68"  x2="192" y2="68"  stroke="#000" stroke-width="1.2"/>
+  <!-- X label C -->
+  <text x="185" y="186" text-anchor="middle" font-size="11" fill="#000" font-family="Arial, Helvetica, sans-serif">C</text>
+
+  <!-- Bar D: val=3.5 → y_top=175-56=119 -->
+  <rect x="221" y="119" width="38" height="56" fill="#6b7280" stroke="#000" stroke-width="0.8"/>
+  <!-- Error bar D: SEM=0.5 → ±8px → top=111, bottom=127 -->
+  <line x1="240" y1="111" x2="240" y2="127" stroke="#000" stroke-width="1.2"/>
+  <line x1="233" y1="111" x2="247" y2="111" stroke="#000" stroke-width="1.2"/>
+  <line x1="233" y1="127" x2="247" y2="127" stroke="#000" stroke-width="1.2"/>
+  <!-- X label D -->
+  <text x="240" y="186" text-anchor="middle" font-size="11" fill="#000" font-family="Arial, Helvetica, sans-serif">D</text>
+</svg>

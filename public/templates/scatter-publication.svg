@@ -1,0 +1,69 @@
+<svg viewBox="0 0 280 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="280" height="200" fill="white"/>
+
+  <!-- Y-axis label -->
+  <text x="10" y="98" text-anchor="middle" font-size="12" fill="#000" font-family="Arial, Helvetica, sans-serif" transform="rotate(-90,10,98)">Y Variable</text>
+
+  <!-- X-axis label -->
+  <text x="152" y="197" text-anchor="middle" font-size="12" fill="#000" font-family="Arial, Helvetica, sans-serif">X Variable</text>
+
+  <!-- Frame (4-sided box) -->
+  <rect x="42" y="15" width="222" height="160" fill="none" stroke="#000" stroke-width="1.5"/>
+
+  <!-- X tick marks (inward) -->
+  <line x1="42"  y1="175" x2="42"  y2="170" stroke="#000" stroke-width="1"/>
+  <line x1="86"  y1="175" x2="86"  y2="170" stroke="#000" stroke-width="1"/>
+  <line x1="131" y1="175" x2="131" y2="170" stroke="#000" stroke-width="1"/>
+  <line x1="175" y1="175" x2="175" y2="170" stroke="#000" stroke-width="1"/>
+  <line x1="220" y1="175" x2="220" y2="170" stroke="#000" stroke-width="1"/>
+  <line x1="264" y1="175" x2="264" y2="170" stroke="#000" stroke-width="1"/>
+
+  <!-- X tick labels -->
+  <text x="42"  y="186" text-anchor="middle" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">0</text>
+  <text x="86"  y="186" text-anchor="middle" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">2</text>
+  <text x="131" y="186" text-anchor="middle" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">4</text>
+  <text x="175" y="186" text-anchor="middle" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">6</text>
+  <text x="220" y="186" text-anchor="middle" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">8</text>
+  <text x="264" y="186" text-anchor="middle" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">10</text>
+
+  <!-- Y tick marks (inward) -->
+  <line x1="42" y1="175" x2="47" y2="175" stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="143" x2="47" y2="143" stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="111" x2="47" y2="111" stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="79"  x2="47" y2="79"  stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="47"  x2="47" y2="47"  stroke="#000" stroke-width="1"/>
+  <line x1="42" y1="15"  x2="47" y2="15"  stroke="#000" stroke-width="1"/>
+
+  <!-- Y tick labels -->
+  <text x="38" y="178" text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">0</text>
+  <text x="38" y="146" text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">2</text>
+  <text x="38" y="114" text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">4</text>
+  <text x="38" y="82"  text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">6</text>
+  <text x="38" y="50"  text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">8</text>
+  <text x="38" y="18"  text-anchor="end" font-size="10" fill="#000" font-family="Arial, Helvetica, sans-serif">10</text>
+
+  <!-- Data points — positive correlation with natural scatter -->
+  <!-- x_px = 42 + x_data*22.2, y_px = 175 - y_data*16 -->
+  <circle cx="53"  cy="162" r="3.5" fill="#000"/>
+  <circle cx="64"  cy="150" r="3.5" fill="#000"/>
+  <circle cx="75"  cy="157" r="3.5" fill="#000"/>
+  <circle cx="86"  cy="137" r="3.5" fill="#000"/>
+  <circle cx="98"  cy="144" r="3.5" fill="#000"/>
+  <circle cx="109" cy="122" r="3.5" fill="#000"/>
+  <circle cx="115" cy="131" r="3.5" fill="#000"/>
+  <circle cx="120" cy="113" r="3.5" fill="#000"/>
+  <circle cx="131" cy="107" r="3.5" fill="#000"/>
+  <circle cx="142" cy="99"  r="3.5" fill="#000"/>
+  <circle cx="148" cy="90"  r="3.5" fill="#000"/>
+  <circle cx="153" cy="82"  r="3.5" fill="#000"/>
+  <circle cx="164" cy="78"  r="3.5" fill="#000"/>
+  <circle cx="175" cy="69"  r="3.5" fill="#000"/>
+  <circle cx="181" cy="62"  r="3.5" fill="#000"/>
+  <circle cx="186" cy="74"  r="3.5" fill="#000"/>
+  <circle cx="197" cy="57"  r="3.5" fill="#000"/>
+  <circle cx="209" cy="49"  r="3.5" fill="#000"/>
+  <circle cx="220" cy="42"  r="3.5" fill="#000"/>
+  <circle cx="231" cy="36"  r="3.5" fill="#000"/>
+  <circle cx="242" cy="30"  r="3.5" fill="#000"/>
+  <circle cx="253" cy="25"  r="3.5" fill="#000"/>
+</svg>

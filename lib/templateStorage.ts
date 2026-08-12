@@ -26,6 +26,9 @@ const PER_SERIES_KEYS: (keyof StyleOverrides)[] = [
   'seriesMarkerShapes',
 ]
 
+// Gallery-style built-in templates live in lib/templates/definitions.ts and are
+// imported directly by the /templates page. BUILTIN_TEMPLATES here is kept for
+// the in-editor TemplateSelector (user-saved templates only for now).
 export const BUILTIN_TEMPLATES: ChartTemplate[] = []
 
 function stripPerSeries(overrides: StyleOverrides): StyleOverrides {

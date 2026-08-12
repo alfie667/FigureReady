@@ -18,7 +18,9 @@ import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
-import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated, trackCheckoutReturnedWithoutPurchase } from '@/lib/analytics'
+import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated, trackCheckoutReturnedWithoutPurchase, trackTemplateApplied } from '@/lib/analytics'
+import { getPendingTemplate, clearPendingTemplate } from '@/lib/templates/session'
+import { buildTemplateOverrides } from '@/lib/templates/apply'
 import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { getCachedEntitlement, refreshEntitlement, hasLegacyProFlag } from '@/lib/usageLimit'
@@ -122,6 +124,11 @@ export default function AppPage() {
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [drawInsetMode, setDrawInsetMode] = useState(false)
 
+  // ── Template undo ─────────────────────────────────────────────────────────────
+  const [showTemplateUndo, setShowTemplateUndo] = useState(false)
+  const appliedTemplateNameRef = useRef('')
+  const preTemplateSnapRef = useRef<{ chartType: ChartType; styleOverrides: StyleOverrides } | null>(null)
+
   const chartPreviewRef = useRef<ChartPreviewHandle>(null)
   const multiPanelRef = useRef<MultiPanelPreviewHandle>(null)
   const [multiPanelPaywallOpen, setMultiPanelPaywallOpen] = useState(false)
@@ -170,6 +177,52 @@ export default function AppPage() {
       clearPendingCheckout()
     }
   }, [])
+
+  // ── Template apply (from /templates gallery flow) ─────────────────────────────
+  useEffect(() => {
+    const pending = getPendingTemplate()
+    if (!pending) return
+    clearPendingTemplate()
+
+    // Snapshot current state for undo before overwriting anything
+    preTemplateSnapRef.current = { chartType, styleOverrides }
+    appliedTemplateNameRef.current = pending.templateName
+
+    // Apply data
+    setColumns(pending.columns)
+    setData(pending.rows)
+    setXCol(pending.xCol)
+    setYCols(pending.yCols)
+    setErrorCols(pending.errorCols)
+    setSeriesNames({})
+    setXAxisLabel(pending.xAxisLabel)
+    setYAxisLabel(pending.yAxisLabel)
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setChartType(pending.chartType)
+
+    // Apply template style (data-safe: never touches xMin/xMax/yMin/yMax/inset/annotations)
+    setStyleOverrides(buildTemplateOverrides(pending, pending.yCols))
+
+    setShowTemplateUndo(true)
+    trackTemplateApplied({
+      template_id: pending.templateId,
+      template_name: pending.templateName,
+      chart_type: pending.chartType,
+    })
+    trackChartCreated()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleUndoTemplate = () => {
+    if (!preTemplateSnapRef.current) return
+    setChartType(preTemplateSnapRef.current.chartType)
+    setStyleOverrides(preTemplateSnapRef.current.styleOverrides)
+    preTemplateSnapRef.current = null
+    setShowTemplateUndo(false)
+  }
 
   // New-tab return: app stays loaded while Polar opens in a new tab.
   // When the user closes Polar and refocuses the app, detect the abandoned checkout.
@@ -885,6 +938,36 @@ export default function AppPage() {
             Upload your Excel
             <input type="file" accept=".xlsx" className="sr-only" onChange={handleFileFromBanner} />
           </label>
+        </div>
+      )}
+
+      {showTemplateUndo && (
+        <div className="bg-[#eff6ff] border-b border-[#bfdbfe] px-4 py-2 flex items-center justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
+            </svg>
+            <span className="text-xs text-[#1d4ed8] font-medium truncate">
+              Template applied: <strong>{appliedTemplateNameRef.current}</strong>
+            </span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleUndoTemplate}
+              className="text-xs font-semibold text-[#2563eb] hover:text-[#1d4ed8] underline underline-offset-2"
+            >
+              Undo
+            </button>
+            <button
+              onClick={() => setShowTemplateUndo(false)}
+              className="text-[#2563eb] hover:text-[#1d4ed8]"
+              aria-label="Dismiss"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
 

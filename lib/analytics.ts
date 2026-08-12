@@ -352,6 +352,34 @@ export function trackPurchase(params: {
   })
 }
 
+// ── Template gallery events ───────────────────────────────────────────────────
+
+interface TemplateEventParams {
+  template_id: string
+  template_name: string
+  chart_type: string
+}
+
+export function trackTemplateGalleryViewed() {
+  trackEvent('template_gallery_viewed', deviceParams())
+}
+
+export function trackTemplateSelected(params: TemplateEventParams) {
+  trackEvent('template_selected', { ...deviceParams(), ...params })
+}
+
+export function trackTemplateDataUploaded(params: TemplateEventParams) {
+  trackEvent('template_data_uploaded', { ...deviceParams(), ...params })
+}
+
+export function trackTemplateMappingCompleted(params: TemplateEventParams) {
+  trackEvent('template_mapping_completed', { ...deviceParams(), ...params })
+}
+
+export function trackTemplateApplied(params: TemplateEventParams) {
+  trackEvent('template_applied', { ...deviceParams(), ...params })
+}
+
 // ── Local counters ────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'figureready-analytics'
