@@ -2,73 +2,49 @@
 import Image from 'next/image'
 import type { FigureTemplate } from '@/lib/templates/types'
 
-const CATEGORY_LABELS: Record<FigureTemplate['category'], string> = {
-  scientific: 'Scientific',
-  'time-series': 'Time-series',
-  comparison: 'Comparison',
-}
-
-const CHART_TYPE_LABELS: Record<string, string> = {
-  scatter: 'Scatter',
-  line: 'Line',
-  lineOnly: 'Line',
-  bar: 'Bar',
+function getMetaLine(tpl: FigureTemplate): string {
+  const typeLabel: Record<string, string> = { scatter: 'Scatter', line: 'Line', lineOnly: 'Line', bar: 'Bar' }
+  const extras: string[] = []
+  if (tpl.requiredDataRoles.group) extras.push('multi-series')
+  if (tpl.requiredDataRoles.error) extras.push('error bars')
+  if (!extras.length) extras.push('1–3 series')
+  return [(typeLabel[tpl.chartType] ?? tpl.chartType), ...extras].join(' · ')
 }
 
 interface Props {
   template: FigureTemplate
-  onSelect: (tpl: FigureTemplate) => void
+  onClick: (tpl: FigureTemplate) => void
 }
 
-export default function TemplateCard({ template, onSelect }: Props) {
+export default function TemplateCard({ template, onClick }: Props) {
   return (
-    <div className="group flex flex-col bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md hover:border-[#2563eb]/40 transition-all duration-200">
-      {/* Preview image */}
-      <div className="relative bg-slate-50 border-b border-slate-100 overflow-hidden" style={{ aspectRatio: '280/200' }}>
+    <button
+      type="button"
+      onClick={() => onClick(template)}
+      className="group text-left w-full bg-white rounded-xl ring-1 ring-black/[0.06] overflow-hidden hover:ring-black/[0.12] hover:shadow-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    >
+      {/* Preview */}
+      <div className="relative overflow-hidden border-b border-slate-100" style={{ aspectRatio: '7/5' }}>
         <Image
           src={template.previewImage}
           alt={`${template.name} preview`}
           fill
-          className="object-contain p-3"
           unoptimized
+          className="object-contain p-4"
         />
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/[0.025] opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center">
+          <span className="bg-white/95 text-slate-900 text-[13px] font-semibold px-4 py-2 rounded-full shadow-sm">
+            Use this template →
+          </span>
+        </div>
       </div>
 
-      {/* Card body */}
-      <div className="flex flex-col flex-1 p-5 gap-3">
-        <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="text-[15px] font-semibold text-slate-900 leading-tight">{template.name}</h3>
-            <p className="text-xs text-slate-500 mt-1 leading-relaxed">{template.description}</p>
-          </div>
-        </div>
-
-        {/* Badges */}
-        <div className="flex flex-wrap gap-1.5">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600">
-            {CATEGORY_LABELS[template.category]}
-          </span>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#dbeafe] text-[#1d4ed8]">
-            {CHART_TYPE_LABELS[template.chartType] ?? template.chartType}
-          </span>
-          {template.requiredDataRoles.error && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700">
-              Error bars
-            </span>
-          )}
-        </div>
-
-        {/* CTA */}
-        <button
-          onClick={() => onSelect(template)}
-          className="mt-auto w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
-        >
-          Use template
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-          </svg>
-        </button>
+      {/* Footer */}
+      <div className="px-4 py-3.5">
+        <p className="text-[13px] font-semibold text-slate-900 leading-tight">{template.name}</p>
+        <p className="text-[11px] text-slate-400 mt-0.5">{getMetaLine(template)}</p>
       </div>
-    </div>
+    </button>
   )
 }

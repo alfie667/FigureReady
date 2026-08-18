@@ -1,5 +1,6 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { FileSpreadsheet, LayoutTemplate, LineChart, PenLine } from 'lucide-react'
 import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
 import ChartTypeSelector from '@/components/ChartTypeSelector'
@@ -8,7 +9,6 @@ import ChartPreview, { type ChartPreviewHandle } from '@/components/ChartPreview
 import MultiPanelPreview, { type MultiPanelPreviewHandle } from '@/components/MultiPanelPreview'
 import PanelLayoutSelector from '@/components/PanelLayoutSelector'
 import EmptyState from '@/components/EmptyState'
-import Header from '@/components/Header'
 import FeedbackButton from '@/components/FeedbackButton'
 import SaveTemplateModal from '@/components/SaveTemplateModal'
 import TemplateSelector from '@/components/TemplateSelector'
@@ -16,11 +16,16 @@ import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartSty
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
-import { saveUserTemplate, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
+import { saveUserTemplate, FTIR_DEV_TEMPLATE, PL_DEV_TEMPLATE_OVERLAY, UVVIS_DEV_TEMPLATE_OVERLAY, DOSE_RESPONSE_DEV_TEMPLATE, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
 import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated, trackCheckoutReturnedWithoutPurchase, trackTemplateApplied } from '@/lib/analytics'
 import { getPendingTemplate, clearPendingTemplate } from '@/lib/templates/session'
 import { buildTemplateOverrides } from '@/lib/templates/apply'
+import { FTIR_SAMPLE_ROWS, FTIR_COLUMNS, FTIR_X_COL, FTIR_Y_COLS } from '@/lib/samples/ftirSampleData'
+import { PL_SAMPLE_ROWS, PL_COLUMNS, PL_X_COL, PL_Y_COLS } from '@/lib/samples/plSampleData'
+import { UVVIS_SAMPLE_ROWS, UVVIS_COLUMNS, UVVIS_X_COL, UVVIS_Y_COLS } from '@/lib/samples/uvvisSampleData'
+import { DR_SAMPLE_ROWS, DR_COLUMNS, DR_X_COL, DR_Y_COLS } from '@/lib/samples/doseResponseSampleData'
+import { fit4PL, type Fit4PLResult } from '@/lib/curveFit4PL'
 import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { getCachedEntitlement, refreshEntitlement, hasLegacyProFlag } from '@/lib/usageLimit'
@@ -30,6 +35,13 @@ import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from
 import { parseExcelFile } from '@/lib/parseExcel'
 import { LineThicknessPicker, ToggleSwitch, type NumericPreset } from '@/components/StyleControls'
 import AnnotationToolbar from '@/components/AnnotationToolbar'
+import type { AnnotationTool } from '@/hooks/useAnnotationInteraction'
+import TopBar from '@/components/editor/TopBar'
+import LeftNav, { type NavTab } from '@/components/editor/LeftNav'
+import ContextPanel from '@/components/editor/ContextPanel'
+import CanvasWorkspace from '@/components/editor/CanvasWorkspace'
+import RightInspector from '@/components/editor/RightInspector'
+import RefinePanel from '@/components/editor/RefinePanel'
 
 const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
 const insetLinePresets: NumericPreset[] = [
@@ -38,72 +50,43 @@ const insetLinePresets: NumericPreset[] = [
   { label: 'Thick', value: 2.5 },
 ]
 
-// ── Icon bar tab definitions ─────────────────────────────────────────────────
+// ── Left nav tab definitions (icon-only rail) ─────────────────────────────────
 
-const SIDEBAR_TABS = [
+const NAV_TABS: NavTab[] = [
   {
     id: 'data',
     label: 'Data',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-      </svg>
-    ),
-  },
-  {
-    id: 'style',
-    label: 'Style',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-      </svg>
-    ),
-  },
-  {
-    id: 'journal',
-    label: 'Journal',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-      </svg>
-    ),
-  },
-  {
-    id: 'annotate',
-    label: 'Annotate',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-      </svg>
-    ),
-  },
-  {
-    id: 'inset',
-    label: 'Inset',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
-      </svg>
-    ),
+    icon: <FileSpreadsheet size={22} strokeWidth={1.75} />,
   },
   {
     id: 'templates',
     label: 'Templates',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
-      </svg>
-    ),
+    icon: <LayoutTemplate size={22} strokeWidth={1.75} />,
+  },
+  {
+    id: 'graph',
+    label: 'Graph',
+    icon: <LineChart size={22} strokeWidth={1.75} />,
+  },
+  {
+    id: 'annotate',
+    label: 'Annotate',
+    icon: <PenLine size={22} strokeWidth={1.75} />,
   },
 ]
 
+// Kept for mobile bottom bar (same tabs as NAV_TABS)
+const SIDEBAR_TABS = NAV_TABS
+
 const PANEL_LABELS_MAP: Record<string, string> = {
   data: 'Data',
+  templates: 'Templates',
+  graph: 'Graph',
+  annotate: 'Annotate',
+  // legacy — kept for mobile drawer fallback
   style: 'Style',
   journal: 'Journal',
-  annotate: 'Annotate',
   inset: 'Inset Figure',
-  templates: 'Templates',
 }
 
 export default function AppPage() {
@@ -120,6 +103,18 @@ export default function AppPage() {
   const [xAxisLabel, setXAxisLabel] = useState('')
   const [yAxisLabel, setYAxisLabel] = useState('')
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
+  const [logScaleWarning, setLogScaleWarning] = useState<string | null>(null)
+
+  // Fit results for dose–response — computed once here, passed to RefinePanel.
+  // ChartPreview runs the same computation internally (memoized), so this is zero extra work.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const doseResponseFits = useMemo((): Record<string, Fit4PLResult> => {
+    if (chartType !== 'doseResponse' || !xCol || data.length === 0) return {}
+    const rawX = data.map(row => Number(row[xCol]))
+    return Object.fromEntries(
+      yCols.map(col => [col, fit4PL(rawX, data.map(row => Number(row[col])))])
+    )
+  }, [chartType, data, xCol, yCols.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [drawInsetMode, setDrawInsetMode] = useState(false)
@@ -157,6 +152,33 @@ export default function AppPage() {
   const [panels, setPanels] = useState<PanelConfig[]>([])
   const [activePanel, setActivePanel] = useState(0)
   const [panelAnnotations, setPanelAnnotations] = useState<ChartAnnotation[][]>([[], [], [], []])
+  const [sidebarActiveTool, setSidebarActiveTool] = useState<AnnotationTool>('select')
+
+  // ── New shell state ────────────────────────────────────────────────────────
+  const [activeTool, setActiveTool] = useState<AnnotationTool>('select')
+  const [inspectorTab, setInspectorTab] = useState<'style' | 'settings'>('style')
+  const [docName] = useState('Untitled figure')
+  const [rightInspectorOpen, setRightInspectorOpen] = useState(true)
+
+  // ── Progressive disclosure state ──────────────────────────────────────────
+  // true once user has applied a template, demo, or explicitly changed chart type
+  const [figureConfigured, setFigureConfigured] = useState(false)
+  // ID of the currently selected annotation (drives State 4 inspector)
+  const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null)
+  // Unified chart element selection (drives RefinePanel auto-section + ChartPreview highlights)
+  const [selectedElement, setSelectedElement] = useState<import('@/lib/chartSelection').SelectedChartElement | null>(null)
+
+  const selectedAnnotation = selectedAnnotationId
+    ? annotations.find(a => a.id === selectedAnnotationId) ?? null
+    : null
+
+  const handleUpdateAnnotation = (id: string, changes: Record<string, unknown>) => {
+    setAnnotations(prev => prev.map(a => a.id === id ? { ...a, ...changes } : a))
+  }
+  const handleDeleteAnnotation = (id: string) => {
+    setAnnotations(prev => prev.filter(a => a.id !== id))
+    setSelectedAnnotationId(null)
+  }
 
   useEffect(() => {
     trackAppOpen()
@@ -206,6 +228,7 @@ export default function AppPage() {
     // Apply template style (data-safe: never touches xMin/xMax/yMin/yMax/inset/annotations)
     setStyleOverrides(buildTemplateOverrides(pending, pending.yCols))
 
+    setFigureConfigured(true)
     setShowTemplateUndo(true)
     trackTemplateApplied({
       template_id: pending.templateId,
@@ -334,6 +357,31 @@ export default function AppPage() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Explicit undo/redo for TopBar buttons (same logic as keyboard shortcut)
+  const handleUndo = () => {
+    if (isMultiPanelRef.current) return
+    if (historyIndexRef.current > 0) {
+      historyIndexRef.current--
+      const prev = historyRef.current[historyIndexRef.current]
+      isRestoringRef.current = true
+      setStyleOverrides(prev.styleOverrides)
+      setAnnotations(prev.annotations)
+      requestAnimationFrame(() => { isRestoringRef.current = false })
+    }
+  }
+
+  const handleRedo = () => {
+    if (isMultiPanelRef.current) return
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      historyIndexRef.current++
+      const next = historyRef.current[historyIndexRef.current]
+      isRestoringRef.current = true
+      setStyleOverrides(next.styleOverrides)
+      setAnnotations(next.annotations)
+      requestAnimationFrame(() => { isRestoringRef.current = false })
+    }
+  }
+
   // ── Multi-panel helpers ──────────────────────────────────────────────────────
 
   const updatePanel = (idx: number, patch: Partial<PanelConfig>) =>
@@ -458,12 +506,16 @@ export default function AppPage() {
     })
     setErrorCols(initialErrorCols)
     setXAxisLabel(x)
-    setYAxisLabel(initialY[0] ?? '')
+    // For multi-series charts the Y-axis label is not the column name.
+    // Leave it blank so templates or the user can provide the right label.
+    setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
     setIsMultiPanel(false)
     setPanels([])
     setIsDemoMode(false)
+    setFigureConfigured(false)   // fresh upload → State 2 (mapping)
+    setSelectedAnnotationId(null)
 
     trackChartCreated()
   }
@@ -482,6 +534,8 @@ export default function AppPage() {
     setIsMultiPanel(false)
     setPanels([])
     setIsDemoMode(false)
+    setFigureConfigured(false)
+    setSelectedAnnotationId(null)
   }
 
   const focusUpload = () => {
@@ -492,8 +546,69 @@ export default function AppPage() {
     const cols = Object.keys(SAMPLE_ROWS[0])
     handleData(cols, SAMPLE_ROWS)
     setIsDemoMode(true)
+    setFigureConfigured(true)   // demo = already configured
     trackSampleDataLoaded()
     trackDemoFigureCreated()
+  }
+
+  const handleFTIRSampleData = () => {
+    setColumns(FTIR_COLUMNS)
+    setData(FTIR_SAMPLE_ROWS)
+    setXCol(FTIR_X_COL)
+    setYCols(FTIR_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({})
+    setXAxisLabel('Wavenumber (cm⁻¹)')
+    setYAxisLabel('Absorbance (a.u.)')
+    setChartType('lineOnly')
+    setStyleOverrides(buildTemplateOverrides(FTIR_DEV_TEMPLATE, FTIR_Y_COLS))
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setFigureConfigured(true)    // demo = already configured
+    setSelectedAnnotationId(null)
+    trackChartCreated()
+  }
+
+  const handlePLSampleData = () => {
+    setColumns(PL_COLUMNS)
+    setData(PL_SAMPLE_ROWS)
+    setXCol(PL_X_COL)
+    setYCols(PL_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({})
+    setXAxisLabel('Wavelength (nm)')
+    setYAxisLabel('Intensity (a.u.)')
+    setChartType('lineOnly')
+    setStyleOverrides(buildTemplateOverrides(PL_DEV_TEMPLATE_OVERLAY, PL_Y_COLS))
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setFigureConfigured(true)
+    setSelectedAnnotationId(null)
+    trackChartCreated()
+  }
+
+  const handleUVVisSampleData = () => {
+    setColumns(UVVIS_COLUMNS)
+    setData(UVVIS_SAMPLE_ROWS)
+    setXCol(UVVIS_X_COL)
+    setYCols(UVVIS_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({})
+    setXAxisLabel('Wavelength (nm)')
+    setYAxisLabel('Absorbance (a.u.)')
+    setChartType('lineOnly')
+    setStyleOverrides(buildTemplateOverrides(UVVIS_DEV_TEMPLATE_OVERLAY, UVVIS_Y_COLS))
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setFigureConfigured(true)
+    setSelectedAnnotationId(null)
+    trackChartCreated()
   }
 
   const handleFileFromBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -506,13 +621,48 @@ export default function AppPage() {
     } catch { /* silently ignore parse errors */ }
   }
 
-  // Auto-load demo when arriving from landing page CTA (?demo=1).
+  const handleDoseResponseSampleData = () => {
+    setColumns(DR_COLUMNS)
+    setData(DR_SAMPLE_ROWS)
+    setXCol(DR_X_COL)
+    setYCols(DR_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({
+      'Compound A': 'Compound A error',
+      'Compound B': 'Compound B error',
+    })
+    setXAxisLabel('Concentration (µM)')
+    setYAxisLabel('Inhibition (%)')
+    setChartType('doseResponse')
+    setStyleOverrides(buildTemplateOverrides(DOSE_RESPONSE_DEV_TEMPLATE, DR_Y_COLS))
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setFigureConfigured(true)
+    setSelectedAnnotationId(null)
+    trackChartCreated()
+  }
+
+  const handleFileFromEmptyState = async (file: File) => {
+    try {
+      const { columns: cols, rows } = await parseExcelFile(file)
+      if (rows.length > 0) { handleData(cols, rows); trackUpload() }
+    } catch { /* silently ignore parse errors */ }
+  }
+
+  // Auto-load demo when arriving from landing page CTA (?demo=1) or dev routes (?demo=ftir).
   // URL param is cleared immediately — no double-fire on refresh or back-navigation.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('demo') !== '1') return
+    const demo = new URLSearchParams(window.location.search).get('demo')
+    if (!demo) return
     window.history.replaceState({}, '', window.location.pathname)
-    handleSampleData()
+    if (demo === 'ftir') handleFTIRSampleData()
+    else if (demo === 'fluorescence') handlePLSampleData()
+    else if (demo === 'uvvis') handleUVVisSampleData()
+    else if (demo === 'doseresponse') handleDoseResponseSampleData()
+    else handleSampleData()
   }, [])
 
   const handleSaveTemplate = (name: string) => {
@@ -535,11 +685,15 @@ export default function AppPage() {
   }
 
   const handleApplyTemplate = (template: ChartTemplate) => {
+    setFigureConfigured(true)
     setChartType(template.chartType)
+    setLogScaleWarning(null)
+
     const newSeriesColors: Record<string, string> = {}
     const newSeriesStrokeWidths: Record<string, number> = {}
     const newSeriesMarkerSizes: Record<string, number> = {}
     const newSeriesMarkerShapes: Record<string, MarkerShape> = {}
+    const newSeriesYOffsets: Record<string, number> = {}
 
     yCols.forEach((col, i) => {
       if (template.seriesColorsList?.[i] != null)
@@ -550,15 +704,34 @@ export default function AppPage() {
         newSeriesMarkerSizes[col] = template.seriesMarkerSizesList[i]
       if (template.seriesMarkerShapesList?.[i] != null)
         newSeriesMarkerShapes[col] = template.seriesMarkerShapesList[i]
+      if (template.seriesYOffsetsList?.[i] != null)
+        newSeriesYOffsets[col] = template.seriesYOffsetsList[i]
     })
 
+    // Log X safety: if template requests log scale but current X data contains
+    // zero or negative values, fall back to linear and warn the user.
+    let appliedOverrides = { ...template.overrides }
+    if (template.overrides.xScale === 'log' && xCol && data.length > 0) {
+      const hasNonPositive = data.some(row => {
+        const v = Number(row[xCol])
+        return isFinite(v) && v <= 0
+      })
+      if (hasNonPositive) {
+        appliedOverrides = { ...appliedOverrides, xScale: 'linear' }
+        setLogScaleWarning('Log X scale requires all concentrations > 0. Linear scale applied instead.')
+      }
+    }
+
     setStyleOverrides({
-      ...template.overrides,
+      ...appliedOverrides,
       ...(Object.keys(newSeriesColors).length && { seriesColors: newSeriesColors }),
       ...(Object.keys(newSeriesStrokeWidths).length && { seriesStrokeWidths: newSeriesStrokeWidths }),
       ...(Object.keys(newSeriesMarkerSizes).length && { seriesMarkerSizes: newSeriesMarkerSizes }),
       ...(Object.keys(newSeriesMarkerShapes).length && { seriesMarkerShapes: newSeriesMarkerShapes }),
+      ...(Object.keys(newSeriesYOffsets).length && { seriesYOffsets: newSeriesYOffsets }),
     })
+    if (template.defaultAxisLabels?.x != null) setXAxisLabel(template.defaultAxisLabels.x)
+    if (template.defaultAxisLabels?.y != null) setYAxisLabel(template.defaultAxisLabels.y)
   }
 
   const ready = xCol && yCols.length > 0 && data.length > 0
@@ -568,143 +741,215 @@ export default function AppPage() {
   const renderPanelContent = () => {
     switch (activeSidePanel) {
 
-      case 'data':
-        return (
-          <div className="space-y-5">
-            <FileUploader onData={(cols, rows) => { handleData(cols, rows); trackUpload() }} />
+      case 'data': {
+        // ── State 1: no data — canvas is the primary upload surface ──────────
+        if (columns.length === 0) {
+          return (
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => setActiveSidePanel('templates')}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#334155] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
+                </svg>
+                Browse templates
+              </button>
+              <button
+                onClick={handleSampleData}
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium text-[#334155] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors"
+              >
+                <svg className="w-4 h-4 shrink-0 text-[#64748b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Try demo data
+              </button>
+            </div>
+          )
+        }
 
-            {columns.length > 0 && (
-              <div className="space-y-5">
-                {/* Multi-panel toggle */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700">Multi-panel figure</p>
-                    <p className="text-[11px] text-slate-400">Combine charts in one figure</p>
-                  </div>
-                  <button
-                    onClick={toggleMultiPanel}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#2563eb]' : 'bg-slate-200'}`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
-                  </button>
+        // ── State 2: data loaded, not configured (mapping step) ───────────────
+        if (!figureConfigured) {
+          return (
+            <div>
+              <FileUploader
+                onData={(cols, rows) => { handleData(cols, rows); trackUpload() }}
+                compact
+              />
+
+              {/* Multi-panel toggle */}
+              <div className="flex items-center justify-between mt-4 mb-3">
+                <div>
+                  <p className="text-xs font-semibold text-slate-700">Multi-panel figure</p>
+                  <p className="text-[11px] text-slate-400">Combine charts in one figure</p>
                 </div>
+                <button
+                  onClick={toggleMultiPanel}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#2563eb]' : 'bg-slate-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
 
-                {isMultiPanel && (
-                  <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3">
-                    <div>
-                      <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
-                      <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
-                      <div className="flex gap-1.5">
-                        {panels.map((p, i) => (
-                          <button
-                            key={p.id}
-                            onClick={() => setActivePanel(i)}
-                            className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#2563eb] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
-                          >
-                            {p.id}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-[#1d4ed8] mb-2">
-                        Excel file — Panel {panels[activePanel]?.id}
-                      </p>
-                      <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#93c5fd] cursor-pointer hover:bg-violet-50 transition-colors">
-                        <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                        </svg>
-                        <span className="text-xs text-slate-600 flex-1 truncate">
-                          {panels[activePanel]?.columns.length > 0
-                            ? `${panels[activePanel].columns.length} columns loaded`
-                            : 'Upload a .xlsx file…'}
-                        </span>
-                        <input
-                          type="file"
-                          accept=".xlsx"
-                          className="hidden"
-                          onChange={handlePanelFileChange}
-                        />
-                      </label>
+              {isMultiPanel && (
+                <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3 mb-3">
+                  <div>
+                    <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
+                    <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
+                    <div className="flex gap-1.5">
+                      {panels.map((p, i) => (
+                        <button key={p.id} onClick={() => setActivePanel(i)}
+                          className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#2563eb] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
+                        >{p.id}</button>
+                      ))}
                     </div>
                   </div>
-                )}
+                  <div>
+                    <p className="text-xs font-medium text-[#1d4ed8] mb-2">Excel file — Panel {panels[activePanel]?.id}</p>
+                    <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#93c5fd] cursor-pointer hover:bg-violet-50 transition-colors">
+                      <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                      </svg>
+                      <span className="text-xs text-slate-600 flex-1 truncate">
+                        {panels[activePanel]?.columns.length > 0 ? `${panels[activePanel].columns.length} columns loaded` : 'Upload a .xlsx file…'}
+                      </span>
+                      <input type="file" accept=".xlsx" className="hidden" onChange={handlePanelFileChange} />
+                    </label>
+                  </div>
+                </div>
+              )}
 
-                {currentColumns.length > 0 && (
-                  <>
-                    <ColumnSelector
-                      columns={currentColumns}
-                      xCol={currentXCol}
-                      yCols={currentYCols}
-                      seriesNames={currentSeriesNames}
-                      errorCols={currentErrorCols}
-                      xAxisLabel={currentXAxisLabel}
-                      yAxisLabel={currentYAxisLabel}
-                      chartType={currentChartType}
-                      seriesColors={currentStyleOverrides.seriesColors ?? {}}
-                      seriesStrokeWidths={currentStyleOverrides.seriesStrokeWidths ?? {}}
-                      seriesMarkerSizes={currentStyleOverrides.seriesMarkerSizes ?? {}}
-                      seriesMarkerShapes={currentStyleOverrides.seriesMarkerShapes ?? {}}
-                      yAxisAssignment={currentStyleOverrides.yAxisAssignment ?? {}}
-                      defaultColors={chartStyles[styleName].colors}
-                      defaultStrokeWidth={chartStyles[styleName].strokeWidth}
-                      defaultMarkerSize={chartStyles[styleName].dotRadius}
-                      onChange={setCurrentXYCols}
-                      onSeriesNamesChange={setCurrentSeriesNames}
-                      onErrorColsChange={setCurrentErrorCols}
-                      onXAxisLabelChange={setCurrentXAxisLabel}
-                      onYAxisLabelChange={setCurrentYAxisLabel}
-                      onSeriesColorsChange={(colors) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesColors: colors })}
-                      onSeriesStrokeWidthsChange={(widths) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesStrokeWidths: widths })}
-                      onSeriesMarkerSizesChange={(sizes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerSizes: sizes })}
-                      onSeriesMarkerShapesChange={(shapes) => setCurrentStyleOverrides({ ...currentStyleOverrides, seriesMarkerShapes: shapes })}
-                      onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
+              {/* MAPPING */}
+              {currentColumns.length > 0 && (
+                <ColumnSelector
+                  columns={currentColumns}
+                  xCol={currentXCol}
+                  yCols={currentYCols}
+                  seriesNames={currentSeriesNames}
+                  errorCols={currentErrorCols}
+                  xAxisLabel={currentXAxisLabel}
+                  yAxisLabel={currentYAxisLabel}
+                  seriesColors={currentStyleOverrides.seriesColors ?? {}}
+                  yAxisAssignment={currentStyleOverrides.yAxisAssignment ?? {}}
+                  defaultColors={chartStyles[styleName].colors}
+                  figureConfigured={false}
+                  onChange={setCurrentXYCols}
+                  onSeriesNamesChange={setCurrentSeriesNames}
+                  onErrorColsChange={setCurrentErrorCols}
+                  onXAxisLabelChange={setCurrentXAxisLabel}
+                  onYAxisLabelChange={setCurrentYAxisLabel}
+                  onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
+                />
+              )}
+
+              {/* Template CTA — primary next step */}
+              <div className="mt-5 space-y-2">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-400 select-none">Next step</p>
+                <button
+                  onClick={() => { setActiveSidePanel('templates'); setFigureConfigured(true) }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#2563eb] text-white text-xs font-semibold hover:bg-[#1d4ed8] transition-colors shadow-sm"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.429 9.75L2.25 12l4.179 2.25m0-4.5l5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0l4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0l-5.571 3-5.571-3" />
+                  </svg>
+                  Choose a template
+                </button>
+
+                {/* Chart type — secondary */}
+                {ready && !isMultiPanel && (
+                  <div>
+                    <p className="text-[9px] text-slate-400 text-center my-2 select-none">or pick chart type manually</p>
+                    <ChartTypeSelector
+                      value={currentChartType}
+                      onChange={v => { setCurrentChartType(v); setFigureConfigured(true) }}
                     />
-                    <div className="flex flex-wrap gap-6">
-                      <ChartTypeSelector value={currentChartType} onChange={setCurrentChartType} />
-                    </div>
-                    <div className="space-y-2.5">
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
-                        <div className="flex gap-1.5">
-                          {(['linear', 'log', 'ln'] as const).map(sc => {
-                            const active = (currentStyleOverrides.xScale ?? 'linear') === sc
-                            return (
-                              <button key={sc}
-                                onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
-                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
-                                {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
-                        <div className="flex gap-1.5">
-                          {(['linear', 'log', 'ln'] as const).map(sc => {
-                            const active = (currentStyleOverrides.yScale ?? 'linear') === sc
-                            return (
-                              <button key={sc}
-                                onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
-                                className={`px-3.5 py-1 text-xs rounded-full border-0 transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
-                                {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log' : 'Ln'}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </>
+                  </div>
                 )}
               </div>
+            </div>
+          )
+        }
+
+        // ── State 3: figure configured — compact, all sections collapsed ───────
+        return (
+          <div>
+            <FileUploader
+              onData={(cols, rows) => { handleData(cols, rows); trackUpload() }}
+              compact
+            />
+
+            {/* Multi-panel toggle */}
+            <div className="flex items-center justify-between mt-4 mb-3">
+              <div>
+                <p className="text-xs font-semibold text-slate-700">Multi-panel figure</p>
+                <p className="text-[11px] text-slate-400">Combine charts in one figure</p>
+              </div>
+              <button
+                onClick={toggleMultiPanel}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#2563eb]' : 'bg-slate-200'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {isMultiPanel && (
+              <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3 mb-3">
+                <div>
+                  <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
+                  <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
+                  <div className="flex gap-1.5">
+                    {panels.map((p, i) => (
+                      <button key={p.id} onClick={() => setActivePanel(i)}
+                        className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#2563eb] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
+                      >{p.id}</button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-[#1d4ed8] mb-2">Excel file — Panel {panels[activePanel]?.id}</p>
+                  <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#93c5fd] cursor-pointer hover:bg-violet-50 transition-colors">
+                    <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <span className="text-xs text-slate-600 flex-1 truncate">
+                      {panels[activePanel]?.columns.length > 0 ? `${panels[activePanel].columns.length} columns loaded` : 'Upload a .xlsx file…'}
+                    </span>
+                    <input type="file" accept=".xlsx" className="hidden" onChange={handlePanelFileChange} />
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {currentColumns.length > 0 && (
+              <ColumnSelector
+                columns={currentColumns}
+                xCol={currentXCol}
+                yCols={currentYCols}
+                seriesNames={currentSeriesNames}
+                errorCols={currentErrorCols}
+                xAxisLabel={currentXAxisLabel}
+                yAxisLabel={currentYAxisLabel}
+                seriesColors={currentStyleOverrides.seriesColors ?? {}}
+                yAxisAssignment={currentStyleOverrides.yAxisAssignment ?? {}}
+                defaultColors={chartStyles[styleName].colors}
+                figureConfigured
+                onChange={setCurrentXYCols}
+                onSeriesNamesChange={setCurrentSeriesNames}
+                onErrorColsChange={setCurrentErrorCols}
+                onXAxisLabelChange={setCurrentXAxisLabel}
+                onYAxisLabelChange={setCurrentYAxisLabel}
+                onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
+              />
             )}
           </div>
         )
+      }
 
       case 'style':
         return ready && !isMultiPanel ? (
@@ -758,8 +1003,12 @@ export default function AppPage() {
             {/* Compact tool row — mobile only; desktop sees the toolbar above the chart */}
             <div className="md:hidden -mx-3 px-3 overflow-x-auto no-scrollbar">
               <AnnotationToolbar
-                onAdd={(type, opts) => chartPreviewRef.current?.addAnnotation(type, opts)}
-                onInsertSymbol={(sym) => chartPreviewRef.current?.insertSymbol(sym)}
+                activeTool={sidebarActiveTool}
+                onToolChange={tool => {
+                  setSidebarActiveTool(tool)
+                  chartPreviewRef.current?.setActiveTool(tool)
+                }}
+                onInsertSymbol={sym => chartPreviewRef.current?.insertSymbol(sym)}
               />
             </div>
             {/* Desktop hint */}
@@ -861,6 +1110,62 @@ export default function AppPage() {
           <p className="text-xs text-slate-400">Load numeric data to add an inset figure.</p>
         )
 
+      case 'graph':
+        return (
+          <div className="space-y-5">
+            {ready && !isMultiPanel && (
+              <>
+                <div className="flex flex-wrap gap-6">
+                  <ChartTypeSelector value={currentChartType} onChange={setCurrentChartType} />
+                </div>
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-14 shrink-0">X Scale</span>
+                    <div className="flex gap-1.5">
+                      {(['linear', 'log', 'ln'] as const).map(sc => {
+                        const active = (currentStyleOverrides.xScale ?? 'linear') === sc
+                        return (
+                          <button key={sc}
+                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
+                            className={`px-3 py-1 text-xs rounded-full transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+                            {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log₁₀' : 'Ln'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium text-slate-500 w-14 shrink-0">Y Scale</span>
+                    <div className="flex gap-1.5">
+                      {(['linear', 'log', 'ln'] as const).map(sc => {
+                        const active = (currentStyleOverrides.yScale ?? 'linear') === sc
+                        return (
+                          <button key={sc}
+                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
+                            className={`px-3 py-1 text-xs rounded-full transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
+                            {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log₁₀' : 'Ln'}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-slate-600">Figure width</p>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min={300} max={1600} step={50}
+                      value={styleOverrides.figureWidth ?? 700}
+                      onChange={e => { const v = Number(e.target.value); if (v >= 300 && v <= 1600) setStyleOverrides(prev => ({ ...prev, figureWidth: v })) }}
+                      className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
+                    <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                  </div>
+                </div>
+              </>
+            )}
+            {!ready && <p className="text-xs text-slate-400">Load data first.</p>}
+          </div>
+        )
+
       case 'templates':
         return (
           <div className="space-y-4">
@@ -883,19 +1188,26 @@ export default function AppPage() {
   }
 
   return (
-    <div className="h-screen bg-[#F7F8FC] md:bg-white flex flex-col overflow-hidden">
+    <div className="h-screen bg-white flex flex-col overflow-hidden">
       {saveTemplateOpen && (
         <SaveTemplateModal
           onSave={handleSaveTemplate}
           onClose={() => setSaveTemplateOpen(false)}
         />
       )}
-      <Header
-        hasData={columns.length > 0}
-        onReset={reset}
+
+      <TopBar
+        docName={docName}
+        activeTool={activeTool}
+        onToolChange={(t) => { setActiveTool(t); chartPreviewRef.current?.setActiveTool(t) }}
+        drawInsetActive={drawInsetMode}
+        onDrawInsetToggle={() => setDrawInsetMode(v => !v)}
+        onInsertSymbol={sym => chartPreviewRef.current?.insertSymbol(sym)}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onExportPNG={handleExportPNG}
         onExportSVG={handleExportSVG}
         onExportPDF={handleExportPDF}
-        onExportPNG={handleExportPNG}
         onShareLink={handleShareLink}
       />
 
@@ -971,78 +1283,36 @@ export default function AppPage() {
         </div>
       )}
 
+      {/* ── 4-column AppShell ─────────────────────────────────────────────── */}
       <div className="flex-1 flex overflow-hidden">
 
-        {/* Icon bar — 72px wide, Figma-style — hidden on mobile */}
-        <nav className="hidden md:flex w-[72px] shrink-0 border-r border-slate-100 flex-col items-center py-3 gap-0.5 bg-white">
-          {SIDEBAR_TABS.flatMap((tab, i) => {
-            const sep = (i === 2 || i === 4)
-              ? [<div key={`sep-${i}`} className="w-9 h-px bg-slate-100 my-1.5 shrink-0" />]
-              : []
-            const btn = (
-              <button
-                key={tab.id}
-                onClick={() => setActiveSidePanel(p => p === tab.id ? null : tab.id)}
-                className={`w-[58px] h-[60px] rounded-2xl flex flex-col items-center justify-center gap-[5px] transition-all duration-150 select-none group ${
-                  activeSidePanel === tab.id
-                    ? 'bg-[#2563eb] text-white shadow-md shadow-blue-200/60'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-                title={tab.label}
-              >
-                <div className="w-[22px] h-[22px] shrink-0">{tab.icon}</div>
-                <span className={`text-[9.5px] font-semibold leading-none tracking-wide ${
-                  activeSidePanel === tab.id ? 'text-white/80' : ''
-                }`}>{tab.label}</span>
-              </button>
-            )
-            return [...sep, btn]
-          })}
-        </nav>
+        <LeftNav
+          tabs={NAV_TABS}
+          activeTab={activeSidePanel}
+          onTabChange={setActiveSidePanel}
+        />
 
-        {/* Secondary panel — resizable, desktop only */}
         {activeSidePanel && (
-          <aside
-            style={{ width: panelWidth }}
-            className="hidden md:flex shrink-0 border-r border-slate-200 flex-col overflow-hidden bg-white relative"
+          <ContextPanel
+            title={PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}
+            onCollapse={() => setActiveSidePanel(null)}
           >
-            <div className="px-4 pt-4 pb-3 border-b border-slate-100 shrink-0 flex items-center gap-2.5">
-              <div className="w-1.5 h-5 rounded-full bg-[#2563eb] shrink-0" />
-              <h2 className="text-[13px] font-bold text-slate-800 tracking-tight">
-                {PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}
-              </h2>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-5">
-              {renderPanelContent()}
-            </div>
-            {/* Drag handle on right edge */}
-            <div
-              className="absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-[#2563eb]/20 transition-colors z-10"
-              onPointerDown={e => {
-                e.preventDefault()
-                panelResizeRef.current = true
-                const startX = e.clientX
-                const startW = panelWidth
-                const onMove = (ev: PointerEvent) => {
-                  if (!panelResizeRef.current) return
-                  const next = Math.max(220, Math.min(520, startW + ev.clientX - startX))
-                  setPanelWidth(next)
-                }
-                const onUp = () => {
-                  panelResizeRef.current = false
-                  window.removeEventListener('pointermove', onMove)
-                  window.removeEventListener('pointerup', onUp)
-                }
-                window.addEventListener('pointermove', onMove)
-                window.addEventListener('pointerup', onUp)
-              }}
-            />
-          </aside>
+            {renderPanelContent()}
+          </ContextPanel>
         )}
 
-        {/* Canvas */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {/* Figure zone — always visible, grows to fill space above inline panel */}
+        <CanvasWorkspace>
+          {/* Log scale warning banner */}
+          {logScaleWarning && (
+            <div className="mx-4 mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <svg className="shrink-0 w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+              </svg>
+              <span>{logScaleWarning}</span>
+              <button onClick={() => setLogScaleWarning(null)} className="ml-auto text-amber-600 hover:text-amber-900">✕</button>
+            </div>
+          )}
+          {/* Figure zone */}
           <div className="flex-1 overflow-hidden flex flex-col min-h-[200px] md:min-h-0">
             {isMultiPanel && panels.length > 0 ? (
               <MultiPanelPreview
@@ -1083,16 +1353,26 @@ export default function AppPage() {
                 onSaveTemplate={() => setSaveTemplateOpen(true)}
                 drawInsetActive={drawInsetMode}
                 onDrawInsetActiveChange={setDrawInsetMode}
-                annotOpen={activeSidePanel === 'annotate'}
+                annotOpen={false}
+                onSelectionChange={setSelectedAnnotationId}
+                onElementSelect={(el) => {
+                  setSelectedElement(el)
+                  if (el) setInspectorTab('style')
+                }}
+                selectedElement={selectedElement}
               />
             ) : (
-              <div className="flex-1 flex items-center justify-center bg-[#eff6ff]">
-                <EmptyState onUploadClick={focusUpload} onSampleClick={handleSampleData} />
+              <div className="flex-1 flex items-center justify-center bg-[#f8fafc]">
+                <EmptyState
+                  onFile={handleFileFromEmptyState}
+                  onSampleClick={handleSampleData}
+                  onTemplatesClick={() => setActiveSidePanel('templates')}
+                />
               </div>
             )}
           </div>
 
-          {/* Editor-only compact legend strip — mobile only, never affects exports */}
+          {/* Mobile legend strip */}
           {ready && currentYCols.length > 0 && (
             <div className="md:hidden shrink-0 flex items-center gap-2 px-3 py-2 bg-[#F7F8FC] border-t border-[#E7EAF0] overflow-x-auto no-scrollbar">
               {currentYCols.map((col, i) => {
@@ -1108,7 +1388,7 @@ export default function AppPage() {
             </div>
           )}
 
-          {/* Mobile inline settings panel — docked below figure, never overlaps it */}
+          {/* Mobile inline settings panel */}
           {mobilePanelOpen && activeSidePanel && (
             <div
               className="md:hidden shrink-0 flex flex-col bg-white rounded-t-2xl overflow-hidden border-t border-[#E7EAF0]"
@@ -1134,18 +1414,102 @@ export default function AppPage() {
             </div>
           )}
 
-          {/* Temporary build badge — mobile only, remove after cache confirmed */}
-          <div className="md:hidden shrink-0 text-center py-0.5">
-            <span className="text-[8px] text-slate-300 font-mono select-all">build:83e3259</span>
-          </div>
-
-          {/* Spacer: reserves exact height for fixed bottom nav + iOS safe-area-inset-bottom */}
+          {/* Mobile spacer for fixed bottom nav */}
           <div
             className="md:hidden shrink-0"
             style={{ height: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
             aria-hidden="true"
           />
-        </main>
+        </CanvasWorkspace>
+
+        <RightInspector
+          activeTab={inspectorTab}
+          onTabChange={setInspectorTab}
+          isOpen={rightInspectorOpen}
+          onCollapse={() => setRightInspectorOpen(false)}
+          onExpand={() => setRightInspectorOpen(true)}
+          selectedAnnotation={selectedAnnotation}
+          onUpdateAnnotation={handleUpdateAnnotation}
+          onDeleteAnnotation={handleDeleteAnnotation}
+          styleContent={
+            !ready || isMultiPanel ? (
+              <p className="text-xs text-slate-400">
+                {columns.length === 0
+                  ? 'Upload data to see style controls.'
+                  : 'Choose a template to configure your figure style.'}
+              </p>
+            ) : (
+              <RefinePanel
+                yCols={yCols}
+                seriesNames={seriesNames}
+                seriesColors={styleOverrides.seriesColors ?? {}}
+                seriesStrokeWidths={styleOverrides.seriesStrokeWidths ?? {}}
+                seriesMarkerSizes={styleOverrides.seriesMarkerSizes ?? {}}
+                seriesMarkerShapes={(styleOverrides.seriesMarkerShapes ?? {}) as Record<string, import('@/lib/markerShapes').MarkerShape>}
+                chartType={chartType}
+                defaultColors={chartStyles[styleName].colors}
+                defaultStrokeWidth={chartStyles[styleName].strokeWidth}
+                defaultMarkerSize={chartStyles[styleName].dotRadius}
+                onSeriesColorsChange={(colors) => setStyleOverrides(prev => ({ ...prev, seriesColors: colors }))}
+                onSeriesStrokeWidthsChange={(widths) => setStyleOverrides(prev => ({ ...prev, seriesStrokeWidths: widths }))}
+                onSeriesMarkerSizesChange={(sizes) => setStyleOverrides(prev => ({ ...prev, seriesMarkerSizes: sizes }))}
+                onSeriesMarkerShapesChange={(shapes) => setStyleOverrides(prev => ({ ...prev, seriesMarkerShapes: shapes }))}
+                baseStyle={chartStyles[styleName]}
+                overrides={styleOverrides}
+                onChange={setStyleOverrides}
+                selectedElement={selectedElement}
+                onElementSelect={setSelectedElement}
+                doseResponseFits={doseResponseFits}
+              />
+            )
+          }
+          settingsContent={
+            <div className="space-y-5">
+              <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
+                <p className="text-xs font-semibold text-[#1d4ed8]">ACS style active</p>
+                <p className="text-[11px] text-blue-500 mt-0.5">American Chemical Society format</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-slate-600">Figure width</p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number" min={300} max={1600} step={50}
+                    value={styleOverrides.figureWidth ?? 700}
+                    onChange={e => {
+                      const v = Number(e.target.value)
+                      if (v >= 300 && v <= 1600) setStyleOverrides(prev => ({ ...prev, figureWidth: v }))
+                    }}
+                    className={inputCls}
+                  />
+                  <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                </div>
+              </div>
+              {ready && !isMultiPanel && (
+                <div className="space-y-3">
+                  <p className="text-xs font-medium text-slate-600">Inset figure</p>
+                  <button
+                    onClick={() => setDrawInsetMode(v => !v)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
+                      drawInsetMode
+                        ? 'bg-[#2563eb] text-white border-[#2563eb]'
+                        : styleOverrides.insetDefined
+                          ? 'bg-blue-50 text-[#2563eb] border-blue-200'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                    </svg>
+                    {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
+                  </button>
+                </div>
+              )}
+              <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                <p className="text-[11px] text-slate-400">More journal presets coming soon — Nature, Cell, JACS</p>
+              </div>
+            </div>
+          }
+        />
 
       </div>
 
@@ -1189,3 +1553,4 @@ export default function AppPage() {
     </div>
   )
 }
+

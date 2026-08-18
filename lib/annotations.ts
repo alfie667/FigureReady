@@ -4,6 +4,10 @@ export interface TextAnnotation {
   text: string
   xPct: number
   yPct: number
+  color?: string
+  fontSize?: number
+  fontWeight?: 'normal' | 'bold'
+  fontStyle?: 'normal' | 'italic'
 }
 
 // Legacy – kept for backward compat. Rendered as a solid arrow.
@@ -14,6 +18,8 @@ export interface ArrowAnnotation {
   y1Pct: number
   x2Pct: number
   y2Pct: number
+  color?: string
+  strokeWidth?: number
 }
 
 // Full-featured line: solid/dashed, optional arrowheads at each end.
@@ -27,6 +33,8 @@ export interface LineAnnotation {
   y1Pct: number
   x2Pct: number
   y2Pct: number
+  color?: string
+  strokeWidth?: number
 }
 
 export interface RectAnnotation {
@@ -38,6 +46,8 @@ export interface RectAnnotation {
   heightPct: number
   fillColor?: string
   fillOpacity?: number
+  borderColor?: string
+  borderWidth?: number
 }
 
 export interface EllipseAnnotation {
@@ -49,6 +59,23 @@ export interface EllipseAnnotation {
   heightPct: number
   fillColor?: string
   fillOpacity?: number
+  borderColor?: string
+  borderWidth?: number
+}
+
+export interface PeakLabelAnnotation {
+  id: string
+  type: 'peak-label'
+  text: string
+  dataX: number
+  dataY: number
+  seriesKey?: string
+  // Label offset from anchor in % of chart container (draggable)
+  offsetXPct: number
+  offsetYPct: number
+  leaderLine: boolean
+  color?: string
+  fontSize?: number
 }
 
 export type ChartAnnotation =
@@ -57,3 +84,4 @@ export type ChartAnnotation =
   | LineAnnotation
   | RectAnnotation
   | EllipseAnnotation
+  | PeakLabelAnnotation

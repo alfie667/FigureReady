@@ -9,7 +9,7 @@ export interface DataRoles {
 
 export interface FigureTemplate extends ChartTemplate {
   description: string
-  category: 'scientific' | 'time-series' | 'comparison'
+  category: 'dose-response' | 'time-course' | 'comparison' | 'correlation' | 'spectra'
   previewImage: string
   requiredDataRoles: DataRoles
   defaultAxisLabels?: { x?: string; y?: string }

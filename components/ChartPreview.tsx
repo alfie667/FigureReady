@@ -1,5 +1,5 @@
 ﻿'use client'
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type Key } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type Key } from 'react'
 import { trackExport, trackFirstFreeExport, trackFreeExportUsed, trackPaywallShown } from '@/lib/analytics'
 import { gtagEvent } from '@/lib/ga'
 import { isProUser, hasUsedFreeExport, recordFreeExport } from '@/lib/usageLimit'
@@ -8,15 +8,20 @@ import {
   LineChart, Line,
   ScatterChart, Scatter,
   BarChart, Bar,
+  ComposedChart,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceArea, ErrorBar,
   ResponsiveContainer, Customized,
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
-import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, LineAnnotation, RectAnnotation, EllipseAnnotation } from '@/lib/annotations'
+import { getPaletteColor } from '@/lib/colorPalettes'
+import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, LineAnnotation, RectAnnotation, EllipseAnnotation, PeakLabelAnnotation } from '@/lib/annotations'
 import AnnotationToolbar from '@/components/AnnotationToolbar'
+import AnnotationContextBar from '@/components/AnnotationContextBar'
+import { useAnnotationInteraction, type AnnotationTool } from '@/hooks/useAnnotationInteraction'
 import { formatAxisLabel } from '@/lib/formatLabel'
 import { getNiceTicks, buildStepTicks } from '@/lib/niceTicks'
+import { fit4PL, sample4PLCurve, buildLogTicks, logFmt, type Fit4PLResult } from '@/lib/curveFit4PL'
 
 function lnFmt(v: number): string {
   const val = Math.exp(v)
@@ -37,6 +42,8 @@ function buildLnTicks(lo: number, hi: number): number[] {
   return ticks.length >= 2 ? ticks : [Math.floor(lo), Math.ceil(hi)]
 }
 import { renderMarker, type MarkerShape } from '@/lib/markerShapes'
+
+const PEAK_SNAP_WINDOW_PTS = 5
 
 // ─── Icons ───────────────────────────────────────────────────────────────────
 
@@ -97,9 +104,10 @@ interface DraggableLabelProps {
   dy?: number
   style?: React.CSSProperties
   onDrag: (dx: number, dy: number) => void
+  onSelect?: () => void
 }
 
-function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, onDrag }: DraggableLabelProps) {
+function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, onDrag, onSelect }: DraggableLabelProps) {
   const lastClient = useRef({ x: 0, y: 0 })
 
   if (!value || !viewBox) return null
@@ -110,15 +118,18 @@ function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, 
     e.preventDefault()
     e.stopPropagation()
     lastClient.current = { x: e.clientX, y: e.clientY }
+    let moved = false
     const onMove = (ev: MouseEvent) => {
       const ddx = ev.clientX - lastClient.current.x
       const ddy = ev.clientY - lastClient.current.y
+      if (Math.abs(ddx) > 2 || Math.abs(ddy) > 2) moved = true
       lastClient.current = { x: ev.clientX, y: ev.clientY }
       onDrag(ddx, ddy)
     }
     const onUp = () => {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
+      if (!moved) onSelect?.()
     }
     window.addEventListener('mousemove', onMove)
     window.addEventListener('mouseup', onUp)
@@ -131,7 +142,7 @@ function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, 
       dominantBaseline="middle"
       transform={angle ? `rotate(${angle}, ${cx}, ${cy})` : undefined}
       className="fr-axis-label"
-      style={{ ...style, cursor: 'grab', userSelect: 'none' }}
+      style={{ ...style, cursor: 'pointer', userSelect: 'none' }}
       onMouseDown={handleMouseDown}
     >
       {String(value)}
@@ -140,6 +151,21 @@ function DraggableAxisLabel({ viewBox, value, angle = 0, dx = 0, dy = 0, style, 
 }
 
 // ─── Draggable legend ────────────────────────────────────────────────────────
+
+// Snap anchors match the preset positions; any drag released within SNAP_R% snaps to the nearest.
+const LEGEND_SNAP_ANCHORS = [
+  { x: 10, y: 3 }, { x: 50, y: 3 }, { x: 88, y: 3 },
+  { x: 10, y: 88 }, { x: 50, y: 88 }, { x: 88, y: 88 },
+  { x: 7, y: 45 }, { x: 93, y: 45 }, { x: 50, y: 1 },
+]
+const SNAP_R = 7
+
+function snapLegend(x: number, y: number) {
+  for (const a of LEGEND_SNAP_ANCHORS) {
+    if (Math.abs(x - a.x) < SNAP_R && Math.abs(y - a.y) < SNAP_R) return a
+  }
+  return { x, y }
+}
 
 interface DraggableLegendProps {
   yCols: string[]
@@ -156,39 +182,74 @@ interface DraggableLegendProps {
   textColor: string
   containerRef: React.RefObject<HTMLDivElement>
   onUpdate: (patch: Partial<StyleOverrides>) => void
+  onElementSelect?: (el: import('@/lib/chartSelection').SelectedChartElement) => void
 }
 
 function DraggableLegend({
   yCols, seriesNames, colors, strokeWidths, chartType,
   xPct, yPct, orientation, bg, fontFamily, fontSize, textColor,
-  containerRef, onUpdate,
+  containerRef, onUpdate, onElementSelect,
 }: DraggableLegendProps) {
+  const selfRef = useRef<HTMLDivElement>(null)
+  const cur = useRef({ x: xPct, y: yPct })
   const lastClient = useRef({ x: 0, y: 0 })
-  const xRef = useRef(xPct)
-  const yRef = useRef(yPct)
-  useEffect(() => { xRef.current = xPct }, [xPct])
-  useEffect(() => { yRef.current = yPct }, [yPct])
+  const hasDragged = useRef(false)
+
+  // Sync position from prop (e.g. when user picks a preset)
+  useEffect(() => {
+    cur.current = { x: xPct, y: yPct }
+    if (selfRef.current) {
+      selfRef.current.style.left = `${xPct}%`
+      selfRef.current.style.top = `${yPct}%`
+    }
+  }, [xPct, yPct])
 
   const isBar = chartType === 'bar'
-  const isScatter = chartType === 'scatter'
+  const isScatter = chartType === 'scatter' || chartType === 'doseResponse'
 
   const startDrag = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation()
+    hasDragged.current = false
     lastClient.current = { x: e.clientX, y: e.clientY }
+    if (selfRef.current) selfRef.current.style.cursor = 'grabbing'
+
     const onMove = (ev: MouseEvent) => {
+      const dx = ev.clientX - lastClient.current.x
+      const dy = ev.clientY - lastClient.current.y
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged.current = true
       const r = containerRef.current?.getBoundingClientRect()
       if (!r) return
-      xRef.current += (ev.clientX - lastClient.current.x) / r.width * 100
-      yRef.current += (ev.clientY - lastClient.current.y) / r.height * 100
+      cur.current.x = Math.max(0, Math.min(100, cur.current.x + dx / r.width * 100))
+      cur.current.y = Math.max(0, Math.min(100, cur.current.y + dy / r.height * 100))
       lastClient.current = { x: ev.clientX, y: ev.clientY }
-      onUpdate({ legendXPct: xRef.current, legendYPct: yRef.current })
+      // Direct DOM update — avoids React re-renders during drag for smooth movement
+      if (selfRef.current) {
+        selfRef.current.style.left = `${cur.current.x}%`
+        selfRef.current.style.top = `${cur.current.y}%`
+      }
     }
-    const onUp = () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
-    window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onUp)
+
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      if (selfRef.current) selfRef.current.style.cursor = 'grab'
+      const snapped = snapLegend(cur.current.x, cur.current.y)
+      cur.current = snapped
+      if (selfRef.current) {
+        selfRef.current.style.left = `${snapped.x}%`
+        selfRef.current.style.top = `${snapped.y}%`
+      }
+      onUpdate({ legendXPct: snapped.x, legendYPct: snapped.y })
+      if (!hasDragged.current) onElementSelect?.({ type: 'legend' })
+    }
+
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
   }
 
   return (
     <div
+      ref={selfRef}
       style={{
         position: 'absolute', left: `${xPct}%`, top: `${yPct}%`,
         transform: 'translate(-50%, 0)', zIndex: 12, userSelect: 'none',
@@ -197,13 +258,17 @@ function DraggableLegend({
         gap: orientation === 'h' ? 14 : 5,
         background: bg ? 'rgba(255,255,255,0.92)' : 'transparent',
         border: bg ? '1px solid #e2e8f0' : 'none',
-        borderRadius: 6, padding: '4px 10px', cursor: 'grab',
-        boxShadow: bg ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+        borderRadius: 6, padding: '7px 13px', cursor: 'grab',
+        boxShadow: bg ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
       }}
       onMouseDown={startDrag}
     >
       {yCols.map((col, i) => (
-        <div key={col} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div
+          key={col}
+          style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', borderRadius: 4, padding: '1px 3px' }}
+          onClick={(e) => { e.stopPropagation(); onElementSelect?.({ type: 'series', seriesKey: col }) }}
+        >
           <svg width="26" height="14" style={{ flexShrink: 0 }}>
             {isBar
               ? <rect x="3" y="3" width="20" height="8" fill={colors[i]} rx="1" />
@@ -217,6 +282,170 @@ function DraggableLegend({
           </span>
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─── Draggable inline series label ───────────────────────────────────────────
+
+interface DraggableInlineLabelProps {
+  label: string
+  color: string
+  fontFamily: string
+  fontSize: number
+  xPct: number
+  yPct: number
+  containerRef: React.RefObject<HTMLDivElement>
+  onUpdate: (patch: { xPct: number; yPct: number; text?: string }) => void
+  onDelete: () => void
+}
+
+function DraggableInlineLabel({ label, color, fontFamily, fontSize, xPct, yPct, containerRef, onUpdate, onDelete }: DraggableInlineLabelProps) {
+  const selfRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const cur = useRef({ x: xPct, y: yPct })
+  const [selected, setSelected] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState(label)
+
+  // Keep edit buffer in sync when label changes externally (e.g. column rename)
+  useEffect(() => { if (!editing) setEditValue(label) }, [label, editing])
+
+  // Sync position from props (e.g. template reapply)
+  useEffect(() => {
+    cur.current = { x: xPct, y: yPct }
+    if (selfRef.current) {
+      selfRef.current.style.left = `${xPct}%`
+      selfRef.current.style.top = `${yPct}%`
+    }
+  }, [xPct, yPct])
+
+  // Click outside → deselect / commit edit
+  useEffect(() => {
+    if (!selected && !editing) return
+    const handler = (e: MouseEvent) => {
+      if (selfRef.current?.contains(e.target as Node)) return
+      if (editing) {
+        setEditing(false)
+        onUpdate({ xPct: cur.current.x, yPct: cur.current.y, text: editValue.trim() || undefined })
+      }
+      setSelected(false)
+    }
+    window.addEventListener('mousedown', handler)
+    return () => window.removeEventListener('mousedown', handler)
+  }, [selected, editing, editValue, onUpdate])
+
+  // Delete/Backspace when selected but not editing
+  useEffect(() => {
+    if (!selected || editing) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); onDelete() }
+      if (e.key === 'Escape') setSelected(false)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selected, editing, onDelete])
+
+  const commitEdit = () => {
+    setEditing(false)
+    onUpdate({ xPct: cur.current.x, yPct: cur.current.y, text: editValue.trim() || undefined })
+  }
+
+  // Pointer-based drag with click vs drag discrimination
+  const startInteraction = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (editing) return
+    e.preventDefault(); e.stopPropagation()
+    const origin = { x: e.clientX, y: e.clientY }
+    const last = { x: e.clientX, y: e.clientY }
+    let dragging = false
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - origin.x, dy = ev.clientY - origin.y
+      if (!dragging && Math.sqrt(dx * dx + dy * dy) > 4) dragging = true
+      if (!dragging) return
+      const r = containerRef.current?.getBoundingClientRect()
+      if (!r) return
+      cur.current.x = Math.max(0, Math.min(100, cur.current.x + (ev.clientX - last.x) / r.width * 100))
+      cur.current.y = Math.max(0, Math.min(100, cur.current.y + (ev.clientY - last.y) / r.height * 100))
+      last.x = ev.clientX; last.y = ev.clientY
+      if (selfRef.current) {
+        selfRef.current.style.cursor = 'grabbing'
+        selfRef.current.style.left = `${cur.current.x}%`
+        selfRef.current.style.top = `${cur.current.y}%`
+      }
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      if (selfRef.current) selfRef.current.style.cursor = editing ? 'text' : 'grab'
+      if (dragging) {
+        onUpdate({ xPct: cur.current.x, yPct: cur.current.y })
+      } else {
+        setSelected(s => !s)
+      }
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }
+
+  return (
+    <div
+      ref={selfRef}
+      style={{
+        position: 'absolute',
+        left: `${xPct}%`,
+        top: `${yPct}%`,
+        transform: 'translateY(-50%)',
+        zIndex: 12,
+        userSelect: 'none',
+        cursor: editing ? 'text' : 'grab',
+        outline: selected && !editing ? `1.5px solid ${color}` : 'none',
+        borderRadius: 3,
+        padding: '1px 3px',
+        pointerEvents: 'all',
+        boxSizing: 'border-box',
+      }}
+      onPointerDown={startInteraction}
+      onDoubleClick={(e) => {
+        e.stopPropagation()
+        setSelected(false)
+        setEditing(true)
+        setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 0)
+      }}
+    >
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={editValue}
+          onChange={e => setEditValue(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') commitEdit()
+            if (e.key === 'Escape') { setEditing(false); setEditValue(label) }
+            e.stopPropagation()
+          }}
+          onPointerDown={e => e.stopPropagation()}
+          style={{
+            fontFamily,
+            fontSize,
+            color,
+            background: 'rgba(255,255,255,0.95)',
+            border: `1.5px solid ${color}`,
+            borderRadius: 2,
+            padding: '0 3px',
+            outline: 'none',
+            minWidth: 40,
+            width: `${Math.max(40, editValue.length * fontSize * 0.62 + 12)}px`,
+            lineHeight: 1.4,
+            boxSizing: 'border-box',
+          }}
+        />
+      ) : (
+        <span style={{ fontFamily, fontSize, color, whiteSpace: 'nowrap', lineHeight: 1 }}>
+          {label}
+        </span>
+      )}
     </div>
   )
 }
@@ -278,18 +507,9 @@ function injectPngDpi(dataUrl: string, dpi: number): string {
   return 'data:image/png;base64,' + btoa(str)
 }
 
-// ─── Drag state ───────────────────────────────────────────────────────────────
-
-type DragState =
-  | { kind: 'text'; id: string; offsetXPct: number; offsetYPct: number }
-  | { kind: 'arrow-body'; id: string; dx1: number; dy1: number; dx2: number; dy2: number }
-  | { kind: 'arrow-end'; id: string; endpoint: 1 | 2 }
-  | { kind: 'rect-body'; id: string; offsetXPct: number; offsetYPct: number }
-  | { kind: 'rect-corner'; id: string; anchorXPct: number; anchorYPct: number }
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
+type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar' | 'doseResponse'
 
 interface ChartMouseEvent {
   activeLabel?: string | number
@@ -299,6 +519,7 @@ export interface ChartPreviewHandle {
   triggerExport: (type: 'png' | 'svg' | 'pdf') => void
   addAnnotation: (type: string, options?: Record<string, unknown>) => void
   insertSymbol: (sym: string) => void
+  setActiveTool: (tool: AnnotationTool) => void
 }
 
 interface Props {
@@ -320,6 +541,9 @@ interface Props {
   drawInsetActive?: boolean
   onDrawInsetActiveChange?: (active: boolean) => void
   annotOpen?: boolean
+  onSelectionChange?: (id: string | null) => void
+  onElementSelect?: (el: import('@/lib/chartSelection').SelectedChartElement | null) => void
+  selectedElement?: import('@/lib/chartSelection').SelectedChartElement | null
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -329,10 +553,11 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
   compact = false, drawInsetActive, onDrawInsetActiveChange, annotOpen,
+  onSelectionChange, onElementSelect, selectedElement,
 }: Props, ref) {
+  const selectedSeriesKey = selectedElement?.type === 'series' ? (selectedElement.seriesKey ?? null) : null
   const chartRef = useRef<HTMLDivElement>(null)
-  const draggingRef = useRef<DragState | null>(null)
-  const pendingDragRef = useRef<{ drag: DragState; x0: number; y0: number } | null>(null)
+  const seriesClickedRef = useRef(false)
   const xLabelDxRef = useRef(styleOverrides.xLabelDx ?? 0)
   const xLabelDyRef = useRef(styleOverrides.xLabelDy ?? 0)
   const yLabelDxRef = useRef(styleOverrides.yLabelDx ?? 0)
@@ -342,20 +567,9 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   useEffect(() => { yLabelDxRef.current = styleOverrides.yLabelDx ?? 0 }, [styleOverrides.yLabelDx])
   useEffect(() => { yLabelDyRef.current = styleOverrides.yLabelDy ?? 0 }, [styleOverrides.yLabelDy])
 
-  // editingId: which text annotation is in text-edit mode
-  const [editingId, _setEditingId] = useState<string | null>(null)
-  const editingIdRef = useRef<string | null>(null)
-  const setEditingId = (id: string | null) => { editingIdRef.current = id; _setEditingId(id) }
-
-  // selectedId: which annotation is selected (shows handles)
-  const [selectedId, _setSelectedId] = useState<string | null>(null)
-  const selectedIdRef = useRef<string | null>(null)
-  const setSelectedId = (id: string | null) => { selectedIdRef.current = id; _setSelectedId(id) }
-
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [paywallMode, setPaywallMode] = useState<'after_free' | 'blocked'>('blocked')
   const [previewDataUrl, setPreviewDataUrl] = useState<string | null>(null)
-  const [isDraggingAnnotation, setIsDraggingAnnotation] = useState(false)
   const [isTouch] = useState(() => typeof window !== 'undefined' && navigator.maxTouchPoints > 0)
 
   // ─── Inset draw state ────────────────────────────────────────────────────────
@@ -377,7 +591,6 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     if (annotOpen !== undefined) setAnnotExpanded(annotOpen)
   }, [annotOpen])
 
-  useImperativeHandle(ref, () => ({ triggerExport, addAnnotation, insertSymbol }))
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
 
   // Track card width to detect mobile (card narrower than design width)
@@ -426,37 +639,56 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     x: unknown; y: number; name: string; color: string; svgX: number; svgY: number
   } | null>(null)
 
-  // Keep stable refs for the keydown handler (avoids re-registering on every render)
-  const annotationsRef = useRef(annotations)
-  const onAnnotationsChangeRef = useRef(onAnnotationsChange)
+  // Stable refs for inset-delete keyboard handler
   const onStyleChangeRef = useRef(onStyleChange)
   const styleOverridesRef = useRef(styleOverrides)
-  useEffect(() => { annotationsRef.current = annotations }, [annotations])
-  useEffect(() => { onAnnotationsChangeRef.current = onAnnotationsChange }, [onAnnotationsChange])
   useEffect(() => { onStyleChangeRef.current = onStyleChange }, [onStyleChange])
   useEffect(() => { styleOverridesRef.current = styleOverrides }, [styleOverrides])
 
-  // Delete / Escape keyboard shortcuts for selected annotation and inset
+  // Interaction hook — owns all annotation drag/tool/keyboard state
+  const interaction = useAnnotationInteraction({
+    annotations, onAnnotationsChange, chartRef, plotAreaRef, isTouch,
+  })
+
+  // Notify parent when selected annotation changes
+  useEffect(() => { onSelectionChange?.(interaction.selectedId) }, [interaction.selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Inset-only keyboard handler (annotation shortcuts live in the hook)
+  const interactionSelectedIdRef = useRef<string | null>(null)
+  useEffect(() => { interactionSelectedIdRef.current = interaction.selectedId }, [interaction.selectedId])
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
-      const selId = selectedIdRef.current
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selId && !editingIdRef.current) {
-          onAnnotationsChangeRef.current(annotationsRef.current.filter(a => a.id !== selId))
-          selectedIdRef.current = null; _setSelectedId(null)
-        } else if (!selId && styleOverridesRef.current.insetDefined) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && !interactionSelectedIdRef.current) {
+        if (styleOverridesRef.current.insetDefined) {
           onStyleChangeRef.current?.({ insetDefined: false, insetXMin: undefined, insetXMax: undefined, insetYMin: undefined, insetYMax: undefined })
         }
-      }
-      if (e.key === 'Escape') {
-        selectedIdRef.current = null; _setSelectedId(null)
-        editingIdRef.current = null; _setEditingId(null)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
   }, [])
+
+  // Backward-compat addAnnotation: maps old type strings to tool activation
+  const addAnnotation = (type: string, opts: Record<string, unknown> = {}) => {
+    if (type === 'text') return interaction.setActiveTool('text')
+    if (type === 'peak-label') return interaction.setActiveTool('peak')
+    if (type === 'rect') return interaction.setActiveTool('rect')
+    if (type === 'ellipse') return interaction.setActiveTool('ellipse')
+    if (type === 'line') {
+      if (opts.dash) return interaction.setActiveTool('dashed')
+      if (opts.headEnd || opts.headStart) return interaction.setActiveTool('arrow')
+      return interaction.setActiveTool('line')
+    }
+    return interaction.setActiveTool('line')
+  }
+
+  useImperativeHandle(ref, () => ({
+    triggerExport,
+    addAnnotation,
+    insertSymbol: interaction.insertSymbol,
+    setActiveTool: interaction.setActiveTool,
+  }))
 
   // ─── Zoom state ─────────────────────────────────────────────────────────────
 
@@ -469,7 +701,11 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const xTickSize = styleOverrides.xTickSize ?? s.tickFontSize
   const yTickSize = styleOverrides.yTickSize ?? s.tickFontSize
   const seriesLabel = (col: string) => seriesNames[col]?.trim() || formatAxisLabel(col)
-  const seriesColor = (col: string, i: number) => styleOverrides.seriesColors?.[col] ?? s.colors[i % s.colors.length]
+  const seriesColor = (col: string, i: number) => {
+    if (styleOverrides.seriesColors?.[col]) return styleOverrides.seriesColors[col]
+    if (styleOverrides.paletteId) return getPaletteColor(styleOverrides.paletteId, i)
+    return s.colors[i % s.colors.length]
+  }
   const seriesStrokeWidth = (col: string) => styleOverrides.seriesStrokeWidths?.[col] ?? s.strokeWidth
   const seriesMarkerSize = (col: string) => styleOverrides.seriesMarkerSizes?.[col] ?? s.dotRadius
   const seriesMarkerShape = (col: string) => styleOverrides.seriesMarkerShapes?.[col] ?? 'circle'
@@ -486,11 +722,11 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   }, [xCol, yCols.join(','), chartType, data.length])
 
   const handleMouseDown = (e: ChartMouseEvent) => {
-    if (!zoomEnabled || e.activeLabel === undefined) return
+    if (!zoomEnabled || interaction.activeTool !== 'zoom' || e.activeLabel === undefined) return
     setRefLeft(Number(e.activeLabel)); setRefRight(null)
   }
   const handleMouseMove = (e: ChartMouseEvent) => {
-    if (!zoomEnabled || refLeft === null || e.activeLabel === undefined) return
+    if (!zoomEnabled || interaction.activeTool !== 'zoom' || refLeft === null || e.activeLabel === undefined) return
     setRefRight(Number(e.activeLabel))
   }
   const handleMouseUp = () => {
@@ -507,17 +743,38 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // ─── Scale / axis flags (must come before data processing) ──────────────────
 
-  const xScale = styleOverrides.xScale ?? 'linear'
+  const isDoseResponse = chartType === 'doseResponse'
+
+  const xScale = styleOverrides.xScale ?? (isDoseResponse ? 'log' : 'linear')
   const yScale = styleOverrides.yScale ?? 'linear'
   const isLogX = xScale === 'log'
   const isLogY = yScale === 'log'
   const isLnX = xScale === 'ln'
   const isLnY = yScale === 'ln'
+  const isXReversed = styleOverrides.xReversed ?? false
   const rechartsXScale = (isLnX ? 'linear' : xScale) as 'linear' | 'log'
   const rechartsYScale = (isLnY ? 'linear' : yScale) as 'linear' | 'log'
   const yAxisAssignment = styleOverrides.yAxisAssignment ?? {}
   const hasRightAxis = yCols.some(col => yAxisAssignment[col] === 'right')
   const y2AxisLabel = styleOverrides.y2AxisLabel ?? ''
+
+  // ─── Auto stacking: resolve effective Y offsets ──────────────────────────────
+
+  const stackingMode = styleOverrides.stackingMode ?? 'manual'
+  const effectiveSeriesYOffsets: Record<string, number> = (() => {
+    if (stackingMode !== 'auto' || yCols.length === 0) {
+      return styleOverrides.seriesYOffsets ?? {}
+    }
+    const amplitudes = yCols.map(col => {
+      const vals = data.map(row => Number(row[col])).filter(v => isFinite(v))
+      if (vals.length === 0) return 0
+      return Math.max(...vals) - Math.min(...vals)
+    })
+    const maxAmp = Math.max(...amplitudes, 1)
+    const gap = styleOverrides.stackGap ?? 0.25
+    const slotHeight = maxAmp * (1 + gap)
+    return Object.fromEntries(yCols.map((col, i) => [col, i * slotHeight]))
+  })()
 
   // ─── Data processing ─────────────────────────────────────────────────────────
 
@@ -530,7 +787,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       const point: Record<string, unknown> = { x }
       yCols.forEach(col => {
         const v = Number(row[col])
-        point[col] = isNaN(v) ? null : ((isLogY || isLnY) && v <= 0 ? null : (isLnY ? Math.log(v) : v))
+        const yOffset = effectiveSeriesYOffsets[col] ?? 0
+        point[col] = isNaN(v) ? null : ((isLogY || isLnY) && v <= 0 ? null : (isLnY ? Math.log(v) : v + yOffset))
         if (hasError(col)) {
           const e = Number(row[errorCols[col]])
           point[`error_${col}`] = isNaN(e) ? null : e
@@ -554,7 +812,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
         const numX = typeof rawX === 'number' ? rawX : Number(rawX)
         const x = (isLnX && isNumericX) ? (numX > 0 ? Math.log(numX) : null) : rawX
         const yRaw = Number(row[col])
-        const y = isLnY ? (yRaw > 0 ? Math.log(yRaw) : null) : yRaw
+        const yOffset = effectiveSeriesYOffsets[col] ?? 0
+        const y = isLnY ? (yRaw > 0 ? Math.log(yRaw) : null) : yRaw + yOffset
         const point: Record<string, unknown> = { x, y }
         if (hasError(col)) {
           const e = Number(row[errorCols[col]])
@@ -576,31 +835,63 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     ? data.map(row => Number(row[xCol])).filter(v => !isNaN(v) && inZoomRange(v) && (!(isLogX || isLnX) || v > 0))
     : []
   const xValuesScaled = isLnX ? xValues.map(Math.log) : xValues
-  const xRangeMin = styleOverrides.xMin ?? (xValuesScaled.length > 0 ? Math.min(...xValuesScaled) : undefined)
-  const xRangeMax = styleOverrides.xMax ?? (xValuesScaled.length > 0 ? Math.max(...xValuesScaled) : undefined)
-  const xStep = styleOverrides.xStep
-  const xTicks = isLnX && xRangeMin !== undefined && xRangeMax !== undefined
+  const manualXMin = Number.isFinite(styleOverrides.xMin) ? styleOverrides.xMin : undefined
+  const manualXMax = Number.isFinite(styleOverrides.xMax) ? styleOverrides.xMax : undefined
+  const xRangeMin = manualXMin ?? (xValuesScaled.length > 0 ? Math.min(...xValuesScaled) : undefined)
+  const xRangeMax = manualXMax ?? (xValuesScaled.length > 0 ? Math.max(...xValuesScaled) : undefined)
+  const xStep = Number.isFinite(styleOverrides.xStep) && (styleOverrides.xStep as number) > 0 ? styleOverrides.xStep : undefined
+  const xTicksRaw = isLnX && xRangeMin !== undefined && xRangeMax !== undefined
     ? buildLnTicks(xRangeMin, xRangeMax)
     : (!isLogX && xRangeMin !== undefined && xRangeMax !== undefined
       ? (xStep ? buildStepTicks(xRangeMin, xRangeMax, xStep) : getNiceTicks(xRangeMin, xRangeMax))
       : undefined)
-  const xDomain = xTicks ? ([xTicks[0], xTicks[xTicks.length - 1]] as [number, number]) : undefined
+  // When user has set explicit bounds, filter ticks to stay strictly within them
+  const hasManualX = manualXMin !== undefined || manualXMax !== undefined
+  const xTicks = xTicksRaw && hasManualX
+    ? xTicksRaw.filter(t =>
+        (manualXMin === undefined || t >= manualXMin) &&
+        (manualXMax === undefined || t <= manualXMax)
+      )
+    : xTicksRaw
+  // Domain: explicit manual values take strict priority over tick-derived bounds
+  const xDomain: [number | 'auto', number | 'auto'] | undefined =
+    hasManualX
+      ? [
+          manualXMin !== undefined ? manualXMin : (xTicks?.length ? xTicks[0] : 'auto'),
+          manualXMax !== undefined ? manualXMax : (xTicks?.length ? xTicks[xTicks.length - 1] : 'auto'),
+        ]
+      : xTicks?.length
+        ? [xTicks[0], xTicks[xTicks.length - 1]]
+        : undefined
 
-  const yMin = styleOverrides.yMin
-  const yMax = styleOverrides.yMax
-  const yStep = styleOverrides.yStep
+  const yMin = Number.isFinite(styleOverrides.yMin) ? styleOverrides.yMin : undefined
+  const yMax = Number.isFinite(styleOverrides.yMax) ? styleOverrides.yMax : undefined
+  const yStep = Number.isFinite(styleOverrides.yStep) && (styleOverrides.yStep as number) > 0 ? styleOverrides.yStep : undefined
   // When dual axis: left domain uses only left-axis series
   const leftCols = hasRightAxis ? yCols.filter(col => yAxisAssignment[col] !== 'right') : yCols
   const allYValues = leftCols
-    .flatMap(col => data.map(row => Number(row[col])))
+    .flatMap(col => {
+      const yOffset = effectiveSeriesYOffsets[col] ?? 0
+      return data.map(row => Number(row[col]) + yOffset)
+    })
     .filter(v => !isNaN(v) && (!(isLogY || isLnY) || v > 0))
   const allYValuesScaled = isLnY ? allYValues.map(Math.log) : allYValues
   const autoYMin = allYValuesScaled.length > 0 ? Math.min(...allYValuesScaled) : ((isLogY || isLnY) ? 0 : 0)
   const autoYMax = allYValuesScaled.length > 0 ? Math.max(...allYValuesScaled) : ((isLogY || isLnY) ? 2 : 1)
+
+  // Stacking padding: expand the auto domain without touching user-set yMin/yMax
+  const stackYRange = autoYMax - autoYMin
+  const paddedAutoYMin = (stackingMode === 'auto' && yMin === undefined && !isLogY && !isLnY)
+    ? autoYMin - stackYRange * (styleOverrides.stackBottomPaddingRatio ?? 0.05)
+    : autoYMin
+  const paddedAutoYMax = (stackingMode === 'auto' && yMax === undefined && !isLogY && !isLnY)
+    ? autoYMax + stackYRange * (styleOverrides.stackTopPaddingRatio ?? 0.15)
+    : autoYMax
+
   const yLnTicks = isLnY ? buildLnTicks(autoYMin, autoYMax) : undefined
   const yTicks = isLnY
     ? yLnTicks
-    : (!isLogY && yStep ? buildStepTicks(yMin ?? autoYMin, yMax ?? autoYMax, yStep) : undefined)
+    : (!isLogY && yStep ? buildStepTicks(yMin ?? paddedAutoYMin, yMax ?? paddedAutoYMax, yStep) : undefined)
   const yDomainProps: { domain?: [number | 'auto', number | 'auto']; allowDataOverflow?: boolean; ticks?: number[] } =
     isLnY
       ? { domain: [autoYMin - 0.5, autoYMax + 0.5], ...(yLnTicks ? { ticks: yLnTicks } : {}) }
@@ -612,7 +903,33 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
               allowDataOverflow: true,
               ...(yTicks ? { ticks: yTicks } : {}),
             }
-          : {}
+          : stackingMode === 'auto'
+            ? { domain: [paddedAutoYMin, paddedAutoYMax] as [number, number], allowDataOverflow: true }
+            : {}
+
+  // ─── Dose–response 4PL fitting (only active when chartType === 'doseResponse') ──
+
+  const doseResponseFits = useMemo((): Record<string, Fit4PLResult> => {
+    if (!isDoseResponse) return {}
+    const rawX = data.map(row => Number(row[xCol]))
+    return Object.fromEntries(
+      yCols.map(col => [col, fit4PL(rawX, data.map(row => Number(row[col])))])
+    )
+  }, [isDoseResponse, data, xCol, yCols.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fitCurveData = useMemo((): Record<string, Array<{ x: number; y: number }>> => {
+    if (!isDoseResponse) return {}
+    const domLo = manualXMin ?? xRangeMin
+    const domHi = manualXMax ?? xRangeMax
+    if (domLo === undefined || domHi === undefined || domLo <= 0 || domHi <= 0) return {}
+    return Object.fromEntries(
+      yCols.flatMap(col => {
+        const fit = doseResponseFits[col]
+        if (!fit?.converged) return []
+        return [[col, sample4PLCurve(fit, domLo, domHi)]]
+      })
+    )
+  }, [isDoseResponse, doseResponseFits, manualXMin, manualXMax, xRangeMin, xRangeMax, yCols.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
 
   // ─── Style derivation ────────────────────────────────────────────────────────
 
@@ -645,17 +962,25 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const tickFontWeight = boldLabels ? 'bold' : 'normal'
   const titleFontWeight = boldLabels ? 'bold' : s.labelFontWeight
   const legendFontSize = styleOverrides.legendFontSize ?? s.tickFontSize
-  const legendPosition = styleOverrides.legendPosition ?? 'top'
+  const legendPosition = styleOverrides.legendPosition ?? 'top-right'
+  const legendMode = styleOverrides.legendMode ?? 'box'
   const legendEnabled = (styleOverrides.showLegend ?? yCols.length > 1) && yCols.length > 1
   const legend = null  // replaced by DraggableLegend overlay
   const legendDefaultPos: Record<string, { x: number; y: number }> = {
+    // legacy values — preserved for backward compat
     top: { x: 50, y: 3 }, bottom: { x: 50, y: 89 }, left: { x: 7, y: 45 }, right: { x: 88, y: 45 },
+    // new presets
+    'top-left': { x: 10, y: 3 }, 'top-center': { x: 50, y: 3 }, 'top-right': { x: 88, y: 3 },
+    'bottom-left': { x: 10, y: 88 }, 'bottom-center': { x: 50, y: 88 }, 'bottom-right': { x: 88, y: 88 },
+    'outside-right': { x: 93, y: 45 }, 'outside-top': { x: 50, y: 1 },
   }
   const legendPos = styleOverrides.legendXPct !== undefined
     ? { x: styleOverrides.legendXPct, y: styleOverrides.legendYPct ?? 3 }
-    : (legendDefaultPos[legendPosition] ?? legendDefaultPos.top)
+    : (legendDefaultPos[legendPosition] ?? legendDefaultPos['top-right'])
   const resolvedColors = yCols.map((col, i) =>
-    (styleOverrides.seriesColors ?? {})[col] ?? s.colors[i % s.colors.length]
+    (styleOverrides.seriesColors ?? {})[col]
+      ?? (styleOverrides.paletteId ? getPaletteColor(styleOverrides.paletteId, i) : null)
+      ?? s.colors[i % s.colors.length]
   )
   const resolvedStrokeWidths = yCols.map(col =>
     (styleOverrides.seriesStrokeWidths ?? {})[col] ?? s.strokeWidth
@@ -684,11 +1009,29 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const effectiveYTickSize  = previewOnly ? Math.min(yTickSize,  11) : yTickSize
   const xTickStyle  = { fontSize: effectiveXTickSize,  fontFamily, fill: axisColor, fontWeight: tickFontWeight }
   const yTickStyle  = { fontSize: effectiveYTickSize,  fontFamily, fill: axisColor, fontWeight: tickFontWeight }
+  const showYTickLabels = styleOverrides.showYTickLabels !== false
+  const yAxisTickProp = showYTickLabels ? yTickStyle : (false as const)
+  const yAxisWidth = showYTickLabels ? 80 : 24
   const axisLine    = { stroke: axisColor, strokeWidth: axisWidth }
   const margin      = s.margin
   // Mobile preview-only: widen the bottom margin so the X-axis title clears the SVG boundary.
   // isExporting restores the original margin — exports always use full desktop margins.
   const effectiveMargin = previewOnly ? { ...margin, bottom: Math.max(margin.bottom, 30) } : margin
+
+  // Inline series labels: measure each label's pixel width for default right-edge placement.
+  const inlineLabelWidths = useMemo(() => {
+    const widths: Record<string, number> = {}
+    if (legendMode !== 'inline' || !legendEnabled || typeof document === 'undefined') return widths
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return widths
+    ctx.font = `${legendFontSize}px ${fontFamily}`
+    for (const col of yCols) {
+      const label = seriesNames[col] || col
+      widths[col] = Math.ceil(ctx.measureText(label).width)
+    }
+    return widths
+  }, [legendMode, legendEnabled, yCols, seriesNames, legendFontSize, fontFamily])
   const xLabelStyle = { fontFamily, fontSize: effectiveXTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const yLabelStyle = { fontFamily, fontSize: effectiveYTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
@@ -704,6 +1047,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
           xLabelDxRef.current += ddx; xLabelDyRef.current += ddy
           onStyleChange?.({ xLabelDx: xLabelDxRef.current, xLabelDy: xLabelDyRef.current })
         }}
+        onSelect={() => onElementSelect?.({ type: 'xAxisLabel' })}
       />
     ),
   }
@@ -721,6 +1065,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
           yLabelDxRef.current += ddx; yLabelDyRef.current += ddy
           onStyleChange?.({ yLabelDx: yLabelDxRef.current, yLabelDy: yLabelDyRef.current })
         }}
+        onSelect={() => onElementSelect?.({ type: 'yAxisLabel' })}
       />
     ),
   } : undefined
@@ -761,7 +1106,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
           <circle
             cx={cx} cy={cy} r={hitR} fill="transparent"
             onMouseEnter={() => {
-              if (draggingRef.current) return
+              if (interaction.isDragging) return
               setPointTooltip({ x: payload.x, y: payload[col] as number, name: seriesLabel(col), color, svgX: cx, svgY: cy })
             }}
             onMouseLeave={() => setPointTooltip(null)}
@@ -770,168 +1115,100 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       )
     }
 
-  // ─── Annotation helpers ──────────────────────────────────────────────────────
-
-  const updateAnnotation = (id: string, changes: Record<string, unknown>) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onAnnotationsChange(annotations.map(a => a.id === id ? { ...(a as any), ...changes } as ChartAnnotation : a))
-  }
-
-  const removeAnnotation = (id: string) => {
-    onAnnotationsChange(annotations.filter(a => a.id !== id))
-    if (selectedIdRef.current === id) { selectedIdRef.current = null; _setSelectedId(null) }
-    if (editingIdRef.current === id) { editingIdRef.current = null; _setEditingId(null) }
-  }
-
-  const addAnnotation = (type: string, options: Record<string, unknown> = {}) => {
-    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ann-${Date.now()}`
-    if (type === 'text') {
-      onAnnotationsChange([...annotations, { id, type: 'text', text: 'Texte', xPct: 50, yPct: 50 }])
-    } else if (type === 'line') {
-      onAnnotationsChange([...annotations, {
-        id, type: 'line',
-        dash: options.dash ?? false,
-        headStart: options.headStart ?? false,
-        headEnd: options.headEnd ?? false,
-        x1Pct: 28, y1Pct: 65, x2Pct: 58, y2Pct: 35,
-      } as LineAnnotation])
-    } else if (type === 'rect') {
-      onAnnotationsChange([...annotations, { id, type: 'rect', xPct: 28, yPct: 28, widthPct: 30, heightPct: 20 }])
-    } else if (type === 'ellipse') {
-      onAnnotationsChange([...annotations, { id, type: 'ellipse', xPct: 28, yPct: 28, widthPct: 30, heightPct: 20 }])
-    }
-    setSelectedId(id)
-  }
-
-  const insertSymbol = (sym: string) => {
-    const id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ann-${Date.now()}`
-    onAnnotationsChange([...annotations, { id, type: 'text', text: sym, xPct: 50, yPct: 50 }])
-    setSelectedId(id)
-  }
-
-  // ─── Drag start helpers ──────────────────────────────────────────────────────
-
-  const getPct = (e: React.PointerEvent) => {
-    const rect = chartRef.current?.getBoundingClientRect()
-    if (!rect) return { xPct: 0, yPct: 0 }
-    return {
-      xPct: ((e.clientX - rect.left) / rect.width) * 100,
-      yPct: ((e.clientY - rect.top) / rect.height) * 100,
-    }
-  }
-
-  const commitDrag = (drag: DragState) => {
-    draggingRef.current = drag
-    setIsDraggingAnnotation(true)
-  }
-
-  const stageDrag = (e: React.PointerEvent, drag: DragState) => {
-    if (isTouch) {
-      pendingDragRef.current = { drag, x0: e.clientX, y0: e.clientY }
-    } else {
-      commitDrag(drag)
-    }
-  }
-
-  const startTextDrag = (e: React.PointerEvent, ann: TextAnnotation) => {
-    if (editingIdRef.current === ann.id) return
-    e.stopPropagation()
-    setSelectedId(ann.id)
-    setPointTooltip(null)
-    if (!chartRef.current) return
-    const { xPct, yPct } = getPct(e)
-    stageDrag(e, { kind: 'text', id: ann.id, offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct })
-  }
-
-  const startArrowBodyDrag = (e: React.PointerEvent, ann: { id: string; x1Pct: number; y1Pct: number; x2Pct: number; y2Pct: number }) => {
-    e.stopPropagation()
-    setSelectedId(ann.id)
-    setPointTooltip(null)
-    if (!chartRef.current) return
-    const { xPct, yPct } = getPct(e)
-    stageDrag(e, { kind: 'arrow-body', id: ann.id, dx1: xPct - ann.x1Pct, dy1: yPct - ann.y1Pct, dx2: xPct - ann.x2Pct, dy2: yPct - ann.y2Pct })
-  }
-
-  const startArrowEndDrag = (e: React.PointerEvent, id: string, endpoint: 1 | 2) => {
-    e.stopPropagation()
-    setPointTooltip(null)
-    stageDrag(e, { kind: 'arrow-end', id, endpoint })
-  }
-
-  const startRectBodyDrag = (e: React.PointerEvent, ann: { id: string; xPct: number; yPct: number; widthPct: number; heightPct: number }) => {
-    e.stopPropagation()
-    setSelectedId(ann.id)
-    setPointTooltip(null)
-    if (!chartRef.current) return
-    const { xPct, yPct } = getPct(e)
-    stageDrag(e, { kind: 'rect-body', id: ann.id, offsetXPct: xPct - ann.xPct, offsetYPct: yPct - ann.yPct })
-  }
-
-  const startRectCornerDrag = (e: React.PointerEvent, ann: { id: string; xPct: number; yPct: number; widthPct: number; heightPct: number }, corner: 'nw' | 'ne' | 'sw' | 'se') => {
-    e.stopPropagation()
-    const anchor = {
-      nw: { xPct: ann.xPct + ann.widthPct, yPct: ann.yPct + ann.heightPct },
-      ne: { xPct: ann.xPct,                yPct: ann.yPct + ann.heightPct },
-      sw: { xPct: ann.xPct + ann.widthPct, yPct: ann.yPct },
-      se: { xPct: ann.xPct,                yPct: ann.yPct },
-    }[corner]
-    stageDrag(e, { kind: 'rect-corner', id: ann.id, anchorXPct: anchor.xPct, anchorYPct: anchor.yPct })
-  }
-
-  // ─── Container pointer handlers ──────────────────────────────────────────────
-
-  const handleContainerPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (pendingDragRef.current) {
-      const dx = e.clientX - pendingDragRef.current.x0
-      const dy = e.clientY - pendingDragRef.current.y0
-      if (Math.sqrt(dx * dx + dy * dy) > 6) {
-        commitDrag(pendingDragRef.current.drag)
-        pendingDragRef.current = null
-      } else {
-        return
+  // Peak pick: keep inline — uses computed axis/data values not available to hook
+  const handlePeakPickClick = (clientX: number, clientY: number) => {
+    const container = chartRef.current
+    if (!container) return
+    const { left: pL, top: pT, width: pW, height: pH } = plotAreaRef.current
+    const containerRect = container.getBoundingClientRect()
+    const clickPxX = clientX - containerRect.left - pL
+    const clickPxY = clientY - containerRect.top - pT
+    const plotFracX = Math.max(0, Math.min(1, clickPxX / pW))
+    const plotFracY = Math.max(0, Math.min(1, clickPxY / pH))
+    const xDomainMin = xRangeMin ?? 0
+    const xDomainMax = xRangeMax ?? 1
+    const yDomainMin = yMin ?? paddedAutoYMin
+    const yDomainMax = yMax ?? paddedAutoYMax
+    const clickedDataX = isLnX
+      ? Math.exp(xDomainMin + plotFracX * (xDomainMax - xDomainMin))
+      : isXReversed
+        ? xDomainMax - plotFracX * (xDomainMax - xDomainMin)
+        : xDomainMin + plotFracX * (xDomainMax - xDomainMin)
+    const clickedDisplayY = yDomainMax - plotFracY * (yDomainMax - yDomainMin)
+    const normW = (xDomainMax - xDomainMin) || 1
+    const normH = (yDomainMax - yDomainMin) || 1
+    let bestCol = yCols[0] ?? ''
+    let bestDist = Infinity
+    let bestOrigIdx = 0
+    for (const col of yCols) {
+      const seriesOff = effectiveSeriesYOffsets[col] ?? 0
+      for (let i = 0; i < data.length; i++) {
+        const rawX = Number(data[i][xCol])
+        const rawY = Number(data[i][col])
+        if (isNaN(rawX) || isNaN(rawY)) continue
+        const scaledX = isLnX ? Math.log(Math.max(rawX, 1e-10)) : rawX
+        const displayY = rawY + seriesOff
+        const dx = (scaledX - (isLnX ? Math.log(Math.max(clickedDataX, 1e-10)) : clickedDataX)) / normW
+        const dy = (displayY - clickedDisplayY) / normH
+        const dist = Math.sqrt(dx * dx + dy * dy)
+        if (dist < bestDist) { bestDist = dist; bestCol = col; bestOrigIdx = i }
       }
     }
-    const drag = draggingRef.current
-    const container = chartRef.current
-    if (!drag || !container) return
-    e.preventDefault()
-    const rect = container.getBoundingClientRect()
-    const xPct = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100))
-    const yPct = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100))
-    if (drag.kind === 'text') {
-      updateAnnotation(drag.id, { xPct: xPct - drag.offsetXPct, yPct: yPct - drag.offsetYPct })
-    } else if (drag.kind === 'arrow-body') {
-      updateAnnotation(drag.id, {
-        x1Pct: xPct - drag.dx1, y1Pct: yPct - drag.dy1,
-        x2Pct: xPct - drag.dx2, y2Pct: yPct - drag.dy2,
-      })
-    } else if (drag.kind === 'arrow-end') {
-      if (drag.endpoint === 1) updateAnnotation(drag.id, { x1Pct: xPct, y1Pct: yPct })
-      else updateAnnotation(drag.id, { x2Pct: xPct, y2Pct: yPct })
-    } else if (drag.kind === 'rect-body') {
-      updateAnnotation(drag.id, { xPct: xPct - drag.offsetXPct, yPct: yPct - drag.offsetYPct })
-    } else if (drag.kind === 'rect-corner') {
-      const newXPct = Math.min(xPct, drag.anchorXPct)
-      const newYPct = Math.min(yPct, drag.anchorYPct)
-      updateAnnotation(drag.id, {
-        xPct: newXPct, yPct: newYPct,
-        widthPct: Math.abs(xPct - drag.anchorXPct),
-        heightPct: Math.abs(yPct - drag.anchorYPct),
-      })
+    const colData = data
+      .map((row, i) => ({ rawX: Number(row[xCol]), rawY: Number(row[bestCol]), origIdx: i }))
+      .filter(d => !isNaN(d.rawX) && !isNaN(d.rawY))
+      .sort((a, b) => a.rawX - b.rawX)
+    const nearestSortedIdx = colData.findIndex(d => d.origIdx === bestOrigIdx)
+    const searchIdx = nearestSortedIdx >= 0 ? nearestSortedIdx : 0
+    const winStart = Math.max(0, searchIdx - PEAK_SNAP_WINDOW_PTS)
+    const winEnd = Math.min(colData.length - 1, searchIdx + PEAK_SNAP_WINDOW_PTS)
+    let peakRawX = colData[searchIdx]?.rawX ?? 0
+    let peakRawY = colData[searchIdx]?.rawY ?? 0
+    let maxRawY = -Infinity
+    for (let i = winStart; i <= winEnd; i++) {
+      if (colData[i].rawY > maxRawY) { maxRawY = colData[i].rawY; peakRawX = colData[i].rawX; peakRawY = colData[i].rawY }
     }
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ann-${Date.now()}`
+    onAnnotationsChange([...annotations, {
+      id, type: 'peak-label', text: 'Peak',
+      dataX: peakRawX, dataY: peakRawY,
+      seriesKey: bestCol,
+      offsetXPct: 0, offsetYPct: -12,
+      leaderLine: true,
+    } as PeakLabelAnnotation])
+    interaction.setSelectedId(id)
+    interaction.setActiveTool('select')
   }
 
-  const handleContainerPointerUp = () => {
-    pendingDragRef.current = null
-    draggingRef.current = null
-    setIsDraggingAnnotation(false)
-  }
-
-  // Deselect when clicking the chart background (not on an annotation)
-  const handleContainerClick = () => {
-    setSelectedId(null)
-    setInsetSelected(false)
-    if (editingIdRef.current) setEditingId(null)
+  // ─── Series click via chart-level proximity (replaces per-Line thin-path click) ─
+  const handleChartSeriesClick = (data: {
+    chartY?: number
+    activePayload?: Array<{ dataKey: string; value: number }> | null
+  } | null) => {
+    if (interaction.activeTool !== 'select') return
+    if (!data?.activePayload?.length) return  // empty area — container onClick handles 'figure'
+    // Map click pixel-Y to data-Y, then pick the nearest series
+    const svgEl = chartRef.current?.querySelector('svg')
+    const svgH = svgEl?.clientHeight ?? 400
+    const mTop = effectiveMargin.top ?? 16
+    const mBot = effectiveMargin.bottom ?? 10
+    const plotH = Math.max(svgH - mTop - mBot, 1)
+    const allY = yCols.flatMap(col =>
+      processedData.map(r => Number((r as Record<string, unknown>)[col])).filter(v => isFinite(v))
+    )
+    const yLo = yMin ?? (allY.length ? Math.min(...allY) : 0)
+    const yHi = yMax ?? (allY.length ? Math.max(...allY) : 1)
+    const ySpan = (yHi - yLo) || 1
+    const clickY = yHi - ((data.chartY ?? 0) - mTop) / plotH * ySpan
+    let best = data.activePayload[0].dataKey as string
+    let bestDist = Infinity
+    for (const item of data.activePayload) {
+      const d = Math.abs(Number(item.value) - clickY)
+      if (d < bestDist) { bestDist = d; best = item.dataKey as string }
+    }
+    seriesClickedRef.current = true
+    onElementSelect?.({ type: 'series', seriesKey: best })
+    setTimeout(() => { seriesClickedRef.current = false }, 0)
   }
 
   // ─── Chart rendering ─────────────────────────────────────────────────────────
@@ -939,18 +1216,22 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const renderChart = () => {
     if (chartType === 'scatter') {
       return (
-        <ScatterChart margin={effectiveMargin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+        <ScatterChart margin={effectiveMargin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={interaction.activeTool !== 'select' ? resetZoom : undefined}>
           {plotBackground}
           {grid}
-          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
-          <YAxis dataKey="y" type="number" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} reversed={isXReversed} />
+          <YAxis dataKey="y" type="number" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yAxisTickProp} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={yAxisWidth} />
           <Tooltip content={<ScatterTooltipContent />} cursor={false} />
           {legend}
           {scatterSeries.map(series => {
             const markerSize = seriesMarkerSize(series.key)
             const markerShape = seriesMarkerShape(series.key)
             return (
-              <Scatter key={series.key} data={series.data} name={seriesLabel(series.key)} fill={series.color} shape={markerRenderer(markerShape, markerSize, series.color)}>
+              <Scatter key={series.key} data={series.data} name={seriesLabel(series.key)} fill={series.color}
+                opacity={selectedSeriesKey && selectedSeriesKey !== series.key ? 0.2 : 1}
+                shape={markerRenderer(markerShape, markerSize, series.color)}
+                onClick={() => { seriesClickedRef.current = true; onElementSelect?.({ type: 'series', seriesKey: series.key }); setTimeout(() => { seriesClickedRef.current = false }, 0) }}
+              >
                 {hasError(series.key) && <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
               </Scatter>
             )
@@ -964,22 +1245,24 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
     if (chartType === 'bar') {
       return (
-        <BarChart data={processedData} margin={effectiveMargin}>
+        <BarChart data={processedData} margin={effectiveMargin} onClick={handleChartSeriesClick}>
           {plotBackground}
           {grid}
           <XAxis dataKey="x" tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} height={65} />
-          <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+          <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yAxisTickProp} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={yAxisWidth} />
           {hasRightAxis && (
-            <YAxis yAxisId="right" orientation="right" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine}
+            <YAxis yAxisId="right" orientation="right" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} tick={yAxisTickProp} axisLine={axisLine} tickLine={axisLine}
               label={y2AxisLabel ? { value: y2AxisLabel, angle: 90, position: 'insideRight', style: yLabelStyle } : undefined}
-              width={80} />
+              width={yAxisWidth} />
           )}
           <Tooltip content={<BarTooltipContent />} cursor={false} />
           {legend}
           {yCols.map((col, i) => {
             const axisId = hasRightAxis ? (yAxisAssignment[col] === 'right' ? 'right' : 'left') : 'left'
             return (
-              <Bar key={col} dataKey={col} yAxisId={axisId} name={seriesLabel(col)} fill={seriesColor(col, i)} radius={[s.barRadius, s.barRadius, 0, 0]}>
+              <Bar key={col} dataKey={col} yAxisId={axisId} name={seriesLabel(col)} fill={seriesColor(col, i)} radius={[s.barRadius, s.barRadius, 0, 0]}
+                fillOpacity={selectedSeriesKey && selectedSeriesKey !== col ? 0.2 : 1}
+              >
                 {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
               </Bar>
             )
@@ -1007,14 +1290,114 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       ),
     } : undefined
 
+    // ─── Dose–response ───────────────────────────────────────────────────────────
+    if (chartType === 'doseResponse') {
+      const drDomLo = manualXMin ?? xRangeMin
+      const drDomHi = manualXMax ?? xRangeMax
+      const drDomain: [number | 'auto', number | 'auto'] = [drDomLo ?? 'auto', drDomHi ?? 'auto']
+      const drTicks = (drDomLo !== undefined && drDomLo > 0 && drDomHi !== undefined && drDomHi > 0)
+        ? buildLogTicks(drDomLo, drDomHi)
+        : undefined
+
+      return (
+        <ComposedChart
+          data={[]}
+          margin={effectiveMargin}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onDoubleClick={interaction.activeTool !== 'select' ? resetZoom : undefined}
+        >
+          {plotBackground}
+          {grid}
+          <XAxis
+            dataKey="x"
+            type="number"
+            scale="log"
+            domain={drDomain}
+            {...(drTicks ? { ticks: drTicks } : {})}
+            tickFormatter={logFmt}
+            tick={xTickStyle}
+            axisLine={axisLine}
+            tickLine={axisLine}
+            label={xLabel}
+            allowDataOverflow
+            height={65}
+          />
+          <YAxis
+            dataKey="y"
+            type="number"
+            scale={rechartsYScale}
+            tickFormatter={isLnY ? lnFmt : undefined}
+            {...yDomainProps}
+            tick={yAxisTickProp}
+            axisLine={axisLine}
+            tickLine={axisLine}
+            label={yLabel}
+            width={yAxisWidth}
+          />
+          <Tooltip content={<ScatterTooltipContent />} cursor={false} />
+          {legend}
+          {/* Fit curves rendered first so experimental points appear on top */}
+          {yCols.map((col, i) => {
+            if (styleOverrides.seriesHideFit?.[col]) return null
+            const pts = fitCurveData[col]
+            if (!pts?.length) return null
+            return (
+              <Line
+                key={`fit-${col}`}
+                data={pts}
+                dataKey="y"
+                stroke={seriesColor(col, i)}
+                strokeWidth={seriesStrokeWidth(col)}
+                dot={false}
+                activeDot={false}
+                legendType="none"
+                isAnimationActive={false}
+                strokeOpacity={selectedSeriesKey && selectedSeriesKey !== col ? 0.2 : 1}
+              />
+            )
+          })}
+          {/* Experimental scatter points rendered on top of fit lines */}
+          {scatterSeries.map(series => {
+            if (styleOverrides.seriesHidePoints?.[series.key]) return null
+            const markerSize = seriesMarkerSize(series.key)
+            const markerShape = seriesMarkerShape(series.key)
+            return (
+              <Scatter
+                key={`exp-${series.key}`}
+                data={series.data}
+                name={seriesLabel(series.key)}
+                fill={series.color}
+                opacity={selectedSeriesKey && selectedSeriesKey !== series.key ? 0.2 : 1}
+                shape={markerRenderer(markerShape, markerSize, series.color)}
+                onClick={() => {
+                  seriesClickedRef.current = true
+                  onElementSelect?.({ type: 'series', seriesKey: series.key })
+                  setTimeout(() => { seriesClickedRef.current = false }, 0)
+                }}
+              >
+                {hasError(series.key) && !styleOverrides.seriesHideErrorBars?.[series.key] && (
+                  <ErrorBar dataKey="error" width={4} strokeWidth={1} stroke={axisColor} direction="y" />
+                )}
+              </Scatter>
+            )
+          })}
+          {zoomArea}
+          {insetZoomRectProps && <ReferenceArea {...insetZoomRectProps} />}
+          {frameLines}
+        </ComposedChart>
+      )
+    }
+
     return (
-      <LineChart data={processedData} margin={hasRightAxis ? { ...effectiveMargin, right: 90 } : effectiveMargin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={resetZoom}>
+      <LineChart data={processedData} margin={hasRightAxis ? { ...effectiveMargin, right: 90 } : effectiveMargin} onMouseDown={handleMouseDown} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onDoubleClick={interaction.activeTool !== 'select' ? resetZoom : undefined} onClick={handleChartSeriesClick}>
         {plotBackground}
         {grid}
-        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} />
-        <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={80} />
+        <XAxis dataKey="x" type={isNumericX ? 'number' : 'category'} domain={xDomain} ticks={xTicks} scale={isNumericX ? rechartsXScale : undefined} tickFormatter={isLnX && isNumericX ? lnFmt : undefined} tick={xTickStyle} axisLine={axisLine} tickLine={axisLine} label={xLabel} allowDataOverflow height={65} reversed={isXReversed} />
+        <YAxis yAxisId="left" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} {...yDomainProps} tick={yAxisTickProp} axisLine={axisLine} tickLine={axisLine} label={yLabel} width={yAxisWidth} />
         {hasRightAxis && (
-          <YAxis yAxisId="right" orientation="right" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} tick={yTickStyle} axisLine={axisLine} tickLine={axisLine} label={y2Label} width={80} />
+          <YAxis yAxisId="right" orientation="right" scale={rechartsYScale} tickFormatter={isLnY ? lnFmt : undefined} tick={yAxisTickProp} axisLine={axisLine} tickLine={axisLine} label={y2Label} width={yAxisWidth} />
         )}
         <Tooltip content={() => null} cursor={false} />
         {legend}
@@ -1026,8 +1409,10 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
           const axisId = hasRightAxis ? (yAxisAssignment[col] === 'right' ? 'right' : 'left') : 'left'
           return (
             <Line key={col} type="monotone" dataKey={col} yAxisId={axisId} name={seriesLabel(col)} stroke={color} strokeWidth={seriesStrokeWidth(col)}
+              strokeOpacity={selectedSeriesKey && selectedSeriesKey !== col ? 0.2 : 1}
               dot={showDots ? makeLineDot(col, color, markerShape, markerSize) : false}
-              activeDot={false} connectNulls>
+              activeDot={false} connectNulls
+            >
               {hasError(col) && <ErrorBar dataKey={`error_${col}`} width={4} strokeWidth={1} stroke={axisColor} direction="y" />}
             </Line>
           )
@@ -1318,19 +1703,6 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     touchAction: 'none',
   })
 
-  const DeleteBtn = ({ onDelete }: { onDelete: () => void }) => (
-    <button
-      onClick={e => { e.stopPropagation(); onDelete() }}
-      style={{
-        position: 'absolute', top: -8, right: -8,
-        width: 16, height: 16, background: '#ef4444', color: 'white',
-        border: 'none', borderRadius: '50%', fontSize: 11, lineHeight: '1',
-        cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 25,
-      }}
-    >×</button>
-  )
-
   // ─── Fill helpers ────────────────────────────────────────────────────────────
 
   const FILL_COLORS = ['#1e293b', '#ffffff', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#3b82f6']
@@ -1349,6 +1721,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const lineAnnotations = annotations.filter((a): a is LineAnnotation => a.type === 'line')
   const rectAnnotations = annotations.filter((a): a is RectAnnotation => a.type === 'rect')
   const ellipseAnnotations = annotations.filter((a): a is EllipseAnnotation => a.type === 'ellipse')
+  const peakLabelAnnotations = annotations.filter((a): a is PeakLabelAnnotation => a.type === 'peak-label')
 
   // ─── JSX ─────────────────────────────────────────────────────────────────────
 
@@ -1375,13 +1748,17 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
         {/* Annotation toolbar — desktop only; mobile sees it inside the Annotate panel */}
         {annotExpanded && (
           <div className="hidden md:block px-4 py-2 bg-[#f8fafc] border-b border-slate-200 shrink-0">
-            <AnnotationToolbar onAdd={addAnnotation} onInsertSymbol={insertSymbol} />
+            <AnnotationToolbar
+              activeTool={interaction.activeTool}
+              onToolChange={interaction.setActiveTool}
+              onInsertSymbol={interaction.insertSymbol}
+            />
           </div>
         )}
 
         {/* Light workspace */}
         <div className="flex-1 overflow-auto bg-[#F7F8FC] md:bg-[#eff6ff]">
-          <div className="min-h-full flex items-center justify-center p-3 sm:p-6 lg:p-10">
+          <div className="min-h-full flex items-center justify-center p-3 sm:p-5">
             <div className="w-full overflow-hidden md:overflow-x-auto">
               <div
                 ref={chartRef}
@@ -1391,20 +1768,73 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     ? '0 1px 4px rgba(0,0,0,0.06), 0 2px 16px rgba(0,0,0,0.08)'
                     : '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
-                  cursor: drawInsetMode ? 'crosshair' : isDraggingAnnotation ? 'grabbing' : (zoomEnabled ? 'crosshair' : 'default'),
+                  cursor: interaction.activeTool === 'text' ? 'text' : (interaction.activeTool !== 'select') ? 'crosshair' : drawInsetMode ? 'crosshair' : interaction.isDragging ? 'grabbing' : 'default',
                   width: figureWidth ? `${figureWidth}px` : '700px',
                   maxWidth: '100%',
                   userSelect: 'none',
                 }}
                 onContextMenu={e => e.preventDefault()}
-                onPointerMove={handleContainerPointerMove}
-                onPointerUp={handleContainerPointerUp}
-                onClick={handleContainerClick}
+                onPointerMove={interaction.handleContainerPointerMove}
+                onPointerUp={interaction.handleContainerPointerUp}
+                onClick={() => {
+                  interaction.handleContainerClick()
+                  setInsetSelected(false)
+                  if (!seriesClickedRef.current && interaction.activeTool === 'select') {
+                    onElementSelect?.({ type: 'figure' })
+                  }
+                }}
               >
-            {/* Chart */}
-            <ResponsiveContainer width="100%" height={effectiveChartHeight}>
-              {renderChart() as React.ReactElement}
-            </ResponsiveContainer>
+            {/* Chart + axis click zones */}
+            <div style={{ position: 'relative' }}>
+              <ResponsiveContainer width="100%" height={effectiveChartHeight}>
+                {renderChart() as React.ReactElement}
+              </ResponsiveContainer>
+
+              {/* Transparent hit zones for Y-axis and X-axis ticks — only in select mode */}
+              {interaction.activeTool === 'select' && !compact && (
+                <>
+                  <div
+                    title="Y axis ticks"
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      width: (effectiveMargin.left ?? 16) + yAxisWidth,
+                      bottom: (effectiveMargin.bottom ?? 10) + 65,
+                      cursor: 'pointer',
+                      zIndex: 5,
+                    }}
+                    className={`transition-colors ${selectedElement?.type === 'yAxisTicks' ? 'bg-blue-400/10' : 'hover:bg-blue-400/5'}`}
+                    onClick={(e) => { e.stopPropagation(); onElementSelect?.({ type: 'yAxisTicks' }) }}
+                  />
+                  <div
+                    title="X axis ticks"
+                    style={{
+                      position: 'absolute',
+                      left: (effectiveMargin.left ?? 16) + yAxisWidth,
+                      right: 0,
+                      bottom: 0,
+                      height: (effectiveMargin.bottom ?? 10) + 65,
+                      cursor: 'pointer',
+                      zIndex: 5,
+                    }}
+                    className={`transition-colors ${selectedElement?.type === 'xAxisTicks' ? 'bg-blue-400/10' : 'hover:bg-blue-400/5'}`}
+                    onClick={(e) => { e.stopPropagation(); onElementSelect?.({ type: 'xAxisTicks' }) }}
+                  />
+                </>
+              )}
+            </div>
+
+            {/* ── Annotation draw overlay (line/rect/ellipse/text tools) ─── */}
+            {interaction.activeTool !== 'select' && interaction.activeTool !== 'peak' && !drawInsetMode && (
+              <div
+                style={{ position: 'absolute', inset: 0, zIndex: 25, cursor: interaction.activeTool === 'text' ? 'text' : 'crosshair' }}
+                onPointerDown={interaction.handleDrawPointerDown}
+                onPointerMove={interaction.handleContainerPointerMove}
+                onPointerUp={interaction.handleContainerPointerUp}
+                onClick={e => e.stopPropagation()}
+              />
+            )}
 
             {/* ── Draw-inset overlay (capture mouse during draw mode) ────── */}
             {drawInsetMode && (
@@ -1427,18 +1857,25 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                   const toData = (px: number, py: number) => {
                     const pctX = Math.max(0, Math.min(1, (px - CARD_PAD - pL) / pW))
                     const pctY = Math.max(0, Math.min(1, (py - CARD_PAD - pT) / pH))
-                    const xNums = processedData.map(d => typeof d.x === 'number' ? d.x : NaN).filter(v => !isNaN(v))
-                    const rawXMin = xNums.length ? Math.min(...xNums) : 0
-                    const rawXMax = xNums.length ? Math.max(...xNums) : 1
-                    const domXMin = styleOverrides.xMin ?? rawXMin
-                    const domXMax = styleOverrides.xMax ?? rawXMax
-                    const yNums = yCols.flatMap(c => processedData.map(d => typeof d[c] === 'number' ? d[c] as number : NaN).filter(v => !isNaN(v)))
-                    const rawYMin = yNums.length ? Math.min(...yNums) : 0
-                    const rawYMax = yNums.length ? Math.max(...yNums) : 1
-                    const yPad = (rawYMax - rawYMin) * 0.05 || 0.05
-                    const domYMin = styleOverrides.yMin ?? rawYMin - yPad
-                    const domYMax = styleOverrides.yMax ?? rawYMax + yPad
-                    return { x: domXMin + pctX * (domXMax - domXMin), y: domYMax - pctY * (domYMax - domYMin) }
+                    // Use the chart's actual displayed domain — matches Recharts axis exactly
+                    const xDomLo = xDomain
+                      ? (typeof xDomain[0] === 'number' ? xDomain[0] : (xRangeMin ?? 0))
+                      : (xRangeMin ?? 0)
+                    const xDomHi = xDomain
+                      ? (typeof xDomain[1] === 'number' ? xDomain[1] : (xRangeMax ?? 1))
+                      : (xRangeMax ?? 1)
+                    const yDomLo = yMin ?? (isLogY ? autoYMin / 2 : isLnY ? autoYMin - 0.5 : paddedAutoYMin)
+                    const yDomHi = yMax ?? (isLogY ? autoYMax * 2 : isLnY ? autoYMax + 0.5 : paddedAutoYMax)
+                    // Log scale: geometric interpolation; reversed axis: invert pctX mapping
+                    const x = (isLogX && xDomLo > 0 && xDomHi > 0)
+                      ? xDomLo * Math.pow(xDomHi / xDomLo, pctX)
+                      : isXReversed
+                        ? xDomHi - pctX * (xDomHi - xDomLo)
+                        : xDomLo + pctX * (xDomHi - xDomLo)
+                    const y = (isLogY && yDomLo > 0 && yDomHi > 0)
+                      ? yDomHi * Math.pow(yDomLo / yDomHi, pctY)
+                      : yDomHi - pctY * (yDomHi - yDomLo)
+                    return { x, y }
                   }
                   const p1 = toData(drawPt1.x, drawPt1.y)
                   const p2 = toData(drawPt2.x, drawPt2.y)
@@ -1474,6 +1911,24 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     border: '2px dashed #2563eb', background: 'rgba(37,99,235,0.08)', pointerEvents: 'none',
                   }} />
                 )}
+              </div>
+            )}
+
+            {/* ── Peak-pick overlay ────────────────────────────────────────── */}
+            {interaction.activeTool === 'peak' && !drawInsetMode && (
+              <div
+                style={{ position: 'absolute', inset: 0, zIndex: 30, cursor: 'crosshair' }}
+                onClick={e => { e.stopPropagation(); handlePeakPickClick(e.clientX, e.clientY) }}
+              >
+                <div style={{
+                  position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)',
+                  background: 'rgba(37,99,235,0.92)', color: 'white',
+                  fontSize: 12, fontFamily: 'system-ui, sans-serif',
+                  padding: '4px 12px', borderRadius: 20, pointerEvents: 'none',
+                  whiteSpace: 'nowrap', boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                }}>
+                  Click on a peak · Esc to cancel
+                </div>
               </div>
             )}
 
@@ -1622,7 +2077,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                             </BarChart>
                           )
                         })() : (
-                          <LineChart key={`inset-line-${iTickSz}-${yAxisW}`} data={data} margin={chartMargin}>
+                          <LineChart key={`inset-line-${iTickSz}-${yAxisW}`} data={processedData} margin={chartMargin}>
                             {(styleOverrides.insetShowFrame ?? false) && (
                               <Customized component={({ offset }: { offset?: { top: number; left: number; width: number; height: number } }) => {
                                 if (!offset) return null
@@ -1635,9 +2090,10 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                                 )
                               }} />
                             )}
-                            <XAxis dataKey={xCol} type="number"
+                            <XAxis dataKey="x" type="number"
                               domain={[xTicks[0], xTicks[xTicks.length - 1]]}
                               ticks={xTicks} allowDataOverflow minTickGap={0}
+                              reversed={isXReversed}
                               tickFormatter={fmtInsetTick}
                               tick={{ fontSize: iTickSz, fill: axisColor, fontFamily }}
                               axisLine={{ stroke: axisColor, strokeWidth: 0.8 }}
@@ -1681,8 +2137,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
               )
             })()}
 
-            {/* Draggable legend overlay — hidden on mobile preview; compact strip in page.tsx is used instead */}
-            {legendEnabled && !previewOnly && (
+            {/* Draggable legend overlay — hidden on mobile preview and when inline labels mode is active */}
+            {legendEnabled && !previewOnly && legendMode === 'box' && (
               <DraggableLegend
                 yCols={yCols}
                 seriesNames={seriesNames}
@@ -1698,10 +2154,66 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                 textColor={axisColor}
                 containerRef={chartRef}
                 onUpdate={(patch) => onStyleChange?.(patch)}
+                onElementSelect={onElementSelect ?? undefined}
               />
             )}
 
-            {/* SVG overlay for arrows */}
+            {/* Draggable inline series labels — rendered as HTML divs so they are draggable
+                and always inside the chart frame. Default position: right side of the plot,
+                vertically aligned to each series' stacking offset. */}
+            {legendEnabled && legendMode === 'inline' && !previewOnly && (() => {
+              const containerW = chartRef.current?.offsetWidth || (figureWidth ?? 700)
+              const containerH = chartRef.current?.offsetHeight || (figureHeight ?? 520)
+              const { left, top, width, height } = plotAreaRef.current
+              const yRange = paddedAutoYMax - paddedAutoYMin
+              return yCols.map((col, i) => {
+                const stored = styleOverrides.seriesLabelPositions?.[col]
+                if (stored?.hidden) return null
+
+                let defaultYPct: number
+                if (stackingMode === 'auto' && yRange > 0 && height > 0) {
+                  const yOffset = effectiveSeriesYOffsets[col] ?? 0
+                  const yFrac = Math.max(0.02, Math.min(0.97, 1 - (yOffset - paddedAutoYMin) / yRange))
+                  defaultYPct = ((top + yFrac * height) / containerH) * 100
+                } else {
+                  defaultYPct = ((i + 0.5) / yCols.length) * 100
+                }
+                const labelW = inlineLabelWidths[col] ?? 60
+                const defaultXPct = width > 0
+                  ? ((left + width - labelW - 14) / containerW) * 100
+                  : Math.max(0, 85 - (labelW / (figureWidth ?? 700)) * 100)
+
+                // Use custom text if the user renamed the label, otherwise fall back to seriesNames
+                const displayLabel = stored?.text || seriesNames[col] || col
+
+                return (
+                  <DraggableInlineLabel
+                    key={col}
+                    label={displayLabel}
+                    color={resolvedColors[i]}
+                    fontFamily={fontFamily}
+                    fontSize={legendFontSize}
+                    xPct={stored?.xPct ?? defaultXPct}
+                    yPct={stored?.yPct ?? defaultYPct}
+                    containerRef={chartRef}
+                    onUpdate={(patch) => onStyleChange?.({
+                      seriesLabelPositions: {
+                        ...styleOverrides.seriesLabelPositions,
+                        [col]: { xPct: patch.xPct, yPct: patch.yPct, text: patch.text ?? stored?.text },
+                      },
+                    })}
+                    onDelete={() => onStyleChange?.({
+                      seriesLabelPositions: {
+                        ...styleOverrides.seriesLabelPositions,
+                        [col]: { ...(stored ?? { xPct: defaultXPct, yPct: defaultYPct }), hidden: true },
+                      },
+                    })}
+                  />
+                )
+              })
+            })()}
+
+            {/* SVG overlay — arrows/annotations */}
             <svg
               style={{
                 position: 'absolute', top: 0, left: 0,
@@ -1709,6 +2221,15 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                 pointerEvents: 'none', overflow: 'visible',
               }}
             >
+              {/* Snap guide lines (shown while dragging any annotation near a snap target) */}
+              {interaction.activeSnapGuides.x !== null && (
+                <line x1={`${interaction.activeSnapGuides.x}%`} y1="0" x2={`${interaction.activeSnapGuides.x}%`} y2="100%"
+                  stroke="#3b82f6" strokeWidth={1} strokeDasharray="4 4" opacity={0.6} style={{ pointerEvents: 'none' }} />
+              )}
+              {interaction.activeSnapGuides.y !== null && (
+                <line x1="0" y1={`${interaction.activeSnapGuides.y}%`} x2="100%" y2={`${interaction.activeSnapGuides.y}%`}
+                  stroke="#3b82f6" strokeWidth={1} strokeDasharray="4 4" opacity={0.6} style={{ pointerEvents: 'none' }} />
+              )}
               <defs>
                 <marker id="fr-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
                   <polygon points="0 0, 8 3, 0 6" fill={axisColor} />
@@ -1725,18 +2246,20 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
               </defs>
               {/* Legacy arrow annotations */}
               {arrowAnnotations.map(ann => {
-                const isSel = selectedId === ann.id
+                const isSel = interaction.selectedId === ann.id
                 return (
                   <g key={ann.id}>
                     <line
+                      ref={el => interaction.registerLineHitbox(ann.id, el)}
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
                       stroke="transparent" strokeWidth={isTouch ? 28 : 14}
                       style={{ pointerEvents: 'all', cursor: 'move' }}
-                      onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
-                      onPointerDown={e => startArrowBodyDrag(e, ann)}
+                      onClick={e => { e.stopPropagation(); interaction.setSelectedId(ann.id) }}
+                      onPointerDown={e => interaction.startMoveLine(e, ann)}
                     />
                     <line
+                      ref={el => interaction.registerLineVisual(ann.id, el)}
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
                       stroke={isSel ? '#3b82f6' : axisColor}
@@ -1746,19 +2269,23 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     />
                     {isSel && (
                       <>
-                        {isTouch && <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 1)} />}
-                        <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
+                        {isTouch && <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 1)} />}
+                        <circle
+                          ref={el => interaction.registerLineEp(ann.id, 1, el)}
+                          cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
                           style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
-                          onPointerDown={e => startArrowEndDrag(e, ann.id, 1)}
+                          onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 1)}
                         />
-                        {isTouch && <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 2)} />}
-                        <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
+                        {isTouch && <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 2)} />}
+                        <circle
+                          ref={el => interaction.registerLineEp(ann.id, 2, el)}
+                          cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
                           style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
-                          onPointerDown={e => startArrowEndDrag(e, ann.id, 2)}
+                          onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 2)}
                         />
                       </>
                     )}
@@ -1767,24 +2294,26 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
               })}
               {/* New line annotations (solid/dashed, optional arrowheads) */}
               {lineAnnotations.map(ann => {
-                const isSel = selectedId === ann.id
+                const isSel = interaction.selectedId === ann.id
                 const strokeColor = isSel ? '#3b82f6' : axisColor
                 const mEnd = ann.headEnd ? (isSel ? 'url(#fr-arrow-sel)' : 'url(#fr-arrow)') : undefined
                 const mStart = ann.headStart ? (isSel ? 'url(#fr-arrow-rev-sel)' : 'url(#fr-arrow-rev)') : undefined
                 return (
                   <g key={ann.id}>
                     <line
+                      ref={el => interaction.registerLineHitbox(ann.id, el)}
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
                       stroke="transparent" strokeWidth={isTouch ? 28 : 14}
                       style={{ pointerEvents: 'all', cursor: 'move' }}
-                      onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
-                      onPointerDown={e => startArrowBodyDrag(e, ann)}
+                      onClick={e => { e.stopPropagation(); interaction.setSelectedId(ann.id) }}
+                      onPointerDown={e => interaction.startMoveLine(e, ann)}
                     />
                     <line
+                      ref={el => interaction.registerLineVisual(ann.id, el)}
                       x1={`${ann.x1Pct}%`} y1={`${ann.y1Pct}%`}
                       x2={`${ann.x2Pct}%`} y2={`${ann.y2Pct}%`}
-                      stroke={strokeColor} strokeWidth={1.5}
+                      stroke={strokeColor} strokeWidth={ann.strokeWidth ?? 1.5}
                       strokeDasharray={ann.dash ? '6 4' : undefined}
                       markerEnd={mEnd}
                       markerStart={mStart}
@@ -1792,62 +2321,120 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     />
                     {isSel && (
                       <>
-                        {isTouch && <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 1)} />}
-                        <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
+                        {isTouch && <circle cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 1)} />}
+                        <circle
+                          ref={el => interaction.registerLineEp(ann.id, 1, el)}
+                          cx={`${ann.x1Pct}%`} cy={`${ann.y1Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
                           style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
-                          onPointerDown={e => startArrowEndDrag(e, ann.id, 1)}
+                          onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 1)}
                         />
-                        {isTouch && <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => startArrowEndDrag(e, ann.id, 2)} />}
-                        <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
+                        {isTouch && <circle cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={16} fill="transparent" style={{ pointerEvents: 'all' }} onClick={e => e.stopPropagation()} onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 2)} />}
+                        <circle
+                          ref={el => interaction.registerLineEp(ann.id, 2, el)}
+                          cx={`${ann.x2Pct}%`} cy={`${ann.y2Pct}%`} r={5}
                           fill="white" stroke="#3b82f6" strokeWidth={1.5}
                           style={{ pointerEvents: isTouch ? 'none' : 'all', cursor: 'crosshair' }}
                           onClick={e => e.stopPropagation()}
-                          onPointerDown={e => startArrowEndDrag(e, ann.id, 2)}
+                          onPointerDown={e => interaction.startResizeLineEndpoint(e, ann, 2)}
                         />
                       </>
                     )}
                   </g>
                 )
               })}
+              {/* Peak label annotations — label offset is draggable, anchor tied to data coordinates */}
+              {peakLabelAnnotations.map(ann => {
+                const isSel = interaction.selectedId === ann.id
+                const container = chartRef.current
+                if (!container) return null
+                // Convert data coordinates to SVG pixel coordinates using plotAreaRef + axis domain
+                const { left, top, width, height } = plotAreaRef.current
+                const cW = container.offsetWidth, cH = container.offsetHeight
+                const dataXScaled = isLnX ? Math.log(Math.max(ann.dataX, 1e-10)) : ann.dataX
+                const seriesYOff = isLnY ? 0 : (effectiveSeriesYOffsets[ann.seriesKey ?? ''] ?? 0)
+                const dataYScaled = isLnY ? Math.log(Math.max(ann.dataY, 1e-10)) : ann.dataY + seriesYOff
+                const xDomainMin = xRangeMin ?? 0
+                const xDomainMax = xRangeMax ?? 1
+                const yDomainMin = yMin ?? paddedAutoYMin
+                const yDomainMax = yMax ?? paddedAutoYMax
+                const xFrac = xDomainMax !== xDomainMin
+                  ? Math.max(0, Math.min(1, isXReversed
+                      ? 1 - (dataXScaled - xDomainMin) / (xDomainMax - xDomainMin)
+                      : (dataXScaled - xDomainMin) / (xDomainMax - xDomainMin)))
+                  : 0.5
+                const yFrac = yDomainMax !== yDomainMin
+                  ? Math.max(0, Math.min(1, 1 - (dataYScaled - yDomainMin) / (yDomainMax - yDomainMin)))
+                  : 0.5
+                const anchorSvgX = left + xFrac * width
+                const anchorSvgY = top + yFrac * height
+                const anchorXPct = anchorSvgX / cW * 100
+                const anchorYPct = anchorSvgY / cH * 100
+                const labelXPct = anchorXPct + ann.offsetXPct
+                const labelYPct = anchorYPct + ann.offsetYPct
+                const labelSvgX = labelXPct / 100 * cW
+                const labelSvgY = labelYPct / 100 * cH
+                const strokeColor = isSel ? '#3b82f6' : axisColor
+                return (
+                  <g key={ann.id}>
+                    {/* Leader line from label to anchor */}
+                    {ann.leaderLine && (
+                      <line
+                        ref={el => interaction.registerPeakLeader(ann.id, el)}
+                        x1={labelSvgX} y1={labelSvgY}
+                        x2={anchorSvgX} y2={anchorSvgY}
+                        stroke={strokeColor} strokeWidth={1}
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    )}
+                    {/* Anchor dot at data point */}
+                    <circle cx={anchorSvgX} cy={anchorSvgY} r={isSel ? 4 : 3}
+                      fill={strokeColor} style={{ pointerEvents: 'none' }} />
+                    {/* Transparent wide hitbox for dragging the label */}
+                    <rect
+                      ref={el => interaction.registerPeakHitbox(ann.id, el)}
+                      x={labelSvgX - 50} y={labelSvgY - 14}
+                      width={100} height={28}
+                      fill="transparent"
+                      style={{ pointerEvents: 'all', cursor: 'grab' }}
+                      onClick={e => { e.stopPropagation(); interaction.setSelectedId(ann.id) }}
+                      onPointerDown={e => interaction.startMovePeak(e, ann, anchorXPct, anchorYPct)}
+                    />
+                    {/* Label text */}
+                    <text
+                      ref={el => interaction.registerPeakLabel(ann.id, el)}
+                      x={labelSvgX} y={labelSvgY}
+                      textAnchor="middle" dominantBaseline="middle"
+                      fill={ann.color ?? strokeColor}
+                      fontFamily={fontFamily} fontSize={ann.fontSize ?? annotationFontSize}
+                      style={{ pointerEvents: 'none', userSelect: 'none' }}
+                    >
+                      {ann.text}
+                    </text>
+                    {/* Selection outline */}
+                    {isSel && (
+                      <rect x={labelSvgX - 52} y={labelSvgY - 16} width={104} height={32}
+                        fill="none" stroke="#3b82f6" strokeWidth={1} rx={3}
+                        style={{ pointerEvents: 'none' }} />
+                    )}
+                  </g>
+                )
+              })}
             </svg>
-
-            {/* Delete buttons for selected arrow/line (midpoint overlay) */}
-            {[...arrowAnnotations, ...lineAnnotations].filter(a => a.id === selectedId).map(ann => (
-              <div
-                key={`del-arrow-${ann.id}`}
-                style={{
-                  position: 'absolute',
-                  left: `${(ann.x1Pct + ann.x2Pct) / 2}%`,
-                  top: `${(ann.y1Pct + ann.y2Pct) / 2}%`,
-                  transform: 'translate(-50%, -50%)',
-                  zIndex: 25, pointerEvents: 'none',
-                }}
-              >
-                <button
-                  onClick={e => { e.stopPropagation(); removeAnnotation(ann.id) }}
-                  style={{
-                    width: 16, height: 16, background: '#ef4444', color: 'white',
-                    border: 'none', borderRadius: '50%', fontSize: 11,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    pointerEvents: 'all',
-                  }}
-                >×</button>
-              </div>
-            ))}
 
             {/* Ellipse annotations */}
             {ellipseAnnotations.map(ann => {
-              const isSel = selectedId === ann.id
+              const isSel = interaction.selectedId === ann.id
               return (
                 <div
                   key={ann.id}
+                  ref={el => interaction.registerBoxEl(ann.id, el)}
                   style={{
                     position: 'absolute',
                     left: `${ann.xPct}%`, top: `${ann.yPct}%`,
                     width: `${ann.widthPct}%`, height: `${ann.heightPct}%`,
-                    border: `1.5px solid ${isSel ? '#3b82f6' : axisColor}`,
+                    border: `${ann.borderWidth ?? 1.5}px solid ${isSel ? '#3b82f6' : (ann.borderColor ?? axisColor)}`,
                     borderRadius: '50%',
                     background: ann.fillColor ? toRgba(ann.fillColor, ann.fillOpacity ?? 0.3) : 'transparent',
                     boxSizing: 'border-box',
@@ -1855,8 +2442,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     touchAction: isTouch && !isSel ? 'pan-y' : 'none',
                     zIndex: 5,
                   }}
-                  onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
-                  onPointerDown={e => startRectBodyDrag(e, ann)}
+                  onClick={e => { e.stopPropagation(); interaction.setSelectedId(ann.id) }}
+                  onPointerDown={e => interaction.startMoveBox(e, ann)}
                 >
                   {isSel && (
                     <>
@@ -1869,10 +2456,9 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                             top: corner.includes('s') ? '100%' : '0%',
                           }}
                           onClick={e => e.stopPropagation()}
-                          onPointerDown={e => startRectCornerDrag(e, ann, corner)}
+                          onPointerDown={e => interaction.startResizeBoxCorner(e, ann, corner)}
                         />
                       ))}
-                      <DeleteBtn onDelete={() => removeAnnotation(ann.id)} />
                     </>
                   )}
                 </div>
@@ -1881,23 +2467,24 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
             {/* Rectangle annotations */}
             {rectAnnotations.map(ann => {
-              const isSel = selectedId === ann.id
+              const isSel = interaction.selectedId === ann.id
               return (
                 <div
                   key={ann.id}
+                  ref={el => interaction.registerBoxEl(ann.id, el)}
                   style={{
                     position: 'absolute',
                     left: `${ann.xPct}%`, top: `${ann.yPct}%`,
                     width: `${ann.widthPct}%`, height: `${ann.heightPct}%`,
-                    border: `1.5px solid ${isSel ? '#3b82f6' : axisColor}`,
+                    border: `${ann.borderWidth ?? 1.5}px solid ${isSel ? '#3b82f6' : (ann.borderColor ?? axisColor)}`,
                     background: ann.fillColor ? toRgba(ann.fillColor, ann.fillOpacity ?? 0.3) : 'transparent',
                     boxSizing: 'border-box',
                     cursor: 'move',
                     touchAction: isTouch && !isSel ? 'pan-y' : 'none',
                     zIndex: 5,
                   }}
-                  onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
-                  onPointerDown={e => startRectBodyDrag(e, ann)}
+                  onClick={e => { e.stopPropagation(); interaction.setSelectedId(ann.id) }}
+                  onPointerDown={e => interaction.startMoveBox(e, ann)}
                 >
                   {isSel && (
                     <>
@@ -1911,10 +2498,9 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                             top: corner.includes('s') ? '100%' : '0%',
                           }}
                           onClick={e => e.stopPropagation()}
-                          onPointerDown={e => startRectCornerDrag(e, ann, corner)}
+                          onPointerDown={e => interaction.startResizeBoxCorner(e, ann, corner)}
                         />
                       ))}
-                      <DeleteBtn onDelete={() => removeAnnotation(ann.id)} />
                     </>
                   )}
                 </div>
@@ -1923,37 +2509,51 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
             {/* Text annotations */}
             {textAnnotations.map(ann => {
-              const isSel = selectedId === ann.id
-              const isEdit = editingId === ann.id
+              const isSel = interaction.selectedId === ann.id
+              const isEdit = interaction.editingId === ann.id
               return (
                 <div
                   key={ann.id}
+                  ref={el => interaction.registerTextEl(ann.id, el)}
                   className="absolute group select-none"
                   style={{
                     left: `${ann.xPct}%`, top: `${ann.yPct}%`,
                     transform: 'translate(-50%, -50%)',
+                    padding: 10,
                     cursor: isEdit ? 'text' : 'grab',
                     touchAction: isTouch && !isSel ? 'pan-y' : 'none',
                     zIndex: 6,
                   }}
-                  onClick={e => { e.stopPropagation(); setSelectedId(ann.id) }}
-                  onPointerDown={e => startTextDrag(e, ann)}
-                  onDoubleClick={e => { e.stopPropagation(); setEditingId(ann.id) }}
+                  onClick={e => { e.stopPropagation(); interaction.setSelectedId(ann.id) }}
+                  onPointerDown={e => interaction.startMoveText(e, ann)}
+                  onDoubleClick={e => { e.stopPropagation(); interaction.setEditingId(ann.id) }}
                 >
                   <div
                     contentEditable={isEdit}
                     suppressContentEditableWarning
+                    onKeyDown={isEdit ? e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.currentTarget.blur()
+                      }
+                      if (e.key === 'Escape') {
+                        e.preventDefault()
+                        e.currentTarget.textContent = ann.text
+                        e.currentTarget.blur()
+                      }
+                    } : undefined}
                     onBlur={e => {
-                      const text = e.currentTarget.textContent?.trim() || 'Texte'
-                      updateAnnotation(ann.id, { text })
-                      setEditingId(null)
+                      const text = e.currentTarget.textContent?.trim() || 'Text'
+                      interaction.updateAnnotation(ann.id, { text })
+                      interaction.setEditingId(null)
                     }}
                     className="px-1 whitespace-nowrap outline-none"
                     style={{
                       fontFamily,
-                      fontSize: annotationFontSize,
-                      color: axisColor,
-                      fontWeight: boldLabels ? 'bold' : 'normal',
+                      fontSize: ann.fontSize ?? annotationFontSize,
+                      color: ann.color ?? axisColor,
+                      fontWeight: ann.fontWeight ?? (boldLabels ? 'bold' : 'normal'),
+                      fontStyle: ann.fontStyle ?? 'normal',
                       borderRadius: 3,
                       outline: isSel ? '1.5px solid #3b82f6' : isEdit ? '1px solid #93c5fd' : 'none',
                       outlineOffset: 3,
@@ -1961,7 +2561,6 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                   >
                     {ann.text}
                   </div>
-                  {isSel && !isEdit && <DeleteBtn onDelete={() => removeAnnotation(ann.id)} />}
                 </div>
               )
             })}
@@ -1999,72 +2598,17 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
           </div>{/* /centering wrapper */}
         </div>{/* /dark workspace */}
 
-        {/* Context bar: fill controls when shape selected, otherwise hints */}
-        {(() => {
-          const selShape = selectedId
-            ? (rectAnnotations.find(a => a.id === selectedId) ?? ellipseAnnotations.find(a => a.id === selectedId) ?? null)
-            : null
-          return (
-            <div className="flex items-center justify-between gap-4 px-4 py-1.5 bg-white border-t border-slate-200/70 shrink-0 min-h-[36px] shadow-[0_-1px_4px_rgba(0,0,0,0.03)]">
-              {selShape ? (
-                <div className="flex items-center gap-3 flex-wrap">
-                  <span className="text-xs font-medium text-slate-500">Fill</span>
-                  <div className="flex items-center gap-1">
-                    {/* No fill */}
-                    <button
-                      title="No fill"
-                      onClick={() => updateAnnotation(selShape.id, { fillColor: undefined })}
-                      className={`w-5 h-5 rounded border-2 transition-all ${!selShape.fillColor ? 'border-[#2563eb] ring-1 ring-[#93c5fd]' : 'border-slate-200'}`}
-                      style={{
-                        background: 'repeating-conic-gradient(#e2e8f0 0% 25%, white 0% 50%) 0 0 / 6px 6px',
-                      }}
-                    />
-                    {FILL_COLORS.map(c => (
-                      <button
-                        key={c}
-                        title={c}
-                        onClick={() => updateAnnotation(selShape.id, { fillColor: c, fillOpacity: selShape.fillOpacity ?? 0.3 })}
-                        className={`w-5 h-5 rounded transition-all ${selShape.fillColor === c ? 'ring-2 ring-[#2563eb] ring-offset-1' : 'ring-1 ring-slate-200'}`}
-                        style={{ background: c }}
-                      />
-                    ))}
-                  </div>
-                  {selShape.fillColor && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-400">Opacity</span>
-                      <input
-                        type="range" min={0} max={100}
-                        value={Math.round((selShape.fillOpacity ?? 0.3) * 100)}
-                        onChange={e => updateAnnotation(selShape.id, { fillOpacity: Number(e.target.value) / 100 })}
-                        className="w-24 accent-[#2563eb] h-1.5 cursor-pointer"
-                      />
-                      <span className="text-xs text-slate-600 tabular-nums w-8">
-                        {Math.round((selShape.fillOpacity ?? 0.3) * 100)}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-slate-400">
-                  {selectedId ? (
-                    <span>
-                      Selected ·{' '}
-                      <kbd className="font-mono bg-slate-100 px-1 rounded text-slate-500">Delete</kbd>
-                      {' '}to remove · click elsewhere to deselect
-                    </span>
-                  ) : zoomEnabled ? (
-                    <span>Drag on the chart to zoom · double-click to reset</span>
-                  ) : null}
-                </p>
-              )}
-              {zoomDomain && (
-                <button onClick={resetZoom} className="text-xs text-slate-400 hover:text-slate-600 transition-colors shrink-0">
-                  Reset zoom
-                </button>
-              )}
-            </div>
-          )
-        })()}
+        <AnnotationContextBar
+          selected={interaction.selectedId ? (annotations.find(a => a.id === interaction.selectedId) ?? null) : null}
+          activeTool={interaction.activeTool}
+          defaultColor={axisColor}
+          defaultFontSize={typeof annotationFontSize === 'number' ? annotationFontSize : 10}
+          zoomEnabled={zoomEnabled}
+          zoomDomain={zoomDomain}
+          onUpdate={(id, changes) => interaction.updateAnnotation(id, changes)}
+          onDelete={interaction.removeAnnotation}
+          onResetZoom={resetZoom}
+        />
 
       </div>{/* /flex-col editor */}
     </>

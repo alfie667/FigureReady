@@ -4,31 +4,51 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogoFull } from '@/components/Logo'
 import TemplateCard from '@/components/templates/TemplateCard'
+import TemplateDetailModal from '@/components/templates/TemplateDetailModal'
 import ColumnMappingModal from '@/components/templates/ColumnMappingModal'
 import { FIGURE_TEMPLATES } from '@/lib/templates/definitions'
 import { setPendingTemplate } from '@/lib/templates/session'
-import { buildTemplateOverrides } from '@/lib/templates/apply'
 import { trackTemplateGalleryViewed, trackTemplateSelected } from '@/lib/analytics'
 import type { FigureTemplate } from '@/lib/templates/types'
 
 const ENABLED = process.env.NEXT_PUBLIC_TEMPLATES_ENABLED === 'true'
 
+type FilterKey = 'all' | 'dose-response' | 'time-course' | 'comparison' | 'correlation' | 'spectra'
+
+const FILTERS: { key: FilterKey; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'dose-response', label: 'Dose-response' },
+  { key: 'time-course', label: 'Time course' },
+  { key: 'comparison', label: 'Comparison' },
+  { key: 'correlation', label: 'Correlation' },
+  { key: 'spectra', label: 'Spectra' },
+]
+
+function matchesFilter(tpl: FigureTemplate, filter: FilterKey): boolean {
+  if (filter === 'all') return true
+  return tpl.category === filter
+}
+
 export default function TemplatesPage() {
   const router = useRouter()
-  const [selected, setSelected] = useState<FigureTemplate | null>(null)
+  const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
+  const [detailTemplate, setDetailTemplate] = useState<FigureTemplate | null>(null)
+  const [mappingTemplate, setMappingTemplate] = useState<FigureTemplate | null>(null)
 
   useEffect(() => {
     if (!ENABLED) { router.replace('/app'); return }
     trackTemplateGalleryViewed()
   }, [router])
 
-  const handleSelect = (tpl: FigureTemplate) => {
-    trackTemplateSelected({
-      template_id: tpl.id,
-      template_name: tpl.name,
-      chart_type: tpl.chartType,
-    })
-    setSelected(tpl)
+  const handleCardClick = (tpl: FigureTemplate) => {
+    trackTemplateSelected({ template_id: tpl.id, template_name: tpl.name, chart_type: tpl.chartType })
+    setDetailTemplate(tpl)
+  }
+
+  const handleUseTemplate = () => {
+    if (!detailTemplate) return
+    setMappingTemplate(detailTemplate)
+    setDetailTemplate(null)
   }
 
   const handleConfirm = (mapping: {
@@ -40,11 +60,11 @@ export default function TemplatesPage() {
     xAxisLabel: string
     yAxisLabel: string
   }) => {
-    if (!selected) return
+    if (!mappingTemplate) return
     setPendingTemplate({
-      templateId: selected.id,
-      templateName: selected.name,
-      chartType: selected.chartType,
+      templateId: mappingTemplate.id,
+      templateName: mappingTemplate.name,
+      chartType: mappingTemplate.chartType,
       columns: mapping.columns,
       rows: mapping.rows,
       xCol: mapping.xCol,
@@ -52,87 +72,103 @@ export default function TemplatesPage() {
       errorCols: mapping.errorCols,
       xAxisLabel: mapping.xAxisLabel,
       yAxisLabel: mapping.yAxisLabel,
-      overrides: selected.overrides,
-      seriesColorsList: selected.seriesColorsList,
-      seriesStrokeWidthsList: selected.seriesStrokeWidthsList,
-      seriesMarkerSizesList: selected.seriesMarkerSizesList,
-      seriesMarkerShapesList: selected.seriesMarkerShapesList,
+      overrides: mappingTemplate.overrides,
+      seriesColorsList: mappingTemplate.seriesColorsList,
+      seriesStrokeWidthsList: mappingTemplate.seriesStrokeWidthsList,
+      seriesMarkerSizesList: mappingTemplate.seriesMarkerSizesList,
+      seriesMarkerShapesList: mappingTemplate.seriesMarkerShapesList,
     })
     router.push('/app')
   }
 
   if (!ENABLED) return null
 
+  const visibleTemplates = FIGURE_TEMPLATES.filter(tpl => matchesFilter(tpl, activeFilter))
+
   return (
-    <div className="min-h-screen bg-[#F7F8FC] flex flex-col">
+    <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-slate-200/80 shadow-[0_1px_4px_rgba(0,0,0,0.05)] shrink-0">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 h-14 flex items-center justify-between">
-          <Link href="/" className="hover:opacity-80 transition-opacity">
+      <header className="bg-white border-b border-slate-200/70">
+        <div className="max-w-5xl mx-auto px-5 md:px-8 h-14 flex items-center justify-between">
+          <Link href="/" className="hover:opacity-75 transition-opacity">
             <LogoFull size={30} textSize={15} />
           </Link>
-          <Link
-            href="/app"
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-slate-100 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Open editor
+          <Link href="/app" className="text-[13px] text-slate-500 hover:text-slate-900 transition-colors">
+            Open editor →
           </Link>
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero + filter bar */}
       <div className="bg-white border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-10 md:py-14">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#dbeafe] text-[#1d4ed8] uppercase tracking-wider">
-              Template Gallery
-            </span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">
-            Start from a proven<br className="hidden sm:block"/> scientific figure layout.
+        <div className="max-w-5xl mx-auto px-5 md:px-8 pt-10">
+          <h1 className="text-[28px] md:text-[36px] font-bold text-slate-900 leading-tight tracking-tight">
+            Choose the figure you want.
           </h1>
-          <p className="mt-3 text-sm md:text-base text-slate-500 max-w-xl leading-relaxed">
-            Choose a template, upload your data, and open the full editor — pre-configured for your figure type.
-            Every setting remains editable.
+          <p className="mt-2.5 text-[15px] text-slate-500 max-w-lg leading-relaxed">
+            Upload your data and recreate the same style in seconds.
           </p>
+
+          {/* Filter chips */}
+          <div className="flex items-center gap-1.5 mt-7 overflow-x-auto pb-0">
+            {FILTERS.map(f => (
+              <button
+                key={f.key}
+                onClick={() => setActiveFilter(f.key)}
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-colors whitespace-nowrap ${
+                  activeFilter === f.key
+                    ? 'bg-slate-900 text-white'
+                    : 'bg-white ring-1 ring-slate-200 text-slate-600 hover:text-slate-900 hover:ring-slate-300'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-px bg-slate-100 mt-4" />
         </div>
       </div>
 
-      {/* Template grid */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 md:px-6 py-8 md:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
-          {FIGURE_TEMPLATES.map(tpl => (
-            <TemplateCard
-              key={tpl.id}
-              template={tpl}
-              onSelect={handleSelect}
-            />
-          ))}
-        </div>
+      {/* Gallery */}
+      <main className="flex-1 max-w-5xl mx-auto w-full px-5 md:px-8 py-8 md:py-10">
+        {visibleTemplates.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+            {visibleTemplates.map(tpl => (
+              <TemplateCard key={tpl.id} template={tpl} onClick={handleCardClick} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-[13px] text-slate-400 text-center py-16">
+            No templates for this filter yet.
+          </p>
+        )}
 
-        {/* Alternative flow */}
         <div className="mt-10 pt-8 border-t border-slate-200 text-center">
-          <p className="text-sm text-slate-500">
+          <p className="text-[13px] text-slate-400">
             Prefer to start blank?{' '}
-            <Link
-              href="/app"
-              className="text-[#2563eb] font-semibold hover:underline"
-            >
+            <Link href="/app" className="text-slate-600 font-medium hover:text-slate-900 transition-colors">
               Open the editor directly →
             </Link>
           </p>
         </div>
       </main>
 
-      {/* Column mapping modal */}
-      {selected && (
+      {/* Detail modal */}
+      {detailTemplate && (
+        <TemplateDetailModal
+          template={detailTemplate}
+          onUse={handleUseTemplate}
+          onClose={() => setDetailTemplate(null)}
+        />
+      )}
+
+      {/* Mapping modal */}
+      {mappingTemplate && (
         <ColumnMappingModal
-          template={selected}
+          template={mappingTemplate}
           onConfirm={handleConfirm}
-          onClose={() => setSelected(null)}
+          onClose={() => setMappingTemplate(null)}
         />
       )}
     </div>

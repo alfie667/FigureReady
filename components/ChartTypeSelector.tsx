@@ -1,4 +1,4 @@
-type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar'
+type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar' | 'doseResponse'
 
 interface Props {
   value: ChartType
@@ -27,6 +27,14 @@ const icons: Record<ChartType, React.ReactNode> = {
       <rect x="4" y="11" width="3" height="8" rx="0.5" />
       <rect x="10.5" y="6" width="3" height="13" rx="0.5" />
       <rect x="17" y="14" width="3" height="5" rx="0.5" />
+    </g>
+  ),
+  doseResponse: (
+    <g fill="currentColor" stroke="none">
+      <circle cx="5" cy="6" r="1.4" />
+      <circle cx="9" cy="8" r="1.4" />
+      <circle cx="13" cy="13" r="1.4" />
+      <circle cx="17" cy="17" r="1.4" />
     </g>
   ),
 }

@@ -10,7 +10,7 @@ function remapIndexed<T>(list: T[] | undefined, yCols: string[]): Record<string,
 export function buildTemplateOverrides(
   tpl: Pick<
     FigureTemplate,
-    'overrides' | 'seriesColorsList' | 'seriesStrokeWidthsList' | 'seriesMarkerSizesList' | 'seriesMarkerShapesList'
+    'overrides' | 'seriesColorsList' | 'seriesStrokeWidthsList' | 'seriesMarkerSizesList' | 'seriesMarkerShapesList' | 'seriesYOffsetsList' | 'paletteId'
   >,
   yCols: string[]
 ): StyleOverrides {
@@ -20,11 +20,15 @@ export function buildTemplateOverrides(
   const widths = remapIndexed(tpl.seriesStrokeWidthsList, yCols)
   const sizes = remapIndexed(tpl.seriesMarkerSizesList, yCols)
   const shapes = remapIndexed(tpl.seriesMarkerShapesList as MarkerShape[] | undefined, yCols)
+  const yOffsets = remapIndexed(tpl.seriesYOffsetsList, yCols)
 
   if (colors) overrides.seriesColors = colors
   if (widths) overrides.seriesStrokeWidths = widths
   if (sizes) overrides.seriesMarkerSizes = sizes
   if (shapes) overrides.seriesMarkerShapes = shapes
+  if (yOffsets) overrides.seriesYOffsets = yOffsets
+  // paletteId only takes effect when no explicit seriesColorsList is provided
+  if (tpl.paletteId && !colors) overrides.paletteId = tpl.paletteId
 
   return overrides
 }

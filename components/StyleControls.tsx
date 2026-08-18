@@ -1,4 +1,8 @@
-﻿import { renderMarker, markerShapeOptions, type MarkerShape } from '@/lib/markerShapes'
+﻿'use client'
+
+import { useRef, useEffect, useState } from 'react'
+import { renderMarker, markerShapeOptions, type MarkerShape } from '@/lib/markerShapes'
+import { COLOR_PALETTES } from '@/lib/colorPalettes'
 
 export function PickerGroup({ label, children }: { label?: string; children: React.ReactNode }) {
   return (
@@ -134,34 +138,86 @@ export function TextSizePicker({
   )
 }
 
-const swatchColors = ['#000000', '#E2211C', '#1F4FA8', '#1B9E4B', '#7B2D8E', '#F59E0B', '#0EA5E9', '#64748B']
-
 export function ColorSwatchPicker({ label, value, onChange }: { label?: string; value: string; onChange: (value: string) => void }) {
+  return <ScientificColorPicker label={label} value={value} onChange={onChange} />
+}
+
+export function ScientificColorPicker({ label, value, onChange }: { label?: string; value: string; onChange: (value: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const customRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
   return (
-    <div className="min-w-0">
+    <div ref={containerRef} className="min-w-0">
       {label && <p className="text-xs font-medium text-slate-500 mb-2">{label}</p>}
-      <div className="flex flex-wrap items-center gap-2">
-        {swatchColors.map(c => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => onChange(c)}
-            title={c}
-            aria-label={c}
-            className={`w-7 h-7 rounded-full shrink-0 ring-2 transition-transform ${
-              value.toLowerCase() === c.toLowerCase() ? 'ring-[#2563eb] scale-110' : 'ring-transparent'
-            }`}
-            style={{ backgroundColor: c, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)' }}
-          />
-        ))}
-        <label
-          className="relative w-7 h-7 rounded-full border border-dashed border-slate-300 flex items-center justify-center cursor-pointer text-slate-400 text-sm shrink-0 overflow-hidden"
-          title="Custom color"
-        >
-          +
-          <input type="color" value={value} onChange={(e) => onChange(e.target.value)} className="absolute inset-0 opacity-0 cursor-pointer" />
-        </label>
-      </div>
+
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] transition-colors text-[12px] text-[#334155] font-mono"
+      >
+        <span
+          className="w-4 h-4 rounded-sm shrink-0 ring-1 ring-black/10"
+          style={{ backgroundColor: value }}
+        />
+        {value.toUpperCase()}
+      </button>
+
+      {/* Expanded palette */}
+      {open && (
+        <div className="mt-2 p-3 rounded-xl border border-[#E2E8F0] bg-white shadow-sm space-y-3">
+          {COLOR_PALETTES.map(palette => (
+            <div key={palette.id}>
+              <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wide mb-1.5">{palette.name}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {palette.colors.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => { onChange(c); setOpen(false) }}
+                    title={c}
+                    aria-label={c}
+                    className={`w-6 h-6 rounded-md shrink-0 ring-2 transition-transform hover:scale-110 ${
+                      value.toLowerCase() === c.toLowerCase() ? 'ring-[#2563EB] scale-110' : 'ring-transparent'
+                    }`}
+                    style={{ backgroundColor: c, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.10)' }}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* Custom color */}
+          <div className="pt-2 border-t border-[#E2E8F0]">
+            <button
+              type="button"
+              onClick={() => customRef.current?.click()}
+              className="text-[11px] text-[#2563EB] hover:underline font-medium"
+            >
+              Custom color…
+            </button>
+            <input
+              ref={customRef}
+              type="color"
+              value={value}
+              onChange={e => { onChange(e.target.value); setOpen(false) }}
+              className="sr-only"
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

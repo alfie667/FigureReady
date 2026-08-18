@@ -21,6 +21,7 @@ export interface PendingTemplate {
   seriesStrokeWidthsList?: number[]
   seriesMarkerSizesList?: number[]
   seriesMarkerShapesList?: MarkerShape[]
+  seriesYOffsetsList?: number[]
 }
 
 export function setPendingTemplate(data: PendingTemplate): void {

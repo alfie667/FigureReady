@@ -1,0 +1,137 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <rect width="280" height="200" fill="white"/>
+
+  <!-- Chart frame -->
+  <rect x="52" y="15" width="213" height="145" fill="none" stroke="#111827" stroke-width="1"/>
+
+  <!-- Lines -->
+  <!-- Vehicle (black) -->
+  <polyline points="52,155.4 82.4,151.6 123,138.0 153.4,118.2 194,85.8 224.4,52.7 265,22.0" fill="none" stroke="#111827" stroke-width="1.4"/>
+  <!-- Cisplatin (blue) -->
+  <polyline points="52,155.4 82.4,152.5 123,143.2 153.4,129.8 194,110.7 224.4,93.3 265,77.6" fill="none" stroke="#2563EB" stroke-width="1.4"/>
+  <!-- Compound B (red) -->
+  <polyline points="52,155.4 82.4,153.6 123,148.7 153.4,142.0 194,129.8 224.4,117.1 265,106.6" fill="none" stroke="#DC2626" stroke-width="1.4"/>
+  <!-- Combination (green) -->
+  <polyline points="52,155.4 82.4,154.5 123,152.5 153.4,150.4 194,147.8 224.4,145.2 265,143.2" fill="none" stroke="#16A34A" stroke-width="1.4"/>
+
+  <!-- Error bars Vehicle -->
+  <g stroke="#111827" stroke-width="0.7">
+    <line x1="52" y1="150.4" x2="52" y2="160"/><line x1="49" y1="150.4" x2="55" y2="150.4"/>
+    <line x1="82.4" y1="146.0" x2="82.4" y2="157.2"/><line x1="79.4" y1="146.0" x2="85.4" y2="146.0"/><line x1="79.4" y1="157.2" x2="85.4" y2="157.2"/>
+    <line x1="123" y1="131.7" x2="123" y2="144.3"/><line x1="120" y1="131.7" x2="126" y2="131.7"/><line x1="120" y1="144.3" x2="126" y2="144.3"/>
+    <line x1="153.4" y1="111.0" x2="153.4" y2="125.4"/><line x1="150.4" y1="111.0" x2="156.4" y2="111.0"/><line x1="150.4" y1="125.4" x2="156.4" y2="125.4"/>
+    <line x1="194" y1="78.1" x2="194" y2="93.5"/><line x1="191" y1="78.1" x2="197" y2="78.1"/><line x1="191" y1="93.5" x2="197" y2="93.5"/>
+    <line x1="224.4" y1="44.5" x2="224.4" y2="60.9"/><line x1="221.4" y1="44.5" x2="227.4" y2="44.5"/><line x1="221.4" y1="60.9" x2="227.4" y2="60.9"/>
+    <line x1="265" y1="14.5" x2="265" y2="29.5"/><line x1="262" y1="14.5" x2="268" y2="14.5"/><line x1="262" y1="29.5" x2="268" y2="29.5"/>
+  </g>
+
+  <!-- Error bars Cisplatin -->
+  <g stroke="#2563EB" stroke-width="0.7">
+    <line x1="82.4" y1="148.1" x2="82.4" y2="156.9"/><line x1="79.4" y1="148.1" x2="85.4" y2="148.1"/><line x1="79.4" y1="156.9" x2="85.4" y2="156.9"/>
+    <line x1="123" y1="139.4" x2="123" y2="147.0"/><line x1="120" y1="139.4" x2="126" y2="139.4"/><line x1="120" y1="147.0" x2="126" y2="147.0"/>
+    <line x1="153.4" y1="126.6" x2="153.4" y2="133.0"/><line x1="150.4" y1="126.6" x2="156.4" y2="126.6"/><line x1="150.4" y1="133.0" x2="156.4" y2="133.0"/>
+    <line x1="194" y1="107.3" x2="194" y2="114.1"/><line x1="191" y1="107.3" x2="197" y2="107.3"/><line x1="191" y1="114.1" x2="197" y2="114.1"/>
+    <line x1="224.4" y1="89.5" x2="224.4" y2="97.1"/><line x1="221.4" y1="89.5" x2="227.4" y2="89.5"/><line x1="221.4" y1="97.1" x2="227.4" y2="97.1"/>
+    <line x1="265" y1="73.8" x2="265" y2="81.4"/><line x1="262" y1="73.8" x2="268" y2="73.8"/><line x1="262" y1="81.4" x2="268" y2="81.4"/>
+  </g>
+
+  <!-- Data markers: Vehicle (black circles) -->
+  <g fill="#111827">
+    <circle cx="52" cy="155.4" r="3"/>
+    <circle cx="82.4" cy="151.6" r="3"/>
+    <circle cx="123" cy="138.0" r="3"/>
+    <circle cx="153.4" cy="118.2" r="3"/>
+    <circle cx="194" cy="85.8" r="3"/>
+    <circle cx="224.4" cy="52.7" r="3"/>
+    <circle cx="265" cy="22.0" r="3"/>
+  </g>
+
+  <!-- Data markers: Cisplatin (blue squares) -->
+  <g fill="#2563EB">
+    <rect x="49.4" y="152.5" width="6" height="6"/>
+    <rect x="79.4" y="149.5" width="6" height="6"/>
+    <rect x="120" y="140.2" width="6" height="6"/>
+    <rect x="150.4" y="126.8" width="6" height="6"/>
+    <rect x="191" y="107.7" width="6" height="6"/>
+    <rect x="221.4" y="90.3" width="6" height="6"/>
+    <rect x="262" y="74.6" width="6" height="6"/>
+  </g>
+
+  <!-- Data markers: Compound B (red diamonds) -->
+  <g fill="#DC2626">
+    <polygon points="52,151.9 49,155.4 52,158.9 55,155.4"/>
+    <polygon points="82.4,150.1 79.4,153.6 82.4,157.1 85.4,153.6"/>
+    <polygon points="123,145.2 120,148.7 123,152.2 126,148.7"/>
+    <polygon points="153.4,138.5 150.4,142.0 153.4,145.5 156.4,142.0"/>
+    <polygon points="194,126.3 191,129.8 194,133.3 197,129.8"/>
+    <polygon points="224.4,113.6 221.4,117.1 224.4,120.6 227.4,117.1"/>
+    <polygon points="265,103.1 262,106.6 265,110.1 268,106.6"/>
+  </g>
+
+  <!-- Data markers: Combination (green triangles) -->
+  <g fill="#16A34A">
+    <polygon points="52,151.9 49,157.4 55,157.4"/>
+    <polygon points="82.4,151.0 79.4,156.5 85.4,156.5"/>
+    <polygon points="123,149.0 120,154.5 126,154.5"/>
+    <polygon points="153.4,146.9 150.4,152.4 156.4,152.4"/>
+    <polygon points="194,144.3 191,149.8 197,149.8"/>
+    <polygon points="224.4,141.7 221.4,147.2 227.4,147.2"/>
+    <polygon points="265,139.7 262,145.2 268,145.2"/>
+  </g>
+
+  <!-- X ticks -->
+  <g stroke="#374151" stroke-width="0.75">
+    <line x1="52" y1="160" x2="52" y2="156"/><line x1="52" y1="15" x2="52" y2="19"/>
+    <line x1="123" y1="160" x2="123" y2="156"/><line x1="123" y1="15" x2="123" y2="19"/>
+    <line x1="194" y1="160" x2="194" y2="156"/><line x1="194" y1="15" x2="194" y2="19"/>
+    <line x1="265" y1="160" x2="265" y2="156"/><line x1="265" y1="15" x2="265" y2="19"/>
+  </g>
+
+  <!-- Y ticks -->
+  <g stroke="#374151" stroke-width="0.75">
+    <line x1="52" y1="160" x2="56" y2="160"/><line x1="261" y1="160" x2="265" y2="160"/>
+    <line x1="52" y1="131" x2="56" y2="131"/><line x1="261" y1="131" x2="265" y2="131"/>
+    <line x1="52" y1="102" x2="56" y2="102"/><line x1="261" y1="102" x2="265" y2="102"/>
+    <line x1="52" y1="73" x2="56" y2="73"/><line x1="261" y1="73" x2="265" y2="73"/>
+    <line x1="52" y1="44" x2="56" y2="44"/><line x1="261" y1="44" x2="265" y2="44"/>
+    <line x1="52" y1="15" x2="56" y2="15"/><line x1="261" y1="15" x2="265" y2="15"/>
+  </g>
+
+  <!-- X tick labels -->
+  <g font-size="7" fill="#374151" text-anchor="middle" font-family="Arial, sans-serif">
+    <text x="52" y="170">0</text>
+    <text x="123" y="170">7</text>
+    <text x="194" y="170">14</text>
+    <text x="265" y="170">21</text>
+  </g>
+
+  <!-- Y tick labels -->
+  <g font-size="7" fill="#374151" text-anchor="end" font-family="Arial, sans-serif">
+    <text x="49" y="163">0</text>
+    <text x="49" y="134">500</text>
+    <text x="49" y="105">1000</text>
+    <text x="49" y="76">1500</text>
+    <text x="49" y="47">2000</text>
+    <text x="49" y="18">2500</text>
+  </g>
+
+  <!-- Legend (top-left — data is near bottom at early timepoints) -->
+  <g font-size="6.5" font-family="Arial, sans-serif" fill="#374151">
+    <line x1="56" y1="26" x2="68" y2="26" stroke="#111827" stroke-width="1.4"/>
+    <circle cx="62" cy="26" r="2.5" fill="#111827"/>
+    <text x="71" y="29">Vehicle</text>
+    <line x1="56" y1="37" x2="68" y2="37" stroke="#2563EB" stroke-width="1.4"/>
+    <rect x="59" y="34" width="6" height="6" fill="#2563EB"/>
+    <text x="71" y="40">Cisplatin</text>
+    <line x1="56" y1="48" x2="68" y2="48" stroke="#DC2626" stroke-width="1.4"/>
+    <polygon points="62,44.5 59,50 65,50" fill="#DC2626"/>
+    <text x="71" y="51">Cmpd B</text>
+    <line x1="56" y1="59" x2="68" y2="59" stroke="#16A34A" stroke-width="1.4"/>
+    <polygon points="62,55.5 59,61 65,61" fill="#16A34A"/>
+    <text x="71" y="62">Combo</text>
+  </g>
+
+  <!-- Axis titles -->
+  <text x="158.5" y="186" text-anchor="middle" font-size="8.5" fill="#111827" font-family="Arial, sans-serif">Days post-inoculation</text>
+  <text x="9" y="87.5" text-anchor="middle" font-size="8" fill="#111827" font-family="Arial, sans-serif" transform="rotate(-90,9,87.5)">Tumor volume (mm&#xB3;)</text>
+</svg>

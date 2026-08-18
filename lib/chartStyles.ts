@@ -1,7 +1,12 @@
 import type { MarkerShape } from './markerShapes'
+import type { PaletteId } from './colorPalettes'
 
 export type StyleName = 'ACS'
-export type LegendPosition = 'top' | 'bottom' | 'left' | 'right'
+export type LegendPosition =
+  | 'top' | 'bottom' | 'left' | 'right'         // legacy — kept for backward compat
+  | 'top-left' | 'top-center' | 'top-right'
+  | 'bottom-left' | 'bottom-center' | 'bottom-right'
+  | 'outside-right' | 'outside-top'
 
 export interface StyleOverrides {
   xTitleSize?: number
@@ -38,6 +43,7 @@ export interface StyleOverrides {
   legendOrientation?: 'h' | 'v'
   legendBg?: boolean
   xScale?: 'linear' | 'log' | 'ln'
+  xReversed?: boolean
   yScale?: 'linear' | 'log' | 'ln'
   yAxisAssignment?: Record<string, 'left' | 'right'>
   y2AxisLabel?: string
@@ -59,6 +65,20 @@ export interface StyleOverrides {
   insetTickFontSize?: number
   insetShowZoomRect?: boolean
   insetShowFrame?: boolean
+  seriesYOffsets?: Record<string, number>
+  showYTickLabels?: boolean
+  legendMode?: 'box' | 'inline'
+  stackingMode?: 'manual' | 'auto'
+  stackGap?: number
+  stackTopPaddingRatio?: number
+  stackBottomPaddingRatio?: number
+  seriesLabelPositions?: Record<string, { xPct: number; yPct: number; text?: string; hidden?: boolean }>
+  paletteId?: PaletteId
+  showFit?: boolean
+  // Dose–response per-series visibility
+  seriesHidePoints?: Record<string, boolean>
+  seriesHideErrorBars?: Record<string, boolean>
+  seriesHideFit?: Record<string, boolean>
 }
 
 export const fontOptions: { value: string; label: string }[] = [

@@ -1,65 +1,72 @@
-﻿'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+'use client'
+import { useState, useEffect, useRef } from 'react'
+import type { AnnotationTool } from '@/hooks/useAnnotationInteraction'
 
 interface Props {
-  onAdd: (type: string, options?: Record<string, unknown>) => void
+  activeTool: AnnotationTool
+  onToolChange: (tool: AnnotationTool) => void
   onInsertSymbol: (sym: string) => void
 }
 
-// ── Icons (larger, strokeWidth 2) ─────────────────────────────────────────
-const StraightLine = () => (
-  <svg width="28" height="14" viewBox="0 0 28 14" fill="none">
-    <line x1="2" y1="7" x2="26" y2="7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+// ── Icons ──────────────────────────────────────────────────────────────────────
+const SelectIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <path d="M3 2l12 7-7 2-2 7L3 2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" fill="none" />
   </svg>
 )
-const ArrowLine = () => (
-  <svg width="28" height="14" viewBox="0 0 28 14" fill="none">
-    <line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" strokeWidth="2" />
-    <polygon points="17,3.5 27,7 17,10.5" fill="currentColor" />
+const TextIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18">
+    <text x="9" y="15" textAnchor="middle" fontSize="16" fontWeight="700" fill="currentColor" fontFamily="Georgia,serif">T</text>
   </svg>
 )
-const DoubleArrow = () => (
-  <svg width="28" height="14" viewBox="0 0 28 14" fill="none">
-    <line x1="9" y1="7" x2="19" y2="7" stroke="currentColor" strokeWidth="2" />
-    <polygon points="10,3.5 1,7 10,10.5" fill="currentColor" />
-    <polygon points="18,3.5 27,7 18,10.5" fill="currentColor" />
+const PeakIcon = () => (
+  <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
+    <circle cx="7" cy="13" r="2" fill="currentColor" />
+    <line x1="7" y1="13" x2="15" y2="5" stroke="currentColor" strokeWidth="1.4" />
+    <text x="16" y="8" fontSize="7" fontWeight="700" fill="currentColor" fontFamily="Arial,sans-serif">pk</text>
   </svg>
 )
-const DashedLine = () => (
-  <svg width="28" height="14" viewBox="0 0 28 14" fill="none">
-    <line x1="2" y1="7" x2="26" y2="7" stroke="currentColor" strokeWidth="2"
-      strokeDasharray="5.5 3.5" strokeLinecap="round" />
+const ArrowIcon = () => (
+  <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+    <line x1="2" y1="7" x2="14" y2="7" stroke="currentColor" strokeWidth="1.8" />
+    <polygon points="13,3.5 21,7 13,10.5" fill="currentColor" />
   </svg>
 )
-const DashedArrow = () => (
-  <svg width="28" height="14" viewBox="0 0 28 14" fill="none">
-    <line x1="2" y1="7" x2="18" y2="7" stroke="currentColor" strokeWidth="2" strokeDasharray="5.5 3.5" />
-    <polygon points="17,3.5 27,7 17,10.5" fill="currentColor" />
+const LineIcon = () => (
+  <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+    <line x1="2" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
   </svg>
 )
-const RectShape = () => (
-  <svg width="28" height="18" viewBox="0 0 28 18" fill="none">
-    <rect x="2" y="2" width="24" height="14" stroke="currentColor" strokeWidth="2" rx="1" />
+const DashedIcon = () => (
+  <svg width="22" height="14" viewBox="0 0 22 14" fill="none">
+    <line x1="2" y1="7" x2="20" y2="7" stroke="currentColor" strokeWidth="1.8" strokeDasharray="4.5 3" strokeLinecap="round" />
   </svg>
 )
-const EllipseShape = () => (
-  <svg width="28" height="18" viewBox="0 0 28 18" fill="none">
-    <ellipse cx="14" cy="9" rx="11.5" ry="6.5" stroke="currentColor" strokeWidth="2" />
+const RectIcon = () => (
+  <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
+    <rect x="2" y="2" width="18" height="12" stroke="currentColor" strokeWidth="1.8" rx="1" />
   </svg>
 )
-const TextShape = () => (
-  <svg width="22" height="20" viewBox="0 0 22 20">
-    <text x="11" y="17" textAnchor="middle" fontSize="19" fontWeight="700"
-      fill="currentColor" fontFamily="Georgia, serif">T</text>
+const EllipseIcon = () => (
+  <svg width="22" height="16" viewBox="0 0 22 16" fill="none">
+    <ellipse cx="11" cy="8" rx="9" ry="6" stroke="currentColor" strokeWidth="1.8" />
+  </svg>
+)
+const ZoomIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+    <circle cx="7.5" cy="7.5" r="5" stroke="currentColor" strokeWidth="1.7" />
+    <line x1="11.5" y1="11.5" x2="16" y2="16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    <line x1="5.5" y1="7.5" x2="9.5" y2="7.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    <line x1="7.5" y1="5.5" x2="7.5" y2="9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
   </svg>
 )
 const ChevronDown = () => (
-  <svg width="10" height="7" viewBox="0 0 10 7" fill="none" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M1 1l4 4 4-4" />
+  <svg width="8" height="6" viewBox="0 0 8 6" fill="none" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M1 1l3 3 3-3" />
   </svg>
 )
 
-// ── Symbols ────────────────────────────────────────────────────────────────
+// ── Symbols ────────────────────────────────────────────────────────────────────
 const SYMBOLS = [
   'α','β','γ','δ','ε','ζ','η','θ','ι','κ','λ','μ',
   'ν','ξ','ο','π','ρ','σ','τ','υ','φ','χ','ψ','ω',
@@ -70,46 +77,30 @@ const SYMBOLS = [
   '→','←','↑','↓','↔','⇒','⇐','⇔',
 ]
 
-// ── Tool button ────────────────────────────────────────────────────────────
-function ToolBtn({
-  icon,
-  label,
-  shortLabel,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode
-  label: string
-  shortLabel: string
-  active: boolean
-  onClick: () => void
+// ── Tool button ────────────────────────────────────────────────────────────────
+function ToolBtn({ icon, label, shortLabel, active, onClick }: {
+  icon: React.ReactNode; label: string; shortLabel: string; active: boolean; onClick: () => void
 }) {
   return (
     <button
       title={label}
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 rounded-lg transition-all duration-150 select-none min-w-[52px] ${
-        active
-          ? 'bg-[#2563eb] text-white shadow-sm'
-          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+      className={`flex flex-col items-center justify-center gap-[4px] px-2 py-1.5 rounded-lg transition-all duration-100 select-none min-w-[44px] ${
+        active ? 'bg-[#2563eb] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
       }`}
     >
       <span className="flex items-center justify-center">{icon}</span>
-      <span className={`text-[10px] font-light tracking-wide leading-none whitespace-nowrap ${
-        active ? 'text-[#bfdbfe]' : 'text-slate-400'
-      }`}>
+      <span className={`text-[9px] font-light tracking-wide leading-none whitespace-nowrap ${active ? 'text-[#bfdbfe]' : 'text-slate-400'}`}>
         {shortLabel}
       </span>
     </button>
   )
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
-export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
-  const [activeKey, setActiveKey] = useState<string | null>(null)
+// ── Main component ─────────────────────────────────────────────────────────────
+export default function AnnotationToolbar({ activeTool, onToolChange, onInsertSymbol }: Props) {
   const [showSymbols, setShowSymbols] = useState(false)
   const symRef = useRef<HTMLDivElement>(null)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!showSymbols) return
@@ -120,99 +111,61 @@ export default function AnnotationToolbar({ onAdd, onInsertSymbol }: Props) {
     return () => document.removeEventListener('mousedown', handler)
   }, [showSymbols])
 
-  const activate = useCallback((key: string, fn: () => void) => {
-    if (timerRef.current) clearTimeout(timerRef.current)
-    setActiveKey(key)
-    fn()
-    timerRef.current = setTimeout(() => setActiveKey(null), 700)
-  }, [])
-
-  const lineTools = [
-    { key: 'line-straight',      label: 'Straight line',   shortLabel: 'Line',    icon: <StraightLine />, opts: { dash: false, headStart: false, headEnd: false } },
-    { key: 'line-arrow',         label: 'Arrow',           shortLabel: 'Arrow',   icon: <ArrowLine />,    opts: { dash: false, headStart: false, headEnd: true  } },
-    { key: 'line-double',        label: 'Double arrow',    shortLabel: 'Double',  icon: <DoubleArrow />,  opts: { dash: false, headStart: true,  headEnd: true  } },
-    { key: 'line-dashed',        label: 'Dashed line',     shortLabel: 'Dashed',  icon: <DashedLine />,   opts: { dash: true,  headStart: false, headEnd: false } },
-    { key: 'line-dashed-arrow',  label: 'Dashed arrow',    shortLabel: 'D.Arrow', icon: <DashedArrow />, opts: { dash: true,  headStart: false, headEnd: true  } },
+  const tools: Array<{ key: AnnotationTool; label: string; shortLabel: string; icon: React.ReactNode }> = [
+    { key: 'select',  label: 'Select',       shortLabel: 'Select',  icon: <SelectIcon /> },
+    { key: 'text',    label: 'Add text',      shortLabel: 'Text',    icon: <TextIcon /> },
+    { key: 'peak',    label: 'Add peak label',shortLabel: 'Peak',    icon: <PeakIcon /> },
+    { key: 'arrow',   label: 'Draw arrow',    shortLabel: 'Arrow',   icon: <ArrowIcon /> },
+    { key: 'line',    label: 'Draw line',     shortLabel: 'Line',    icon: <LineIcon /> },
+    { key: 'dashed',  label: 'Draw dashed line', shortLabel: 'Dashed', icon: <DashedIcon /> },
+    { key: 'rect',    label: 'Draw rectangle', shortLabel: 'Rect',   icon: <RectIcon /> },
+    { key: 'ellipse', label: 'Draw ellipse',  shortLabel: 'Ellipse', icon: <EllipseIcon /> },
+    { key: 'zoom',    label: 'Zoom (drag to select range, double-click to reset)', shortLabel: 'Zoom', icon: <ZoomIcon /> },
   ]
 
-  const sep = <div className="w-px h-14 bg-slate-100 mx-0.5 shrink-0" />
+  const sep = <div className="w-px h-10 bg-slate-100 mx-0.5 shrink-0" />
 
   return (
-    <div className="flex items-center bg-white rounded-2xl shadow-lg px-2 py-2 gap-0">
+    <div className="flex items-center bg-white rounded-2xl shadow-lg px-2 py-1.5 gap-0 flex-wrap">
+      {/* Select */}
+      <ToolBtn {...tools[0]} active={activeTool === 'select'} onClick={() => onToolChange('select')} />
+      {sep}
+      {/* Text + Peak */}
+      <ToolBtn {...tools[1]} active={activeTool === 'text'} onClick={() => onToolChange('text')} />
+      <ToolBtn {...tools[2]} active={activeTool === 'peak'} onClick={() => onToolChange('peak')} />
+      {sep}
       {/* Line tools */}
-      <div className="flex items-center">
-        {lineTools.map(t => (
-          <ToolBtn
-            key={t.key}
-            icon={t.icon}
-            label={t.label}
-            shortLabel={t.shortLabel}
-            active={activeKey === t.key}
-            onClick={() => activate(t.key, () => onAdd('line', t.opts))}
-          />
-        ))}
-      </div>
-
+      <ToolBtn {...tools[3]} active={activeTool === 'arrow'} onClick={() => onToolChange('arrow')} />
+      <ToolBtn {...tools[4]} active={activeTool === 'line'} onClick={() => onToolChange('line')} />
+      <ToolBtn {...tools[5]} active={activeTool === 'dashed'} onClick={() => onToolChange('dashed')} />
       {sep}
-
       {/* Shape tools */}
-      <div className="flex items-center">
-        <ToolBtn
-          icon={<RectShape />}
-          label="Add rectangle"
-          shortLabel="Rect."
-          active={activeKey === 'rect'}
-          onClick={() => activate('rect', () => onAdd('rect'))}
-        />
-        <ToolBtn
-          icon={<EllipseShape />}
-          label="Add ellipse"
-          shortLabel="Ellipse"
-          active={activeKey === 'ellipse'}
-          onClick={() => activate('ellipse', () => onAdd('ellipse'))}
-        />
-      </div>
-
+      <ToolBtn {...tools[6]} active={activeTool === 'rect'} onClick={() => onToolChange('rect')} />
+      <ToolBtn {...tools[7]} active={activeTool === 'ellipse'} onClick={() => onToolChange('ellipse')} />
       {sep}
-
-      {/* Text */}
-      <ToolBtn
-        icon={<TextShape />}
-        label="Add text"
-        shortLabel="Text"
-        active={activeKey === 'text'}
-        onClick={() => activate('text', () => onAdd('text'))}
-      />
-
+      {/* Zoom tool */}
+      <ToolBtn {...tools[8]} active={activeTool === 'zoom'} onClick={() => onToolChange('zoom')} />
       {sep}
-
       {/* Symbol picker */}
       <div ref={symRef} className="relative flex items-center">
         <button
           title="Insert scientific symbol"
           onClick={() => setShowSymbols(v => !v)}
-          className={`flex flex-col items-center justify-center gap-[5px] px-2.5 py-2 min-w-[52px] rounded-lg transition-all duration-150 select-none ${
-            showSymbols
-              ? 'bg-[#2563eb] text-white shadow-sm'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          className={`flex flex-col items-center justify-center gap-[4px] px-2 py-1.5 min-w-[44px] rounded-lg transition-all duration-100 select-none ${
+            showSymbols ? 'bg-[#2563eb] text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <span className="flex items-center gap-1">
-            <span className="text-[18px] leading-none font-serif">Σ</span>
+          <span className="flex items-center gap-0.5">
+            <span className="text-[15px] leading-none font-serif">Σ</span>
             <ChevronDown />
           </span>
-          <span className={`text-[10px] font-light tracking-wide leading-none ${
-            showSymbols ? 'text-[#bfdbfe]' : 'text-slate-400'
-          }`}>
+          <span className={`text-[9px] font-light tracking-wide leading-none ${showSymbols ? 'text-[#bfdbfe]' : 'text-slate-400'}`}>
             Symb.
           </span>
         </button>
-
         {showSymbols && (
           <div className="absolute top-full mt-2 left-0 bg-white border border-slate-200 rounded-2xl shadow-xl p-3 z-50 min-w-max">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-2.5 select-none px-0.5">
-              Scientific symbols
-            </p>
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-slate-400 mb-2.5 select-none px-0.5">Scientific symbols</p>
             <div className="grid grid-cols-12 gap-0.5">
               {SYMBOLS.map(sym => (
                 <button
