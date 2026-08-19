@@ -188,25 +188,7 @@ export default function StyleEditor({ baseStyle, overrides, hasMultipleSeries, c
             </div>
 
             {(overrides.legendMode ?? 'box') === 'box' && (
-              <div>
-                <select
-                  value={overrides.legendPosition ?? 'top-right'}
-                  onChange={e => onChange({
-                    ...overrides,
-                    legendPosition: e.target.value as LegendPosition,
-                    legendXPct: undefined, legendYPct: undefined,
-                  })}
-                  className="w-full border border-slate-200 rounded px-1.5 py-0.5 text-[10px] text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
-                >
-                  {LEGEND_POSITION_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <div className="flex gap-3 mt-2">
-                  <ToggleSwitch label="Vertical" checked={(overrides.legendOrientation ?? 'h') === 'v'} onChange={v => set('legendOrientation', v ? 'v' : 'h')} />
-                  <ToggleSwitch label="Background" checked={overrides.legendBg ?? true} onChange={v => set('legendBg', v)} />
-                </div>
-              </div>
+              <ToggleSwitch label="Cadre" checked={overrides.legendBg ?? true} onChange={v => set('legendBg', v)} />
             )}
             <CompactSizeRow label="Text size" value={legendFontSize} sm={9} md={12} lg={15} onChange={v => set('legendFontSize', v)} />
           </>
