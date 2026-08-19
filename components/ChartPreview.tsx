@@ -261,6 +261,7 @@ function DraggableLegend({
         boxShadow: bg ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
       }}
       onMouseDown={startDrag}
+      onClick={(e) => e.stopPropagation()}
     >
       {yCols.map((col, i) => (
         <div
