@@ -267,7 +267,6 @@ function DraggableLegend({
         <div
           key={col}
           style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', borderRadius: 4, padding: '1px 3px' }}
-          onClick={(e) => { e.stopPropagation(); onElementSelect?.({ type: 'series', seriesKey: col }) }}
         >
           <svg width="26" height="14" style={{ flexShrink: 0 }}>
             {isBar
