@@ -1082,7 +1082,7 @@ export default function AppPage() {
                   onErrorColsChange={setCurrentErrorCols}
                   onXAxisLabelChange={setCurrentXAxisLabel}
                   onYAxisLabelChange={setCurrentYAxisLabel}
-                  onYAxisAssignmentChange={(assignment) => setCurrentStyleOverrides({ ...currentStyleOverrides, yAxisAssignment: assignment })}
+                  onYAxisAssignmentChange={(assignment) => handleUserStyleChange({ ...currentStyleOverrides, yAxisAssignment: assignment }, 'axis')}
                 />
               )}
 
@@ -1230,7 +1230,7 @@ export default function AppPage() {
                   value={styleOverrides.figureWidth ?? 700}
                   onChange={e => {
                     const v = Number(e.target.value)
-                    if (v >= 300 && v <= 1600) setStyleOverrides(prev => ({ ...prev, figureWidth: v }))
+                    if (v >= 300 && v <= 1600) handleUserStyleChange({ ...currentStyleOverrides, figureWidth: v }, 'figure_size')
                   }}
                   className={inputCls}
                 />
@@ -1299,7 +1299,13 @@ export default function AppPage() {
 
             {(() => {
               const so = styleOverrides
-              const upd = (patch: Partial<StyleOverrides>) => setStyleOverrides(prev => ({ ...prev, ...patch }))
+              const upd = (patch: Partial<StyleOverrides>) => {
+                if (!figureEditedFiredRef.current && dataSource !== null) {
+                  figureEditedFiredRef.current = true
+                  trackFigureEdited({ data_source: dataSource, edit_type: 'other' })
+                }
+                setStyleOverrides(prev => ({ ...prev, ...patch }))
+              }
               const axisColor = so.axisColor ?? chartStyles[styleName].axisColor
               return (
                 <div className="pt-3 border-t border-slate-100 space-y-3">
@@ -1373,7 +1379,7 @@ export default function AppPage() {
                         const active = (currentStyleOverrides.xScale ?? 'linear') === sc
                         return (
                           <button key={sc}
-                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, xScale: sc })}
+                            onClick={() => handleUserStyleChange({ ...currentStyleOverrides, xScale: sc }, 'axis')}
                             className={`px-3 py-1 text-xs rounded-full transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log₁₀' : 'Ln'}
                           </button>
@@ -1388,7 +1394,7 @@ export default function AppPage() {
                         const active = (currentStyleOverrides.yScale ?? 'linear') === sc
                         return (
                           <button key={sc}
-                            onClick={() => setCurrentStyleOverrides({ ...currentStyleOverrides, yScale: sc })}
+                            onClick={() => handleUserStyleChange({ ...currentStyleOverrides, yScale: sc }, 'axis')}
                             className={`px-3 py-1 text-xs rounded-full transition-colors ${active ? 'bg-[#2563eb] text-white' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`}>
                             {sc === 'linear' ? 'Linear' : sc === 'log' ? 'Log₁₀' : 'Ln'}
                           </button>
@@ -1402,7 +1408,7 @@ export default function AppPage() {
                   <div className="flex items-center gap-2">
                     <input type="number" min={300} max={1600} step={50}
                       value={styleOverrides.figureWidth ?? 700}
-                      onChange={e => { const v = Number(e.target.value); if (v >= 300 && v <= 1600) setStyleOverrides(prev => ({ ...prev, figureWidth: v })) }}
+                      onChange={e => { const v = Number(e.target.value); if (v >= 300 && v <= 1600) handleUserStyleChange({ ...currentStyleOverrides, figureWidth: v }, 'figure_size') }}
                       className="w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]" />
                     <span className="text-[10px] text-slate-400 shrink-0">px</span>
                   </div>
@@ -1768,7 +1774,7 @@ export default function AppPage() {
                     value={styleOverrides.figureWidth ?? 700}
                     onChange={e => {
                       const v = Number(e.target.value)
-                      if (v >= 300 && v <= 1600) setStyleOverrides(prev => ({ ...prev, figureWidth: v }))
+                      if (v >= 300 && v <= 1600) handleUserStyleChange({ ...currentStyleOverrides, figureWidth: v }, 'figure_size')
                     }}
                     className={inputCls}
                   />
