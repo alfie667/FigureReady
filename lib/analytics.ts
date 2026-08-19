@@ -1,5 +1,10 @@
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+export type SampleType = 'ftir' | 'xrd' | 'doseresponse' | 'uvvis' | 'fluorescence' | 'generic'
+export type UploadSource = 'empty_state' | 'left_panel' | 'banner' | 'compact' | 'drag_drop'
+export type UploadErrorCode = 'unsupported_format' | 'parse_error' | 'empty_file' | 'no_numeric_columns' | 'file_too_large' | 'unknown'
+export type FigureEditType = 'axis' | 'series_style' | 'label' | 'legend' | 'annotation' | 'figure_size' | 'other'
+
 export interface AnalyticsData {
   uploads: number
   chartsCreated: number
@@ -29,7 +34,7 @@ export interface PendingCheckout {
   location: CheckoutLocation
   trigger: CheckoutTrigger
   started_at: string
-  checkout_opened_at?: string   // set just before the Polar tab opens / same-tab redirect fires
+  checkout_opened_at?: string
   figure_created: boolean | null
   file_uploaded: boolean | null
   sample_only: boolean | null
@@ -44,8 +49,6 @@ declare global {
 }
 
 // ── Internal Neon logging ─────────────────────────────────────────────────────
-// Fire-and-forget: POST to /api/analytics/event for the /admin/funnel dashboard.
-// keepalive: true ensures the request survives same-tab page navigations.
 
 function logFunnelEvent(payload: {
   event_name:   string
@@ -67,8 +70,8 @@ function logFunnelEvent(payload: {
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-// Checked at call time so ?debug_ga4=1 works in production.
 export function isDebugMode(): boolean {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') return true
   if (process.env.NODE_ENV !== 'production') return true
   if (process.env.NEXT_PUBLIC_GA_DEBUG === 'true') return true
   if (typeof window === 'undefined') return false
@@ -79,10 +82,12 @@ export function isDebugMode(): boolean {
 
 export function trackEvent(name: string, params?: Record<string, unknown>) {
   if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
-  window.gtag('event', name, {
+  const payload = {
     ...(isDebugMode() && { debug_mode: true }),
     ...params,
-  })
+  }
+  if (isDebugMode()) console.log('[analytics]', name, payload)
+  window.gtag('event', name, payload)
 }
 
 // ── Consent Mode v2 ───────────────────────────────────────────────────────────
@@ -114,58 +119,160 @@ export function trackFirstFreeExport() {
   trackEvent('first_free_export', deviceParams())
 }
 
-export function trackFreeExportUsed() {
-  trackEvent('free_export_used', deviceParams())
-}
-
-export function trackPaywallShown(params: {
-  mode: 'after_free' | 'blocked'
-  file_type?: string
-  figure_created?: boolean | null
-  file_uploaded?: boolean | null
-  sample_only?: boolean | null
-}) {
-  trackEvent('paywall_shown', { ...deviceParams(), ...params })
-}
-
 // ── CTA / funnel events ───────────────────────────────────────────────────────
 
 export function trackUploadCtaClick(location = 'unknown') {
   trackEvent('upload_cta_click', { location })
 }
 
-export function trackAppOpen() {
-  trackEvent('app_open')
+export function trackAppOpen(params?: {
+  entry_point?: string
+  demo?: string
+  source?: string
+}) {
+  const utms: Record<string, unknown> = {}
+  if (typeof window !== 'undefined') {
+    const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']
+    utmKeys.forEach(k => {
+      const v = sessionStorage.getItem(`fr_${k}`)
+      if (v) utms[k] = v
+    })
+  }
+  const source = (typeof window !== 'undefined' ? sessionStorage.getItem('fr_utm_source') : null) ?? params?.source ?? 'direct'
+  trackEvent('app_opened', { ...deviceParams(), ...utms, source, ...params })
 }
 
 export function trackSampleCtaClick() {
   trackEvent('sample_cta_click')
 }
 
-export function trackSampleDataLoaded() {
-  trackEvent('sample_data_loaded')
+// ── Sample activation events ──────────────────────────────────────────────────
+
+export function trackSampleSelected(params: {
+  sample_type: SampleType
+  source: 'empty_state' | 'url_param' | 'left_panel'
+}) {
+  trackEvent('sample_selected', { ...deviceParams(), ...params })
 }
 
-export function trackDemoFigureCreated() {
-  trackEvent('demo_figure_created')
+export function trackSampleFigureLoaded(params: {
+  sample_type: SampleType
+  workflow: string
+}) {
+  trackEvent('sample_figure_loaded', { ...deviceParams(), ...params })
 }
 
-// ── App events ────────────────────────────────────────────────────────────────
-
-export function trackUpload() {
-  trackEvent('file_upload')
-  incLocal('uploads')
+export function trackReplaceWithMyDataClicked(params: {
+  current_sample: SampleType | null
+}) {
+  trackEvent('replace_with_my_data_clicked', { ...deviceParams(), ...params })
 }
 
-export function trackChartCreated() {
-  trackEvent('figure_created')
+export function trackSampleToUserUploadCompleted(params: {
+  row_count: number
+  column_count: number
+}) {
+  trackEvent('sample_to_user_upload_completed', { ...deviceParams(), ...params })
+}
+
+// ── Upload events ─────────────────────────────────────────────────────────────
+
+export function trackUploadStarted(params: { source: UploadSource }) {
+  trackEvent('upload_started', { ...deviceParams(), ...params })
+}
+
+export function trackUploadCompleted(params: {
+  source: UploadSource
+  file_type: string
+  row_count: number
+  column_count: number
+  series_count: number
+}) {
+  trackEvent('upload_completed', { ...deviceParams(), ...params })
+}
+
+export function trackUploadFailed(params: {
+  source: UploadSource
+  file_type: string
+  error_code: UploadErrorCode
+}) {
+  trackEvent('upload_failed', { ...deviceParams(), ...params })
+}
+
+// ── Smart Template events ─────────────────────────────────────────────────────
+
+export function trackSmartTemplateViewed() {
+  trackEvent('smart_template_viewed', deviceParams())
+}
+
+export function trackSmartTemplateSelected(params: {
+  template_id: string
+  template_name: string
+  chart_type: string
+}) {
+  trackEvent('smart_template_selected', { ...deviceParams(), ...params })
+}
+
+export function trackSmartTemplateApplied(params: {
+  template_id: string
+  template_name: string
+  chart_type: string
+  series_count: number
+  data_source: 'user_upload' | 'sample'
+}) {
+  trackEvent('smart_template_applied', { ...deviceParams(), ...params })
+}
+
+// ── Figure lifecycle events ───────────────────────────────────────────────────
+
+export function trackFigureCreated(params: {
+  chart_type: string
+  workflow: string
+  data_source: 'user_upload' | 'sample'
+  series_count: number
+}) {
+  trackEvent('figure_created', { ...deviceParams(), ...params })
   incLocal('chartsCreated')
 }
 
-export function trackExport(format?: 'png' | 'svg' | 'pdf') {
-  trackEvent('export_clicked', format ? { format } : undefined)
+export function trackFigureEdited(params: {
+  data_source: 'user_upload' | 'sample'
+  edit_type: FigureEditType
+}) {
+  trackEvent('figure_edited', { ...deviceParams(), ...params })
+}
+
+// ── Export events ─────────────────────────────────────────────────────────────
+
+// Fires export_clicked — call once per user action (button press), before outcome is known.
+export function trackExport(format: 'png' | 'svg' | 'pdf') {
+  trackEvent('export_clicked', { ...deviceParams(), format })
+}
+
+export function trackExportCompleted(params: {
+  format: 'png' | 'svg' | 'pdf'
+  data_source: 'user_upload' | 'sample'
+  workflow: string
+  is_pro: boolean
+}) {
+  trackEvent('export_completed', { ...deviceParams(), ...params })
   incLocal('exports')
 }
+
+export function trackExportPaywallShown(params: {
+  format: 'png' | 'svg' | 'pdf'
+  mode: 'after_free' | 'blocked'
+}) {
+  trackEvent('export_paywall_shown', { ...deviceParams(), ...params })
+}
+
+// ── Billing events ────────────────────────────────────────────────────────────
+
+export function trackBillingPeriodChanged(params: { period: 'monthly' | 'yearly' }) {
+  trackEvent('billing_period_changed', { ...deviceParams(), ...params })
+}
+
+// ── App events ────────────────────────────────────────────────────────────────
 
 export function trackFeedback() {
   incLocal('feedbackSubmissions')
@@ -173,6 +280,26 @@ export function trackFeedback() {
 
 export function trackPricingView() {
   trackEvent('pricing_viewed')
+}
+
+// ── Template gallery events (classic /templates flow) ─────────────────────────
+
+interface TemplateEventParams {
+  template_id: string
+  template_name: string
+  chart_type: string
+}
+
+export function trackTemplateDataUploaded(params: TemplateEventParams) {
+  trackEvent('template_data_uploaded', { ...deviceParams(), ...params })
+}
+
+export function trackTemplateMappingCompleted(params: TemplateEventParams) {
+  trackEvent('template_mapping_completed', { ...deviceParams(), ...params })
+}
+
+export function trackTemplateApplied(params: TemplateEventParams) {
+  trackEvent('template_applied', { ...deviceParams(), ...params })
 }
 
 // ── Checkout plan metadata ────────────────────────────────────────────────────
@@ -306,8 +433,6 @@ export function trackCheckoutCancelled(pending: PendingCheckout) {
     sample_only:       pending.sample_only,
   })
 
-  // Log to Neon under the same event name as the other abandonment path so the
-  // dashboard aggregates both detection paths (app mount vs bfcache/browser-back).
   logFunnelEvent({
     event_name:  'checkout_returned_without_purchase',
     plan:        pending.plan,
@@ -350,34 +475,6 @@ export function trackPurchase(params: {
     device_type: dev.device_type as string,
     screen_width: dev.screen_width as number,
   })
-}
-
-// ── Template gallery events ───────────────────────────────────────────────────
-
-interface TemplateEventParams {
-  template_id: string
-  template_name: string
-  chart_type: string
-}
-
-export function trackTemplateGalleryViewed() {
-  trackEvent('template_gallery_viewed', deviceParams())
-}
-
-export function trackTemplateSelected(params: TemplateEventParams) {
-  trackEvent('template_selected', { ...deviceParams(), ...params })
-}
-
-export function trackTemplateDataUploaded(params: TemplateEventParams) {
-  trackEvent('template_data_uploaded', { ...deviceParams(), ...params })
-}
-
-export function trackTemplateMappingCompleted(params: TemplateEventParams) {
-  trackEvent('template_mapping_completed', { ...deviceParams(), ...params })
-}
-
-export function trackTemplateApplied(params: TemplateEventParams) {
-  trackEvent('template_applied', { ...deviceParams(), ...params })
 }
 
 // ── Local counters ────────────────────────────────────────────────────────────

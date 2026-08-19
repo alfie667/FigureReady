@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 200">
+  <rect width="280" height="200" fill="white"/>
+
+  <!-- L-axis -->
+  <line x1="38" y1="10" x2="38" y2="175" stroke="#374151" stroke-width="1.2"/>
+  <line x1="38" y1="175" x2="262" y2="175" stroke="#374151" stroke-width="1.2"/>
+
+  <!-- Log-scale tick marks on X axis -->
+  <g stroke="#9CA3AF" stroke-width="0.8">
+    <line x1="82"  y1="175" x2="82"  y2="179"/>
+    <line x1="126" y1="175" x2="126" y2="179"/>
+    <line x1="170" y1="175" x2="170" y2="179"/>
+    <line x1="214" y1="175" x2="214" y2="179"/>
+  </g>
+
+  <!-- Series 1 — blue #2166ac, IC50 around x=140 -->
+  <!-- Sigmoid from top (y=18) to bottom (y=168): 100% → 0% inhibition -->
+  <polyline
+    points="38,168 68,168 82,167 95,165 106,160 115,153 124,143 133,128 140,111 148,91 156,70 165,50 175,34 187,22 200,17 218,14 245,13 262,13"
+    fill="none" stroke="#2166ac" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"
+  />
+
+  <!-- Series 2 — red #ca0020, IC50 shifted right ~x=158 -->
+  <polyline
+    points="38,168 68,168 90,167 106,165 118,160 128,153 140,143 150,130 158,113 167,94 176,73 188,52 200,36 215,24 232,17 248,14 262,13"
+    fill="none" stroke="#ca0020" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="4,3"
+  />
+
+  <!-- Data points series 1 (blue circles) with error bars -->
+  <g stroke="#2166ac" stroke-width="1">
+    <!-- Error bar caps (horizontal) + vertical bar -->
+    <line x1="82"  y1="162" x2="82"  y2="172"/><line x1="78"  y1="162" x2="86"  y2="162"/><line x1="78"  y1="172" x2="86"  y2="172"/>
+    <line x1="106" y1="154" x2="106" y2="166"/><line x1="102" y1="154" x2="110" y2="154"/><line x1="102" y1="166" x2="110" y2="166"/>
+    <line x1="124" y1="137" x2="124" y2="149"/><line x1="120" y1="137" x2="128" y2="137"/><line x1="120" y1="149" x2="128" y2="149"/>
+    <line x1="140" y1="104" x2="140" y2="118"/><line x1="136" y1="104" x2="144" y2="104"/><line x1="136" y1="118" x2="144" y2="118"/>
+    <line x1="156" y1="63"  x2="156" y2="77"/> <line x1="152" y1="63"  x2="160" y2="63"/> <line x1="152" y1="77"  x2="160" y2="77"/>
+    <line x1="175" y1="28"  x2="175" y2="40"/> <line x1="171" y1="28"  x2="179" y2="28"/> <line x1="171" y1="40"  x2="179" y2="40"/>
+    <line x1="200" y1="12"  x2="200" y2="22"/> <line x1="196" y1="12"  x2="204" y2="12"/> <line x1="196" y1="22"  x2="204" y2="22"/>
+  </g>
+  <g fill="#2166ac">
+    <circle cx="82"  cy="167" r="3"/>
+    <circle cx="106" cy="160" r="3"/>
+    <circle cx="124" cy="143" r="3"/>
+    <circle cx="140" cy="111" r="3"/>
+    <circle cx="156" cy="70"  r="3"/>
+    <circle cx="175" cy="34"  r="3"/>
+    <circle cx="200" cy="17"  r="3"/>
+  </g>
+
+  <!-- Data points series 2 (red squares) -->
+  <g stroke="#ca0020" stroke-width="1">
+    <line x1="106" y1="159" x2="106" y2="171"/><line x1="102" y1="159" x2="110" y2="159"/><line x1="102" y1="171" x2="110" y2="171"/>
+    <line x1="128" y1="147" x2="128" y2="159"/><line x1="124" y1="147" x2="132" y2="147"/><line x1="124" y1="159" x2="132" y2="159"/>
+    <line x1="150" y1="124" x2="150" y2="136"/><line x1="146" y1="124" x2="154" y2="124"/><line x1="146" y1="136" x2="154" y2="136"/>
+    <line x1="167" y1="88"  x2="167" y2="100"/><line x1="163" y1="88"  x2="171" y2="88"/> <line x1="163" y1="100" x2="171" y2="100"/>
+    <line x1="188" y1="46"  x2="188" y2="58"/> <line x1="184" y1="46"  x2="192" y2="46"/> <line x1="184" y1="58"  x2="192" y2="58"/>
+    <line x1="215" y1="18"  x2="215" y2="30"/> <line x1="211" y1="18"  x2="219" y2="18"/> <line x1="211" y1="30"  x2="219" y2="30"/>
+  </g>
+  <g fill="#ca0020">
+    <rect x="103" y="163" width="6" height="6"/>
+    <rect x="125" y="151" width="6" height="6"/>
+    <rect x="147" y="130" width="6" height="6"/>
+    <rect x="164" y="94"  width="6" height="6"/>
+    <rect x="185" y="52"  width="6" height="6"/>
+    <rect x="212" y="24"  width="6" height="6"/>
+  </g>
+
+  <!-- Axis labels -->
+  <text x="150" y="196" text-anchor="middle" font-size="8" fill="#9CA3AF" font-family="Arial, sans-serif">Concentration (log)</text>
+  <text x="12" y="94" text-anchor="middle" font-size="8" fill="#9CA3AF" font-family="Arial, sans-serif" transform="rotate(-90,12,94)">Inhibition (%)</text>
+</svg>

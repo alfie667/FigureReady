@@ -1,7 +1,6 @@
 ﻿'use client'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type Key } from 'react'
-import { trackExport, trackFirstFreeExport, trackFreeExportUsed, trackPaywallShown } from '@/lib/analytics'
-import { gtagEvent } from '@/lib/ga'
+import { trackExport, trackFirstFreeExport, trackExportCompleted, trackExportPaywallShown } from '@/lib/analytics'
 import { isProUser, hasUsedFreeExport, recordFreeExport } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
 import {
@@ -544,6 +543,8 @@ interface Props {
   onSelectionChange?: (id: string | null) => void
   onElementSelect?: (el: import('@/lib/chartSelection').SelectedChartElement | null) => void
   selectedElement?: import('@/lib/chartSelection').SelectedChartElement | null
+  dataSource?: 'user_upload' | 'sample'
+  figureWorkflow?: string
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -554,6 +555,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
   compact = false, drawInsetActive, onDrawInsetActiveChange, annotOpen,
   onSelectionChange, onElementSelect, selectedElement,
+  dataSource = 'sample',
+  figureWorkflow = 'user_upload',
 }: Props, ref) {
   const selectedSeriesKey = selectedElement?.type === 'series' ? (selectedElement.seriesKey ?? null) : null
   const chartRef = useRef<HTMLDivElement>(null)
@@ -1475,7 +1478,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   }
 
   const triggerExport = async (type: 'png' | 'svg' | 'pdf') => {
-    gtagEvent('download_click', { file_type: type })
+    // export_clicked fires once per user action, regardless of outcome
+    trackExport(type)
 
     if (isProUser()) {
       if (type === 'png') await doExportPNG()
@@ -1489,26 +1493,26 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       await doExportFreePNG()
       recordFreeExport()
       trackFirstFreeExport()
-      trackPaywallShown({ mode: 'after_free', file_type: type })
+      trackExportCompleted({ format: 'png', data_source: dataSource, workflow: figureWorkflow, is_pro: false })
+      trackExportPaywallShown({ format: type, mode: 'after_free' })
       await openPaywall('after_free')
       return
     }
 
     // Quota exhausted or non-PNG format attempted
-    trackFreeExportUsed()
-    trackPaywallShown({ mode: 'blocked', file_type: type })
+    trackExportPaywallShown({ format: type, mode: 'blocked' })
     await openPaywall('blocked')
   }
 
   const doExportPNG = async () => {
     if (!chartRef.current) return
-    trackExport('png')
     setIsExporting(true)
     try {
       const raw = await captureChartPng(300 / 96)
       const dataUrl = injectPngDpi(raw, 300)
       const a = document.createElement('a')
       a.href = dataUrl; a.download = 'figureready.png'; a.click()
+      trackExportCompleted({ format: 'png', data_source: dataSource, workflow: figureWorkflow, is_pro: true })
     } catch (err) { console.error('PNG export failed:', err) }
     finally { setIsExporting(false) }
   }
@@ -1528,7 +1532,6 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   const doExportPDF = async () => {
     if (!chartRef.current) return
-    trackExport('pdf')
     setIsExporting(true)
     try {
       const raw = await captureChartPng(300 / 96)
@@ -1544,13 +1547,13 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
       const pdf = new jsPDF({ orientation, unit: 'mm', format: [mmW, mmH] })
       pdf.addImage(raw, 'PNG', 0, 0, mmW, mmH)
       pdf.save('figureready.pdf')
+      trackExportCompleted({ format: 'pdf', data_source: dataSource, workflow: figureWorkflow, is_pro: true })
     } catch (err) { console.error('PDF export failed:', err) }
     finally { setIsExporting(false) }
   }
 
   const doExportSVG = async () => {
     if (!chartRef.current) return
-    trackExport('svg')
     setIsExporting(true)
     await new Promise(r => setTimeout(r, 80))
     const svg = chartRef.current.querySelector('svg')
@@ -1684,6 +1687,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     const a = document.createElement('a')
     a.href = url; a.download = 'figureready.svg'; a.click()
     URL.revokeObjectURL(url)
+    trackExportCompleted({ format: 'svg', data_source: dataSource, workflow: figureWorkflow, is_pro: true })
     setIsExporting(false)
   }
 
@@ -2147,7 +2151,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                 chartType={chartType}
                 xPct={legendPos.x}
                 yPct={legendPos.y}
-                orientation={styleOverrides.legendOrientation ?? 'h'}
+                orientation={styleOverrides.legendOrientation ?? 'v'}
                 bg={styleOverrides.legendBg ?? true}
                 fontFamily={fontFamily}
                 fontSize={legendFontSize}

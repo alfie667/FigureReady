@@ -8,7 +8,7 @@ import TemplateDetailModal from '@/components/templates/TemplateDetailModal'
 import ColumnMappingModal from '@/components/templates/ColumnMappingModal'
 import { FIGURE_TEMPLATES } from '@/lib/templates/definitions'
 import { setPendingTemplate } from '@/lib/templates/session'
-import { trackTemplateGalleryViewed, trackTemplateSelected } from '@/lib/analytics'
+// analytics imports removed — page redirects immediately to /app?tab=templates
 import type { FigureTemplate } from '@/lib/templates/types'
 
 const ENABLED = process.env.NEXT_PUBLIC_TEMPLATES_ENABLED === 'true'
@@ -36,12 +36,10 @@ export default function TemplatesPage() {
   const [mappingTemplate, setMappingTemplate] = useState<FigureTemplate | null>(null)
 
   useEffect(() => {
-    if (!ENABLED) { router.replace('/app'); return }
-    trackTemplateGalleryViewed()
+    router.replace('/app?tab=templates')
   }, [router])
 
   const handleCardClick = (tpl: FigureTemplate) => {
-    trackTemplateSelected({ template_id: tpl.id, template_name: tpl.name, chart_type: tpl.chartType })
     setDetailTemplate(tpl)
   }
 

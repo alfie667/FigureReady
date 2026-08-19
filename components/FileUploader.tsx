@@ -1,6 +1,7 @@
 ﻿'use client'
 import { useCallback, useState } from 'react'
 import { parseExcelFile } from '@/lib/parseExcel'
+import { trackUploadStarted, trackUploadFailed, type UploadSource } from '@/lib/analytics'
 
 interface Props {
   onData: (columns: string[], rows: Record<string, unknown>[]) => void
@@ -12,8 +13,14 @@ export default function FileUploader({ onData, compact }: Props) {
   const [isDragging, setIsDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleFile = useCallback(async (file: File) => {
+  const handleFile = useCallback(async (file: File, isDrag = false) => {
+    const source: UploadSource = isDrag ? 'drag_drop' : (compact ? 'compact' : 'left_panel')
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'unknown'
+    const file_type = ['xlsx', 'xls', 'csv'].includes(ext) ? ext : 'unknown'
+    trackUploadStarted({ source })
+
     if (!file.name.endsWith('.xlsx')) {
+      trackUploadFailed({ source, file_type, error_code: 'unsupported_format' })
       setError('Only .xlsx files are supported')
       return
     }
@@ -22,25 +29,27 @@ export default function FileUploader({ onData, compact }: Props) {
       setFileName(file.name)
       const { columns, rows } = await parseExcelFile(file)
       if (rows.length === 0) {
+        trackUploadFailed({ source, file_type, error_code: 'empty_file' })
         setError('The file appears to be empty')
         return
       }
       onData(columns, rows)
     } catch {
+      trackUploadFailed({ source, file_type, error_code: 'parse_error' })
       setError('Failed to read the file')
     }
-  }, [onData])
+  }, [onData, compact])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     const file = e.dataTransfer.files[0]
-    if (file) handleFile(file)
+    if (file) handleFile(file, true)
   }, [handleFile])
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) handleFile(file)
+    if (file) handleFile(file, false)
     e.target.value = ''
   }, [handleFile])
 

@@ -36,7 +36,7 @@ const PER_SERIES_KEYS: (keyof StyleOverrides)[] = [
 // Gallery-style built-in templates live in lib/templates/definitions.ts and are
 // imported directly by the /templates page. BUILTIN_TEMPLATES here is kept for
 // the in-editor TemplateSelector (development/internal templates only).
-const XRD_DEV_TEMPLATE: ChartTemplate = {
+export const XRD_DEV_TEMPLATE: ChartTemplate = {
   id: 'internal-xrd-stacked',
   name: '[DEV] Stacked XRD Patterns',
   builtIn: true,

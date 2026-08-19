@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { trackPricingView } from '@/lib/analytics'
+import { trackPricingView, trackBillingPeriodChanged } from '@/lib/analytics'
 import { startCheckout } from '@/lib/checkout'
 
 interface Props {
@@ -107,7 +107,7 @@ export default function PaywallModal({ mode, previewDataUrl, onClose, figureCrea
           {/* Plan toggle */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             <button
-              onClick={() => setPlan('monthly')}
+              onClick={() => { if (plan !== 'monthly') { setPlan('monthly'); trackBillingPeriodChanged({ period: 'monthly' }) } }}
               className={`rounded-xl border-2 p-4 text-left transition-all ${
                 plan === 'monthly' ? 'border-[#2563eb] bg-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'
               }`}
@@ -117,7 +117,7 @@ export default function PaywallModal({ mode, previewDataUrl, onClose, figureCrea
               <p className="text-xs text-slate-400">/month</p>
             </button>
             <button
-              onClick={() => setPlan('yearly')}
+              onClick={() => { if (plan !== 'yearly') { setPlan('yearly'); trackBillingPeriodChanged({ period: 'yearly' }) } }}
               className={`rounded-xl border-2 p-4 text-left relative transition-all ${
                 plan === 'yearly' ? 'border-[#2563eb] bg-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'
               }`}

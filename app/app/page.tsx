@@ -16,15 +16,32 @@ import { chartStyles, type StyleName, type StyleOverrides } from '@/lib/chartSty
 import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
-import { saveUserTemplate, FTIR_DEV_TEMPLATE, PL_DEV_TEMPLATE_OVERLAY, UVVIS_DEV_TEMPLATE_OVERLAY, DOSE_RESPONSE_DEV_TEMPLATE, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
+import { saveUserTemplate, FTIR_DEV_TEMPLATE, PL_DEV_TEMPLATE_OVERLAY, UVVIS_DEV_TEMPLATE_OVERLAY, DOSE_RESPONSE_DEV_TEMPLATE, XRD_DEV_TEMPLATE, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
 import type { MarkerShape } from '@/lib/markerShapes'
-import { trackUpload, trackChartCreated, trackSampleDataLoaded, trackAppOpen, trackDemoFigureCreated, trackCheckoutReturnedWithoutPurchase, trackTemplateApplied } from '@/lib/analytics'
+import {
+  trackAppOpen,
+  trackSampleSelected,
+  trackSampleFigureLoaded,
+  trackReplaceWithMyDataClicked,
+  trackSampleToUserUploadCompleted,
+  trackUploadStarted,
+  trackUploadCompleted,
+  trackUploadFailed,
+  trackFigureCreated,
+  trackFigureEdited,
+  trackSmartTemplateApplied,
+  trackCheckoutReturnedWithoutPurchase,
+  trackTemplateApplied,
+  type SampleType,
+  type FigureEditType,
+} from '@/lib/analytics'
 import { getPendingTemplate, clearPendingTemplate } from '@/lib/templates/session'
 import { buildTemplateOverrides } from '@/lib/templates/apply'
 import { FTIR_SAMPLE_ROWS, FTIR_COLUMNS, FTIR_X_COL, FTIR_Y_COLS } from '@/lib/samples/ftirSampleData'
 import { PL_SAMPLE_ROWS, PL_COLUMNS, PL_X_COL, PL_Y_COLS } from '@/lib/samples/plSampleData'
 import { UVVIS_SAMPLE_ROWS, UVVIS_COLUMNS, UVVIS_X_COL, UVVIS_Y_COLS } from '@/lib/samples/uvvisSampleData'
 import { DR_SAMPLE_ROWS, DR_COLUMNS, DR_X_COL, DR_Y_COLS } from '@/lib/samples/doseResponseSampleData'
+import { XRD_SAMPLE_ROWS, XRD_COLUMNS, XRD_X_COL, XRD_Y_COLS } from '@/lib/samples/xrdSampleData'
 import { fit4PL, type Fit4PLResult } from '@/lib/curveFit4PL'
 import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
@@ -42,6 +59,7 @@ import ContextPanel from '@/components/editor/ContextPanel'
 import CanvasWorkspace from '@/components/editor/CanvasWorkspace'
 import RightInspector from '@/components/editor/RightInspector'
 import RefinePanel from '@/components/editor/RefinePanel'
+import SmartTemplateGallery, { type SmartWorkflowResult } from '@/components/editor/SmartTemplateGallery'
 
 const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
 const insetLinePresets: NumericPreset[] = [
@@ -91,6 +109,12 @@ const PANEL_LABELS_MAP: Record<string, string> = {
 
 export default function AppPage() {
   const [isDemoMode, setIsDemoMode] = useState(false)
+  const [sampleBanner, setSampleBanner] = useState(false)
+  const [dataSource, setDataSource] = useState<'user_upload' | 'sample' | null>(null)
+  const figureCreatedFiredRef = useRef(false)
+  const figureEditedFiredRef = useRef(false)
+  const currentSampleTypeRef = useRef<SampleType | null>(null)
+  const figureWorkflowRef = useRef<string>('user_upload')
   const [showRestorePrompt, setShowRestorePrompt] = useState(false)
   const [columns, setColumns] = useState<string[]>([])
   const [data, setData] = useState<Record<string, unknown>[]>([])
@@ -159,6 +183,7 @@ export default function AppPage() {
   const [inspectorTab, setInspectorTab] = useState<'style' | 'settings'>('style')
   const [docName] = useState('Untitled figure')
   const [rightInspectorOpen, setRightInspectorOpen] = useState(true)
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null)
 
   // ── Progressive disclosure state ──────────────────────────────────────────
   // true once user has applied a template, demo, or explicitly changed chart type
@@ -181,7 +206,11 @@ export default function AppPage() {
   }
 
   useEffect(() => {
-    trackAppOpen()
+    const initParams = new URLSearchParams(window.location.search)
+    const initDemo = initParams.get('demo')
+    const initTab = initParams.get('tab')
+    const entryPoint = initDemo ? 'demo_url' : 'direct'
+    trackAppOpen({ entry_point: entryPoint, ...(initDemo ? { demo: initDemo } : {}) })
     const saved = loadDefaultStyle()
     if (saved) setStyleOverrides(saved)
     if (window.innerWidth >= 768) setActiveSidePanel('data')
@@ -230,12 +259,17 @@ export default function AppPage() {
 
     setFigureConfigured(true)
     setShowTemplateUndo(true)
+    setDataSource('user_upload')
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'template_gallery'
     trackTemplateApplied({
       template_id: pending.templateId,
       template_name: pending.templateName,
       chart_type: pending.chartType,
     })
-    trackChartCreated()
+    trackFigureCreated({ chart_type: pending.chartType, workflow: 'template_gallery', data_source: 'user_upload', series_count: pending.yCols.length })
+    figureCreatedFiredRef.current = true
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -517,7 +551,14 @@ export default function AppPage() {
     setFigureConfigured(false)   // fresh upload → State 2 (mapping)
     setSelectedAnnotationId(null)
 
-    trackChartCreated()
+    // Analytics: new user dataset — reset tracking refs, fire figure_created
+    setDataSource('user_upload')
+    currentSampleTypeRef.current = null
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    // figureWorkflowRef is set by the caller before invoking handleData
+    trackFigureCreated({ chart_type: chartType, workflow: figureWorkflowRef.current, data_source: 'user_upload', series_count: initialY.length })
+    figureCreatedFiredRef.current = true
   }
 
   const reset = () => {
@@ -544,11 +585,30 @@ export default function AppPage() {
 
   const handleSampleData = () => {
     const cols = Object.keys(SAMPLE_ROWS[0])
-    handleData(cols, SAMPLE_ROWS)
+    const x = cols[0] ?? ''
+    const yCandidates = cols.filter(c => c !== x && !isErrorColumn(c))
+    const initialY = yCandidates[0] ? [yCandidates[0]] : cols[1] ? [cols[1]] : []
+    setColumns(cols)
+    setData(SAMPLE_ROWS)
+    setXCol(x)
+    setYCols(initialY)
+    setSeriesNames({})
+    setErrorCols({})
+    setXAxisLabel(x)
+    setYAxisLabel('')
+    setStyleOverrides({})
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setSelectedAnnotationId(null)
     setIsDemoMode(true)
-    setFigureConfigured(true)   // demo = already configured
-    trackSampleDataLoaded()
-    trackDemoFigureCreated()
+    setFigureConfigured(true)
+    setDataSource('sample')
+    currentSampleTypeRef.current = 'generic'
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'sample'
+    trackSampleFigureLoaded({ sample_type: 'generic', workflow: 'generic' })
   }
 
   const handleFTIRSampleData = () => {
@@ -566,9 +626,15 @@ export default function AppPage() {
     setIsMultiPanel(false)
     setPanels([])
     setIsDemoMode(false)
-    setFigureConfigured(true)    // demo = already configured
+    setFigureConfigured(true)
     setSelectedAnnotationId(null)
-    trackChartCreated()
+    setSampleBanner(true)
+    setDataSource('sample')
+    currentSampleTypeRef.current = 'ftir'
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'sample'
+    trackSampleFigureLoaded({ sample_type: 'ftir', workflow: 'ftir-stacked' })
   }
 
   const handlePLSampleData = () => {
@@ -588,7 +654,13 @@ export default function AppPage() {
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
-    trackChartCreated()
+    setSampleBanner(true)
+    setDataSource('sample')
+    currentSampleTypeRef.current = 'fluorescence'
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'sample'
+    trackSampleFigureLoaded({ sample_type: 'fluorescence', workflow: 'stacked-spectra' })
   }
 
   const handleUVVisSampleData = () => {
@@ -608,17 +680,35 @@ export default function AppPage() {
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
-    trackChartCreated()
+    setSampleBanner(true)
+    setDataSource('sample')
+    currentSampleTypeRef.current = 'uvvis'
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'sample'
+    trackSampleFigureLoaded({ sample_type: 'uvvis', workflow: 'stacked-spectra' })
   }
 
   const handleFileFromBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     e.target.value = ''
+    const fileType = file.name.endsWith('.csv') ? 'csv' : file.name.endsWith('.xls') ? 'xls' : 'xlsx'
+    trackUploadStarted({ source: 'banner' })
     try {
       const { columns: cols, rows } = await parseExcelFile(file)
-      if (rows.length > 0) { handleData(cols, rows); trackUpload() }
-    } catch { /* silently ignore parse errors */ }
+      if (rows.length === 0) {
+        trackUploadFailed({ source: 'banner', file_type: fileType, error_code: 'empty_file' })
+        return
+      }
+      const yCandidates = cols.filter(c => c !== (cols[0] ?? '') && !isErrorColumn(c))
+      const initialY = yCandidates[0] ? [yCandidates[0]] : cols[1] ? [cols[1]] : []
+      trackUploadCompleted({ source: 'banner', file_type: fileType, row_count: rows.length, column_count: cols.length, series_count: initialY.length })
+      figureWorkflowRef.current = 'user_upload'
+      handleData(cols, rows)
+    } catch {
+      trackUploadFailed({ source: 'banner', file_type: fileType, error_code: 'parse_error' })
+    }
   }
 
   const handleDoseResponseSampleData = () => {
@@ -641,24 +731,155 @@ export default function AppPage() {
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
-    trackChartCreated()
+    setSampleBanner(true)
+    setDataSource('sample')
+    currentSampleTypeRef.current = 'doseresponse'
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'sample'
+    trackSampleFigureLoaded({ sample_type: 'doseresponse', workflow: 'dose-response' })
+  }
+
+  const handleXRDSampleData = () => {
+    setColumns(XRD_COLUMNS)
+    setData(XRD_SAMPLE_ROWS)
+    setXCol(XRD_X_COL)
+    setYCols(XRD_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({})
+    setXAxisLabel('2θ (°)')
+    setYAxisLabel('Intensity (a.u.)')
+    setChartType('lineOnly')
+    setStyleOverrides(buildTemplateOverrides(XRD_DEV_TEMPLATE, XRD_Y_COLS))
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setFigureConfigured(true)
+    setSelectedAnnotationId(null)
+    setSampleBanner(true)
+    setDataSource('sample')
+    currentSampleTypeRef.current = 'xrd'
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+    figureWorkflowRef.current = 'sample'
+    trackSampleFigureLoaded({ sample_type: 'xrd', workflow: 'xrd-stacked' })
+  }
+
+  const handleReplaceWithMyData = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    trackReplaceWithMyDataClicked({ current_sample: currentSampleTypeRef.current })
+    const fileType = file.name.endsWith('.csv') ? 'csv' : file.name.endsWith('.xls') ? 'xls' : 'xlsx'
+    trackUploadStarted({ source: 'banner' })
+    try {
+      const { columns: cols, rows } = await parseExcelFile(file)
+      if (rows.length === 0) {
+        trackUploadFailed({ source: 'banner', file_type: fileType, error_code: 'empty_file' })
+        return
+      }
+      const yCandidates = cols.filter(c => c !== (cols[0] ?? '') && !isErrorColumn(c))
+      const initialY = yCandidates[0] ? [yCandidates[0]] : cols[1] ? [cols[1]] : []
+      trackUploadCompleted({ source: 'banner', file_type: fileType, row_count: rows.length, column_count: cols.length, series_count: initialY.length })
+      trackSampleToUserUploadCompleted({ row_count: rows.length, column_count: cols.length })
+      figureWorkflowRef.current = 'user_upload'
+      handleData(cols, rows)
+      setSampleBanner(false)
+    } catch {
+      trackUploadFailed({ source: 'banner', file_type: fileType, error_code: 'parse_error' })
+    }
+  }
+
+  const handleLoadFTIRData = () => {
+    setColumns(FTIR_COLUMNS)
+    setData(FTIR_SAMPLE_ROWS)
+    setXCol(FTIR_X_COL)
+    setYCols(FTIR_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({})
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setSelectedAnnotationId(null)
+  }
+
+  const handleLoadDRData = () => {
+    setColumns(DR_COLUMNS)
+    setData(DR_SAMPLE_ROWS)
+    setXCol(DR_X_COL)
+    setYCols(DR_Y_COLS)
+    setSeriesNames({})
+    setErrorCols({
+      'Compound A': 'Compound A error',
+      'Compound B': 'Compound B error',
+    })
+    setAnnotations([])
+    setIsMultiPanel(false)
+    setPanels([])
+    setIsDemoMode(false)
+    setSelectedAnnotationId(null)
+  }
+
+  const handleApplySmartWorkflow = (result: SmartWorkflowResult) => {
+    setXCol(result.xCol)
+    setYCols(result.yCols)
+    setErrorCols(result.errorCols)
+    setXAxisLabel(result.xAxisLabel)
+    setYAxisLabel(result.yAxisLabel)
+    setChartType(result.chartType)
+    setStyleOverrides(result.overrides)
+    setLogScaleWarning(null)
+    setFigureConfigured(true)
+    setActiveSidePanel(null)
+    const smartDataSource = dataSource ?? 'user_upload'
+    trackSmartTemplateApplied({ template_id: result.templateId, template_name: result.templateName, chart_type: result.chartType, series_count: result.yCols.length, data_source: smartDataSource })
+    // Only fire figure_created for user-upload data, and only once per dataset
+    if (smartDataSource === 'user_upload' && !figureCreatedFiredRef.current) {
+      figureWorkflowRef.current = 'smart_template'
+      trackFigureCreated({ chart_type: result.chartType, workflow: 'smart_template', data_source: 'user_upload', series_count: result.yCols.length })
+      figureCreatedFiredRef.current = true
+    }
   }
 
   const handleFileFromEmptyState = async (file: File) => {
+    const fileType = file.name.endsWith('.csv') ? 'csv' : file.name.endsWith('.xls') ? 'xls' : 'xlsx'
+    trackUploadStarted({ source: 'empty_state' })
     try {
       const { columns: cols, rows } = await parseExcelFile(file)
-      if (rows.length > 0) { handleData(cols, rows); trackUpload() }
-    } catch { /* silently ignore parse errors */ }
+      if (rows.length === 0) {
+        trackUploadFailed({ source: 'empty_state', file_type: fileType, error_code: 'empty_file' })
+        return
+      }
+      const yCandidates = cols.filter(c => c !== (cols[0] ?? '') && !isErrorColumn(c))
+      const initialY = yCandidates[0] ? [yCandidates[0]] : cols[1] ? [cols[1]] : []
+      trackUploadCompleted({ source: 'empty_state', file_type: fileType, row_count: rows.length, column_count: cols.length, series_count: initialY.length })
+      figureWorkflowRef.current = 'user_upload'
+      handleData(cols, rows)
+      setSampleBanner(false)
+    } catch {
+      trackUploadFailed({ source: 'empty_state', file_type: fileType, error_code: 'parse_error' })
+    }
   }
 
-  // Auto-load demo when arriving from landing page CTA (?demo=1) or dev routes (?demo=ftir).
-  // URL param is cleared immediately — no double-fire on refresh or back-navigation.
+  // Auto-open tab or load demo from URL params. Params are cleared immediately.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    const demo = new URLSearchParams(window.location.search).get('demo')
+    const params = new URLSearchParams(window.location.search)
+    const tab = params.get('tab')
+    const demo = params.get('demo')
+    if (tab || demo) window.history.replaceState({}, '', window.location.pathname)
+    if (tab === 'templates') { setActiveSidePanel('templates'); return }
     if (!demo) return
-    window.history.replaceState({}, '', window.location.pathname)
-    if (demo === 'ftir') handleFTIRSampleData()
+    const sampleIdMap: Record<string, SampleType> = {
+      xrd: 'xrd', ftir: 'ftir', fluorescence: 'fluorescence',
+      uvvis: 'uvvis', doseresponse: 'doseresponse',
+    }
+    const sampleType = sampleIdMap[demo] ?? 'generic'
+    trackSampleSelected({ sample_type: sampleType, source: 'url_param' })
+    if (demo === 'xrd') handleXRDSampleData()
+    else if (demo === 'ftir') handleFTIRSampleData()
     else if (demo === 'fluorescence') handlePLSampleData()
     else if (demo === 'uvvis') handleUVVisSampleData()
     else if (demo === 'doseresponse') handleDoseResponseSampleData()
@@ -732,6 +953,20 @@ export default function AppPage() {
     })
     if (template.defaultAxisLabels?.x != null) setXAxisLabel(template.defaultAxisLabels.x)
     if (template.defaultAxisLabels?.y != null) setYAxisLabel(template.defaultAxisLabels.y)
+    setActiveTemplateId(template.id)
+  }
+
+  // Wrapper for user-initiated style changes — fires figure_edited once per dataset
+  const handleUserStyleChange = (overrides: StyleOverrides, editType: FigureEditType = 'other') => {
+    if (!figureEditedFiredRef.current && dataSource !== null) {
+      figureEditedFiredRef.current = true
+      trackFigureEdited({ data_source: dataSource, edit_type: editType })
+    }
+    setCurrentStyleOverrides(overrides)
+  }
+
+  const handleUserStylePatch = (patch: Partial<StyleOverrides>) => {
+    handleUserStyleChange({ ...currentStyleOverrides, ...patch })
   }
 
   const ready = xCol && yCols.length > 0 && data.length > 0
@@ -773,7 +1008,13 @@ export default function AppPage() {
           return (
             <div>
               <FileUploader
-                onData={(cols, rows) => { handleData(cols, rows); trackUpload() }}
+                onData={(cols, rows) => {
+                  const x = cols[0] ?? ''
+                  const yCands = cols.filter(c => c !== x && !isErrorColumn(c))
+                  const initialY = yCands[0] ? [yCands[0]] : cols[1] ? [cols[1]] : []
+                  trackUploadCompleted({ source: 'compact', file_type: 'xlsx', row_count: rows.length, column_count: cols.length, series_count: initialY.length })
+                  handleData(cols, rows)
+                }}
                 compact
               />
 
@@ -877,7 +1118,13 @@ export default function AppPage() {
         return (
           <div>
             <FileUploader
-              onData={(cols, rows) => { handleData(cols, rows); trackUpload() }}
+              onData={(cols, rows) => {
+                const x = cols[0] ?? ''
+                const yCands = cols.filter(c => c !== x && !isErrorColumn(c))
+                const initialY = yCands[0] ? [yCands[0]] : cols[1] ? [cols[1]] : []
+                trackUploadCompleted({ source: 'compact', file_type: 'xlsx', row_count: rows.length, column_count: cols.length, series_count: initialY.length })
+                handleData(cols, rows)
+              }}
               compact
             />
 
@@ -958,7 +1205,7 @@ export default function AppPage() {
             overrides={styleOverrides}
             hasMultipleSeries={yCols.length > 1}
             columns={columns.filter(c => c !== xCol)}
-            onChange={setStyleOverrides}
+            onChange={handleUserStyleChange}
           />
         ) : (
           <p className="text-xs text-slate-400">Load data first to edit styles.</p>
@@ -1292,7 +1539,7 @@ export default function AppPage() {
           onTabChange={setActiveSidePanel}
         />
 
-        {activeSidePanel && (
+        {activeSidePanel && activeSidePanel !== 'templates' && (
           <ContextPanel
             title={PANEL_LABELS_MAP[activeSidePanel] ?? activeSidePanel}
             onCollapse={() => setActiveSidePanel(null)}
@@ -1302,6 +1549,40 @@ export default function AppPage() {
         )}
 
         <CanvasWorkspace>
+          {/* ── Template Gallery (replaces canvas when templates tab is active) ── */}
+          {activeSidePanel === 'templates' ? (
+            <SmartTemplateGallery
+              columns={columns}
+              data={data}
+              xCol={xCol}
+              yCols={yCols}
+              errorCols={errorCols}
+              onApply={handleApplySmartWorkflow}
+              onClose={() => setActiveSidePanel(null)}
+              onLoadFTIRDemo={handleLoadFTIRData}
+              onLoadDRDemo={handleLoadDRData}
+            />
+          ) : (
+          <>
+          {/* Sample loaded banner */}
+          {sampleBanner && (
+            <div className="mx-4 mt-2 shrink-0 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              <svg className="shrink-0 w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Sample loaded · <strong>Click anything</strong> on the figure to edit it</span>
+              <label className="ml-auto cursor-pointer font-semibold text-[#2563eb] hover:text-[#1d4ed8] transition-colors whitespace-nowrap shrink-0">
+                Replace with my data
+                <input type="file" accept=".xlsx,.xls,.csv" className="sr-only" onChange={handleReplaceWithMyData} />
+              </label>
+              <button onClick={() => setSampleBanner(false)} className="ml-2 shrink-0 text-emerald-400 hover:text-emerald-700 transition-colors" aria-label="Dismiss">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Log scale warning banner */}
           {logScaleWarning && (
             <div className="mx-4 mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
@@ -1347,7 +1628,7 @@ export default function AppPage() {
                 annotations={annotations}
                 onAnnotationsChange={setAnnotations}
                 onStyleChange={(patch) => {
-                  setStyleOverrides(prev => ({ ...prev, ...patch }))
+                  handleUserStylePatch(patch)
                   if (patch.insetDefined === false) setDrawInsetMode(false)
                 }}
                 onSaveTemplate={() => setSaveTemplateOpen(true)}
@@ -1357,15 +1638,23 @@ export default function AppPage() {
                 onSelectionChange={setSelectedAnnotationId}
                 onElementSelect={(el) => {
                   setSelectedElement(el)
-                  if (el) setInspectorTab('style')
+                  if (el) { setInspectorTab('style'); setRightInspectorOpen(true) }
                 }}
                 selectedElement={selectedElement}
+                dataSource={dataSource ?? 'sample'}
+                figureWorkflow={figureWorkflowRef.current}
               />
             ) : (
-              <div className="flex-1 flex items-center justify-center bg-[#f8fafc]">
+              <div className="flex-1 overflow-y-auto bg-[#f8fafc] flex flex-col items-center justify-center min-h-0 py-6">
                 <EmptyState
                   onFile={handleFileFromEmptyState}
-                  onSampleClick={handleSampleData}
+                  onSampleSelect={(id) => {
+                    if (id === 'xrd') handleXRDSampleData()
+                    else if (id === 'ftir') handleFTIRSampleData()
+                    else if (id === 'doseresponse') handleDoseResponseSampleData()
+                    else if (id === 'uvvis') handleUVVisSampleData()
+                    else if (id === 'fluorescence') handlePLSampleData()
+                  }}
                   onTemplatesClick={() => setActiveSidePanel('templates')}
                 />
               </div>
@@ -1420,12 +1709,14 @@ export default function AppPage() {
             style={{ height: 'calc(56px + env(safe-area-inset-bottom, 0px))' }}
             aria-hidden="true"
           />
+          </>
+          )}
         </CanvasWorkspace>
 
         <RightInspector
           activeTab={inspectorTab}
           onTabChange={setInspectorTab}
-          isOpen={rightInspectorOpen}
+          isOpen={rightInspectorOpen && activeSidePanel !== 'templates'}
           onCollapse={() => setRightInspectorOpen(false)}
           onExpand={() => setRightInspectorOpen(true)}
           selectedAnnotation={selectedAnnotation}
@@ -1450,15 +1741,15 @@ export default function AppPage() {
                 defaultColors={chartStyles[styleName].colors}
                 defaultStrokeWidth={chartStyles[styleName].strokeWidth}
                 defaultMarkerSize={chartStyles[styleName].dotRadius}
-                onSeriesColorsChange={(colors) => setStyleOverrides(prev => ({ ...prev, seriesColors: colors }))}
-                onSeriesStrokeWidthsChange={(widths) => setStyleOverrides(prev => ({ ...prev, seriesStrokeWidths: widths }))}
-                onSeriesMarkerSizesChange={(sizes) => setStyleOverrides(prev => ({ ...prev, seriesMarkerSizes: sizes }))}
-                onSeriesMarkerShapesChange={(shapes) => setStyleOverrides(prev => ({ ...prev, seriesMarkerShapes: shapes }))}
+                onSeriesColorsChange={(colors) => handleUserStyleChange({ ...styleOverrides, seriesColors: colors })}
+                onSeriesStrokeWidthsChange={(widths) => handleUserStyleChange({ ...styleOverrides, seriesStrokeWidths: widths })}
+                onSeriesMarkerSizesChange={(sizes) => handleUserStyleChange({ ...styleOverrides, seriesMarkerSizes: sizes })}
+                onSeriesMarkerShapesChange={(shapes) => handleUserStyleChange({ ...styleOverrides, seriesMarkerShapes: shapes })}
                 baseStyle={chartStyles[styleName]}
                 overrides={styleOverrides}
-                onChange={setStyleOverrides}
+                onChange={handleUserStyleChange}
                 selectedElement={selectedElement}
-                onElementSelect={setSelectedElement}
+                onElementSelect={(el) => { setSelectedElement(el); if (el) { setInspectorTab('style'); setRightInspectorOpen(true) } }}
                 doseResponseFits={doseResponseFits}
               />
             )
