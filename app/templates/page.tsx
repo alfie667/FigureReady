@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { LogoFull } from '@/components/Logo'
@@ -8,7 +8,6 @@ import TemplateDetailModal from '@/components/templates/TemplateDetailModal'
 import ColumnMappingModal from '@/components/templates/ColumnMappingModal'
 import { FIGURE_TEMPLATES } from '@/lib/templates/definitions'
 import { setPendingTemplate } from '@/lib/templates/session'
-// analytics imports removed — page redirects immediately to /app?tab=templates
 import type { FigureTemplate } from '@/lib/templates/types'
 
 const ENABLED = process.env.NEXT_PUBLIC_TEMPLATES_ENABLED === 'true'
@@ -34,10 +33,6 @@ export default function TemplatesPage() {
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
   const [detailTemplate, setDetailTemplate] = useState<FigureTemplate | null>(null)
   const [mappingTemplate, setMappingTemplate] = useState<FigureTemplate | null>(null)
-
-  useEffect(() => {
-    router.replace('/app?tab=templates')
-  }, [router])
 
   const handleCardClick = (tpl: FigureTemplate) => {
     setDetailTemplate(tpl)

@@ -81,12 +81,12 @@ export function isDebugMode(): boolean {
 // ── Central dispatcher ────────────────────────────────────────────────────────
 
 export function trackEvent(name: string, params?: Record<string, unknown>) {
-  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
   const payload = {
     ...(isDebugMode() && { debug_mode: true }),
     ...params,
   }
   if (isDebugMode()) console.log('[analytics]', name, payload)
+  if (typeof window === 'undefined' || typeof window.gtag !== 'function') return
   window.gtag('event', name, payload)
 }
 

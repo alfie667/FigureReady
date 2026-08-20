@@ -835,6 +835,7 @@ export default function AppPage() {
     setActiveSidePanel(null)
     const smartDataSource = dataSource ?? 'user_upload'
     trackSmartTemplateApplied({ template_id: result.templateId, template_name: result.templateName, chart_type: result.chartType, series_count: result.yCols.length, data_source: smartDataSource })
+    figureEditedFiredRef.current = false
     // Only fire figure_created for user-upload data, and only once per dataset
     if (smartDataSource === 'user_upload' && !figureCreatedFiredRef.current) {
       figureWorkflowRef.current = 'smart_template'
@@ -954,6 +955,7 @@ export default function AppPage() {
     if (template.defaultAxisLabels?.x != null) setXAxisLabel(template.defaultAxisLabels.x)
     if (template.defaultAxisLabels?.y != null) setYAxisLabel(template.defaultAxisLabels.y)
     setActiveTemplateId(template.id)
+    figureEditedFiredRef.current = false
   }
 
   // Wrapper for user-initiated style changes — fires figure_edited once per dataset
