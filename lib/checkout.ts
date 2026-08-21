@@ -146,26 +146,39 @@ export function startCheckout(
     }],
   }
 
+  // ── 5. Dev guard: never hit production Polar URLs from localhost ─────────────
+  // Prevents polluting the Polar dashboard with test sessions during development.
+  // All analytics events still fire normally (visible in GA4 debug view).
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.warn('[FigureReady] DEV: Polar redirect suppressed — would have gone to:', destination)
+    trackCheckoutOpened(checkoutContext)
+    checkoutInFlight = false
+    opts.onComplete?.()
+    return
+  }
+
   if (opts.newTab) {
-    // ── 5a. New tab: fire begin_checkout synchronously then open Polar ────────
-    window.gtag?.('event', 'begin_checkout', beginCheckoutPayload)
-    // Stamp the exact moment the Polar tab opens so abandonment duration is accurate.
+    // ── 6a. New tab: stamp timestamp, open Polar, fire GA4 events ─────────────
+    // Tab stays alive so there is no navigation race — order is semantic only.
     localStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify({ ...pending, checkout_opened_at: new Date().toISOString() }))
     window.open(destination, '_blank', 'noopener,noreferrer')
+    window.gtag?.('event', 'begin_checkout', beginCheckoutPayload)
     trackCheckoutOpened(checkoutContext)
     checkoutInFlight = false
     opts.onComplete?.()
   } else {
-    // ── 5b. Same tab: wait for GA4 to confirm the hit (max 1.5 s) ────────────
+    // ── 6b. Same tab: queue checkout_opened BEFORE begin_checkout ─────────────
+    // GA4 processes dataLayer events in FIFO order. Queuing checkout_opened first
+    // guarantees it is transmitted before begin_checkout's event_callback fires
+    // and the browser navigates away — no sendBeacon race.
+    localStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify({ ...pending, checkout_opened_at: new Date().toISOString() }))
+    trackCheckoutOpened(checkoutContext)
+
     let redirected = false
     const doRedirect = () => {
       if (redirected) return
       redirected = true
       checkoutInFlight = false
-      // Stamp the exact redirect moment before navigating away.
-      localStorage.setItem(CHECKOUT_PENDING_KEY, JSON.stringify({ ...pending, checkout_opened_at: new Date().toISOString() }))
-      // checkout_opened fires via sendBeacon — survives same-tab navigation
-      trackCheckoutOpened(checkoutContext)
       window.location.href = destination
     }
 

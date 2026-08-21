@@ -30,12 +30,10 @@ import {
   trackFigureCreated,
   trackFigureEdited,
   trackSmartTemplateApplied,
-  trackCheckoutReturnedWithoutPurchase,
   trackTemplateApplied,
   type SampleType,
   type FigureEditType,
 } from '@/lib/analytics'
-import { getPendingTemplate, clearPendingTemplate } from '@/lib/templates/session'
 import { buildTemplateOverrides } from '@/lib/templates/apply'
 import { FTIR_SAMPLE_ROWS, FTIR_COLUMNS, FTIR_X_COL, FTIR_Y_COLS } from '@/lib/samples/ftirSampleData'
 import { PL_SAMPLE_ROWS, PL_COLUMNS, PL_X_COL, PL_Y_COLS } from '@/lib/samples/plSampleData'
@@ -43,7 +41,7 @@ import { UVVIS_SAMPLE_ROWS, UVVIS_COLUMNS, UVVIS_X_COL, UVVIS_Y_COLS } from '@/l
 import { DR_SAMPLE_ROWS, DR_COLUMNS, DR_X_COL, DR_Y_COLS } from '@/lib/samples/doseResponseSampleData'
 import { XRD_SAMPLE_ROWS, XRD_COLUMNS, XRD_X_COL, XRD_Y_COLS } from '@/lib/samples/xrdSampleData'
 import { fit4PL, type Fit4PLResult } from '@/lib/curveFit4PL'
-import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
+import { getPendingTemplate, clearPendingTemplate } from '@/lib/templates/session'
 import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { getCachedEntitlement, refreshEntitlement, hasLegacyProFlag } from '@/lib/usageLimit'
 import RestoreAccessForm from '@/components/RestoreAccessForm'
@@ -219,14 +217,6 @@ export default function AppPage() {
     refreshEntitlement().then(e => {
       if (!e.isPro && hasLegacyProFlag()) setShowRestorePrompt(true)
     })
-
-    // Same-tab return: user navigated to Polar then hit back — pending checkout
-    // still in localStorage since success page never loaded to clear it.
-    const pending = getPendingCheckout()
-    if (pending) {
-      trackCheckoutReturnedWithoutPurchase(pending)
-      clearPendingCheckout()
-    }
   }, [])
 
   // ── Template apply (from /templates gallery flow) ─────────────────────────────
@@ -280,21 +270,6 @@ export default function AppPage() {
     preTemplateSnapRef.current = null
     setShowTemplateUndo(false)
   }
-
-  // New-tab return: app stays loaded while Polar opens in a new tab.
-  // When the user closes Polar and refocuses the app, detect the abandoned checkout.
-  useEffect(() => {
-    const onFocus = () => {
-      const pending = getPendingCheckout()
-      if (!pending) return
-      const secondsAway = (Date.now() - new Date(pending.started_at).getTime()) / 1000
-      if (secondsAway < 5) return // too fast — user didn't actually visit Polar
-      trackCheckoutReturnedWithoutPurchase(pending)
-      clearPendingCheckout()
-    }
-    window.addEventListener('focus', onFocus)
-    return () => window.removeEventListener('focus', onFocus)
-  }, [])
 
   // ── Share via URL ─────────────────────────────────────────────────────────────
 

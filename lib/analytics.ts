@@ -278,7 +278,13 @@ export function trackFeedback() {
   incLocal('feedbackSubmissions')
 }
 
+const PRICING_VIEWED_SESSION_KEY = 'fr_pricing_viewed'
+
 export function trackPricingView() {
+  if (typeof window !== 'undefined') {
+    if (sessionStorage.getItem(PRICING_VIEWED_SESSION_KEY)) return
+    sessionStorage.setItem(PRICING_VIEWED_SESSION_KEY, '1')
+  }
   trackEvent('pricing_viewed')
 }
 
@@ -351,7 +357,7 @@ export function trackCheckoutOpened(params: {
   })
 }
 
-export function trackCheckoutReturnedWithoutPurchase(pending: PendingCheckout) {
+export function trackCheckoutAbandoned(pending: PendingCheckout) {
   const openedAt  = pending.checkout_opened_at ?? pending.started_at
   const durationS = Math.round((Date.now() - new Date(openedAt).getTime()) / 1000)
   const abandonmentType =
@@ -361,11 +367,13 @@ export function trackCheckoutReturnedWithoutPurchase(pending: PendingCheckout) {
 
   const dev = deviceParams()
 
-  trackEvent('checkout_returned_without_purchase', {
+  trackEvent('checkout_abandoned', {
     ...dev,
     selected_plan:     pending.plan,
     checkout_source:   pending.location,
     trigger:           pending.trigger,
+    value:             pending.value,
+    currency:          pending.currency,
     time_away_seconds: durationS,
     abandonment_type:  abandonmentType,
     figure_created:    pending.figure_created,
@@ -374,7 +382,7 @@ export function trackCheckoutReturnedWithoutPurchase(pending: PendingCheckout) {
   })
 
   logFunnelEvent({
-    event_name:  'checkout_returned_without_purchase',
+    event_name:  'checkout_abandoned',
     plan:        pending.plan,
     source:      pending.location,
     device_type: dev.device_type as string,
@@ -409,40 +417,6 @@ export function trackPurchaseSuccess(params: {
   })
 }
 
-export function trackCheckoutCancelled(pending: PendingCheckout) {
-  const openedAt  = pending.checkout_opened_at ?? pending.started_at
-  const durationS = Math.round((Date.now() - new Date(openedAt).getTime()) / 1000)
-  const abandonmentType =
-    durationS < 10  ? 'immediate' :
-    durationS > 60  ? 'high_intent' :
-    'normal'
-
-  const dev = deviceParams()
-
-  trackEvent('checkout_cancelled', {
-    ...dev,
-    selected_plan:     pending.plan,
-    checkout_source:   pending.location,
-    trigger:           pending.trigger,
-    value:             pending.value,
-    currency:          pending.currency,
-    time_away_seconds: durationS,
-    abandonment_type:  abandonmentType,
-    figure_created:    pending.figure_created,
-    file_uploaded:     pending.file_uploaded,
-    sample_only:       pending.sample_only,
-  })
-
-  logFunnelEvent({
-    event_name:  'checkout_returned_without_purchase',
-    plan:        pending.plan,
-    source:      pending.location,
-    device_type: dev.device_type as string,
-    screen_width: dev.screen_width as number,
-    duration_s:  durationS,
-    abandon_type: abandonmentType,
-  })
-}
 
 // ── purchase (server-verified, deduped) ──────────────────────────────────────
 

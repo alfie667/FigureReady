@@ -30,14 +30,14 @@ async function getStats(days: number) {
           ROUND(AVG(duration_s))::int AS avg_s,
           PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY duration_s)::int AS median_s
         FROM funnel_events
-        WHERE event_name = 'checkout_returned_without_purchase'
+        WHERE event_name IN ('checkout_abandoned', 'checkout_returned_without_purchase')
           AND duration_s IS NOT NULL
           AND created_at > now() - ${interval}::interval
       `,
       sql`
         SELECT abandon_type, COUNT(*)::int AS count
         FROM funnel_events
-        WHERE event_name = 'checkout_returned_without_purchase'
+        WHERE event_name IN ('checkout_abandoned', 'checkout_returned_without_purchase')
           AND abandon_type IS NOT NULL
           AND created_at > now() - ${interval}::interval
         GROUP BY abandon_type
@@ -139,7 +139,8 @@ export default async function FunnelPage({ searchParams }: PageProps) {
 
   const opened    = find(counts, 'checkout_opened')
   const purchased = find(counts, 'purchase')
-  const returned  = find(counts, 'checkout_returned_without_purchase')
+  // Sum both names: new events use checkout_abandoned, historical data uses checkout_returned_without_purchase
+  const returned  = find(counts, 'checkout_abandoned') + find(counts, 'checkout_returned_without_purchase')
   const convRate  = pct(purchased, opened)
 
   const dur = durations[0]

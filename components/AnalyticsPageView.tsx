@@ -1,9 +1,8 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { trackEvent, trackCheckoutCancelled } from '@/lib/analytics'
+import { trackEvent, trackCheckoutAbandoned } from '@/lib/analytics'
 import { getPendingCheckout, clearPendingCheckout } from '@/lib/checkout'
-import { isProUser } from '@/lib/usageLimit'
 
 /**
  * Placed once in the root layout.
@@ -11,7 +10,10 @@ import { isProUser } from '@/lib/usageLimit'
  *   the redirect to Polar and are available on /success.
  * – Fires page_view on every SPA route change (skips the first render because
  *   GA4's gtag('config', ...) already fires page_view on initial load).
- * – Detects abandoned checkout (checkout_cancelled) via fr_checkout_pending.
+ * – Single authoritative detection point for checkout_abandoned events, covering:
+ *     (a) same-tab browser-back from Polar      → pageshow (bfcache restore)
+ *     (b) new-tab Polar closed, user refocuses  → window focus event
+ *     (c) user navigates elsewhere in the SPA   → pathname change check
  */
 export function AnalyticsPageView() {
   const pathname = usePathname()
@@ -26,21 +28,39 @@ export function AnalyticsPageView() {
     })
   }, [])
 
-  // Detect abandoned checkout — fires checkout_cancelled when user returns without purchasing.
-  // Covers: (a) same-tab browser-back from Polar, (b) new-tab Polar closed and user resumes.
+  // Detect abandoned checkout — single source of truth for checkout_abandoned.
+  // Runs on mount, on bfcache restore (pageshow), and on new-tab focus return.
   useEffect(() => {
     function checkAbandoned() {
       const pending = getPendingCheckout()
-      if (pending && !isProUser() && !window.location.pathname.startsWith('/success')) {
-        trackCheckoutCancelled(pending)
-        clearPendingCheckout()
-      }
+      if (!pending || window.location.pathname.startsWith('/success')) return
+      trackCheckoutAbandoned(pending)
+      clearPendingCheckout()
     }
+
     checkAbandoned()
-    // pageshow fires on bfcache restore (browser back button after hard redirect to Polar)
+
+    // (a) Same-tab: browser back from Polar restores the page from bfcache
     const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) checkAbandoned() }
     window.addEventListener('pageshow', onPageShow)
-    return () => window.removeEventListener('pageshow', onPageShow)
+
+    // (b) New-tab: user closes the Polar tab and refocuses this window
+    const onFocus = () => {
+      const pending = getPendingCheckout()
+      if (!pending || window.location.pathname.startsWith('/success')) return
+      // Guard: ignore focus events that fire immediately (< 5 s after checkout started)
+      // so we don't misfire when the Polar tab opens and steals then returns focus briefly.
+      const secondsAway = (Date.now() - new Date(pending.started_at).getTime()) / 1000
+      if (secondsAway < 5) return
+      trackCheckoutAbandoned(pending)
+      clearPendingCheckout()
+    }
+    window.addEventListener('focus', onFocus)
+
+    return () => {
+      window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [])
 
   // SPA page_view — skip initial render (GA4 config already fires it).
