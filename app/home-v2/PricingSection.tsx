@@ -21,10 +21,20 @@ const FREE_FEATURES = [
 
 const PRO_FEATURES = [
   'Unlimited exports',
-  'PNG, SVG & PDF',
-  '300 DPI · no watermark',
+  'PNG · SVG · PDF · TIFF · EPS',
+  '300 / 600 / 1200 DPI — your choice',
+  'Custom figure size in mm/cm (Nature, Science, Cell dimensions built-in)',
+  'No watermark',
   'Error bars & log scale',
-  'All scientific templates',
+  'Statistical significance annotations (★ p<0.05, ★★ p<0.01, ★★★ p<0.001)',
+  'Panel figures — combine multiple plots (Fig. 1A, 1B, 1C)',
+  'Journal-specific templates — Nature, Science, Cell, ACS, IEEE, Elsevier',
+  'Author instructions built-in — correct specs for each journal',
+  'Colorblind-friendly palettes (required by Nature & Cell)',
+  'Scientific fonts — Arial, Helvetica, Times New Roman',
+  'Customizable line width, marker size, axis ticks',
+  '7-day money-back guarantee',
+  'Priority support',
 ]
 
 export default function PricingSection() {
