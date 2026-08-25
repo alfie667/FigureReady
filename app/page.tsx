@@ -28,20 +28,20 @@ export const metadata: Metadata = {
 }
 
 const UNIVERSITIES = [
-  { badge: 'MIT',    name: 'MIT',                      color: '#A31F34' },
-  { badge: 'SU',     name: 'Stanford University',       color: '#8C1515' },
-  { badge: 'HU',     name: 'Harvard University',        color: '#A51C30' },
-  { badge: 'OX',     name: 'University of Oxford',      color: '#002147' },
-  { badge: 'ETH',    name: 'ETH Zürich',                color: '#1F407A' },
-  { badge: 'CNRS',   name: 'CNRS',                      color: '#003189' },
-  { badge: 'SB',     name: 'Sorbonne Université',       color: '#1A1A6E' },
-  { badge: 'MPI',    name: 'Max Planck Institute',      color: '#008A93' },
-  { badge: 'CAM',    name: 'Univ. of Cambridge',        color: '#003B5C' },
-  { badge: 'IC',     name: 'Imperial College London',   color: '#003E74' },
-  { badge: 'X',      name: 'École Polytechnique',       color: '#272B5B' },
-  { badge: 'TUM',    name: 'TU Munich',                 color: '#0065BD' },
-  { badge: 'NUS',    name: 'National Univ. Singapore',  color: '#003D7C' },
-  { badge: 'CIT',    name: 'Caltech',                   color: '#FF6C0C' },
+  { name: 'MIT',                     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/400px-MIT_logo.svg.png' },
+  { name: 'Stanford University',     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Seal_of_Leland_Stanford_Junior_University.svg/180px-Seal_of_Leland_Stanford_Junior_University.svg.png' },
+  { name: 'Harvard University',      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Harvard_University_coat_of_arms.svg/180px-Harvard_University_coat_of_arms.svg.png' },
+  { name: 'University of Oxford',    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Oxford-University-Circlet.svg/180px-Oxford-University-Circlet.svg.png' },
+  { name: 'ETH Zürich',              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/ETH_Z%C3%BCrich_Logo_black.svg/400px-ETH_Z%C3%BCrich_Logo_black.svg.png' },
+  { name: 'CNRS',                    logo: 'https://upload.wikimedia.org/wikipedia/fr/thumb/7/70/Logo_du_CNRS.svg/320px-Logo_du_CNRS.svg.png' },
+  { name: 'Sorbonne Université',     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Logo_Sorbonne_Universit%C3%A9.png/400px-Logo_Sorbonne_Universit%C3%A9.png' },
+  { name: 'Max Planck Institute',    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Max_Planck_Society_logo.svg/320px-Max_Planck_Society_logo.svg.png' },
+  { name: 'Univ. of Cambridge',      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Coat_of_Arms_of_the_University_of_Cambridge.svg/180px-Coat_of_Arms_of_the_University_of_Cambridge.svg.png' },
+  { name: 'Imperial College London', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Imperial_College_London_crest.svg/180px-Imperial_College_London_crest.svg.png' },
+  { name: 'École Polytechnique',     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/%C3%89cole_polytechnique_signature.svg/320px-%C3%89cole_polytechnique_signature.svg.png' },
+  { name: 'TU Munich',               logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/TU_M%C3%BCnchen_Logo.svg/320px-TU_M%C3%BCnchen_Logo.svg.png' },
+  { name: 'NUS Singapore',           logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b9/NUS_coat_of_arms.svg/180px-NUS_coat_of_arms.svg.png' },
+  { name: 'Caltech',                 logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Caltech_seal.svg/180px-Caltech_seal.svg.png' },
 ]
 
 function ArrowRight() {
@@ -173,15 +173,15 @@ export default function HomePage() {
         <div className="overflow-hidden">
           <div className="animate-marquee flex items-center gap-0">
             {[...UNIVERSITIES, ...UNIVERSITIES].map((uni, i) => (
-              <span key={i} className="flex items-center shrink-0 gap-2.5 px-7">
-                <span
-                  className="inline-flex items-center justify-center rounded-md text-white font-bold text-[10px] tracking-wide shrink-0"
-                  style={{ backgroundColor: uni.color, minWidth: '2rem', height: '1.5rem', padding: '0 6px' }}
-                >
-                  {uni.badge}
-                </span>
-                <span className="text-sm font-medium text-slate-500 whitespace-nowrap">{uni.name}</span>
-                <span className="text-slate-200 text-base select-none ml-7">|</span>
+              <span key={i} className="flex items-center shrink-0 gap-3 px-10">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={uni.logo}
+                  alt={uni.name}
+                  height={36}
+                  className="h-9 w-auto object-contain grayscale opacity-50 hover:opacity-80 hover:grayscale-0 transition-all duration-300"
+                  style={{ maxWidth: '130px' }}
+                />
               </span>
             ))}
           </div>
