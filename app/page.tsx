@@ -27,85 +27,22 @@ export const metadata: Metadata = {
   },
 }
 
-const LC = '#64748b'
-const S  = { fontFamily: "Georgia,'Times New Roman',serif" }
-const SS = { fontFamily: "'Helvetica Neue',Arial,sans-serif" }
-const SH = 'M1 1h20v14q0 11-10 15q-10-4-10-15z'
+const LOGO_STYLE: React.CSSProperties = {
+  height: '44px',
+  width: 'auto',
+  maxWidth: '160px',
+  objectFit: 'contain' as const,
+  filter: 'brightness(0) saturate(0) invert(44%) sepia(18%) saturate(600%) hue-rotate(185deg) opacity(0.85)',
+}
 
 const LOGOS = [
-  // Oxford
-  <svg key="oxford" viewBox="0 0 145 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="University of Oxford">
-    <path d={SH} fill="none" stroke={LC} strokeWidth="1.4" transform="translate(0 4)"/>
-    <text x="27" y="16" style={S} fontSize="8" letterSpacing="1.4" fill={LC}>UNIVERSITY OF</text>
-    <text x="27" y="32" style={S} fontSize="15" fontWeight="700" letterSpacing="1" fill={LC}>OXFORD</text>
-  </svg>,
-  // UC Berkeley
-  <svg key="berkeley" viewBox="0 0 132 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="UC Berkeley">
-    <circle cx="11" cy="19" r="10" fill="none" stroke={LC} strokeWidth="1.4"/>
-    <text x="11" y="23" textAnchor="middle" style={SS} fontSize="8" fontWeight="700" fill={LC}>UC</text>
-    <text x="26" y="26" style={S} fontSize="18" fontWeight="400" fill={LC}>Berkeley</text>
-  </svg>,
-  // Max Planck
-  <svg key="maxplanck" viewBox="0 0 162 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="Max Planck Gesellschaft">
-    <circle cx="12" cy="19" r="11" fill="none" stroke={LC} strokeWidth="1.4"/>
-    <text x="12" y="23" textAnchor="middle" style={S} fontSize="10" fontWeight="700" fill={LC}>M</text>
-    <text x="28" y="15" style={S} fontSize="9" letterSpacing="1" fill={LC}>MAX PLANCK</text>
-    <text x="28" y="29" style={S} fontSize="8.5" letterSpacing="0.5" fill={LC}>GESELLSCHAFT</text>
-  </svg>,
-  // Yale
-  <svg key="yale" viewBox="0 0 130 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="Yale University">
-    <path d={SH} fill="none" stroke={LC} strokeWidth="1.4" transform="translate(0 4)"/>
-    <text x="27" y="16" style={S} fontSize="8" letterSpacing="1.4" fill={LC}>LUX ET VERITAS</text>
-    <text x="27" y="33" style={S} fontSize="16" fontWeight="700" letterSpacing="1" fill={LC}>YALE</text>
-  </svg>,
-  // Imperial College
-  <svg key="imperial" viewBox="0 0 174 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="Imperial College London">
-    <path d={SH} fill="none" stroke={LC} strokeWidth="1.4" transform="translate(0 4)"/>
-    <text x="27" y="16" style={S} fontSize="8" letterSpacing="1" fill={LC}>IMPERIAL COLLEGE</text>
-    <text x="27" y="32" style={S} fontSize="14" fontWeight="700" letterSpacing="1" fill={LC}>LONDON</text>
-  </svg>,
-  // UTokyo
-  <svg key="utokyo" viewBox="0 0 160 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="University of Tokyo">
-    <circle cx="12" cy="19" r="11" fill="none" stroke={LC} strokeWidth="1.4"/>
-    <text x="12" y="23" textAnchor="middle" style={S} fontSize="9" fontWeight="700" fill={LC}>東</text>
-    <text x="28" y="15" style={S} fontSize="8" letterSpacing="1" fill={LC}>UNIVERSITY OF</text>
-    <text x="28" y="31" style={S} fontSize="14" fontWeight="700" letterSpacing="1" fill={LC}>TOKYO</text>
-  </svg>,
-  // MIT
-  <svg key="mit" viewBox="0 0 72 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="MIT">
-    <text x="0" y="32" style={SS} fontWeight="900" fontSize="34" fill={LC} letterSpacing="-1">MIT</text>
-  </svg>,
-  // ETH Zürich
-  <svg key="eth" viewBox="0 0 148 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="ETH Zürich">
-    <text x="0" y="30" style={SS} fontWeight="900" fontSize="26" fill={LC}>ETH</text>
-    <line x1="52" y1="4" x2="52" y2="34" stroke={LC} strokeWidth="1"/>
-    <text x="58" y="18" style={SS} fontWeight="300" fontSize="11" fill={LC}>Zürich</text>
-    <text x="58" y="31" style={SS} fontSize="8" letterSpacing="0.5" fill={LC} opacity="0.6">SWITZERLAND</text>
-  </svg>,
-  // Harvard
-  <svg key="harvard" viewBox="0 0 148 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="Harvard University">
-    <path d={SH} fill="none" stroke={LC} strokeWidth="1.4" transform="translate(0 4)"/>
-    <text x="27" y="16" style={S} fontSize="8" letterSpacing="1.4" fill={LC}>VERITAS</text>
-    <text x="27" y="32" style={S} fontSize="14" fontWeight="700" letterSpacing="1" fill={LC}>HARVARD</text>
-  </svg>,
-  // Cambridge
-  <svg key="cambridge" viewBox="0 0 162 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="University of Cambridge">
-    <path d={SH} fill="none" stroke={LC} strokeWidth="1.4" transform="translate(0 4)"/>
-    <text x="27" y="16" style={S} fontSize="8" letterSpacing="1.4" fill={LC}>UNIVERSITY OF</text>
-    <text x="27" y="32" style={S} fontSize="14" fontWeight="700" letterSpacing="1" fill={LC}>CAMBRIDGE</text>
-  </svg>,
-  // CNRS
-  <svg key="cnrs" viewBox="0 0 105 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="CNRS">
-    <rect x="1" y="5" width="22" height="26" rx="2" fill="none" stroke={LC} strokeWidth="1.4"/>
-    <text x="12" y="17" textAnchor="middle" style={SS} fontSize="6" fontWeight="700" fill={LC}>CENTRE</text>
-    <text x="12" y="25" textAnchor="middle" style={SS} fontSize="6" fontWeight="700" fill={LC}>NATIONAL</text>
-    <text x="30" y="26" style={SS} fontWeight="900" fontSize="20" fill={LC} letterSpacing="0">CNRS</text>
-  </svg>,
-  // TU Munich
-  <svg key="tum" viewBox="0 0 140 38" height="38" xmlns="http://www.w3.org/2000/svg" aria-label="TU Munich">
-    <text x="0" y="30" style={SS} fontWeight="900" fontSize="26" fill={LC} letterSpacing="0">TUM</text>
-    <text x="2" y="38" style={SS} fontSize="7" letterSpacing="1" fill={LC} opacity="0.7">MÜNCHEN</text>
-  </svg>,
+  { name: 'MIT',                  src: '/logos/mit.svg' },
+  { name: 'ETH Zürich',          src: '/logos/eth.svg' },
+  { name: 'Yale University',      src: '/logos/yale.svg' },
+  { name: 'University of Oxford', src: '/logos/oxford.svg' },
+  { name: 'Harvard University',   src: '/logos/harvard.svg' },
+  { name: 'Univ. of Cambridge',   src: '/logos/cambridge.svg' },
+  { name: 'UC Berkeley',          src: '/logos/berkeley.svg' },
 ]
 
 function ArrowRight() {
@@ -237,8 +174,9 @@ export default function HomePage() {
         <div className="overflow-hidden">
           <div className="animate-marquee flex items-center">
             {[...LOGOS, ...LOGOS].map((logo, i) => (
-              <span key={i} className="flex items-center justify-center shrink-0 px-10">
-                {logo}
+              <span key={i} className="flex items-center justify-center shrink-0 px-12">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={logo.src} alt={logo.name} style={LOGO_STYLE} />
               </span>
             ))}
           </div>
