@@ -11,14 +11,20 @@ export const metadata: Metadata = {
 
 
 const proFeatures = [
-  'Unlimited figures',
-  'Excel upload (.xlsx)',
-  'Line, scatter, bar charts',
-  'PNG & SVG export (300 DPI)',
+  'Unlimited exports',
+  'PNG · SVG · PDF · TIFF · EPS',
+  '300 / 600 / 1200 DPI — your choice',
+  'Custom figure size in mm/cm (Nature, Science, Cell dimensions built-in)',
   'No watermark',
-  'ACS / Nature / IEEE styles',
-  'Error bars',
-  'Style customization',
+  'Error bars & log scale',
+  'Statistical significance annotations (★ p<0.05, ★★ p<0.01, ★★★ p<0.001)',
+  'Panel figures — combine multiple plots (Fig. 1A, 1B, 1C)',
+  'Journal-specific templates — Nature, Science, Cell, ACS, IEEE, Elsevier',
+  'Author instructions built-in — correct specs for each journal',
+  'Colorblind-friendly palettes (required by Nature & Cell)',
+  'Scientific fonts — Arial, Helvetica, Times New Roman',
+  'Customizable line width, marker size, axis ticks',
+  '7-day money-back guarantee',
   'Priority support',
 ]
 
