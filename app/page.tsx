@@ -27,10 +27,9 @@ export const metadata: Metadata = {
   },
 }
 
-const LC = '#64748b' // slate-500 — same monochrome blue-slate as figurelabs.ai
-const S = `font-family:Georgia,'Times New Roman',serif`
-const SS = `font-family:'Helvetica Neue',Arial,sans-serif`
-// simple shield path (22×27 px bounding box)
+const LC = '#64748b'
+const S  = { fontFamily: "Georgia,'Times New Roman',serif" }
+const SS = { fontFamily: "'Helvetica Neue',Arial,sans-serif" }
 const SH = 'M1 1h20v14q0 11-10 15q-10-4-10-15z'
 
 const LOGOS = [
