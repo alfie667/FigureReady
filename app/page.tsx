@@ -28,21 +28,22 @@ export const metadata: Metadata = {
 }
 
 const LOGO_STYLE: React.CSSProperties = {
-  height: '44px',
+  height: '36px',
   width: 'auto',
-  maxWidth: '160px',
+  maxWidth: '240px',
   objectFit: 'contain' as const,
   filter: 'brightness(0) saturate(0) invert(44%) sepia(18%) saturate(600%) hue-rotate(185deg) opacity(0.85)',
 }
 
 const LOGOS = [
-  { name: 'MIT',                  src: '/logos/mit.svg' },
-  { name: 'ETH Zürich',          src: '/logos/eth.svg' },
-  { name: 'Yale University',      src: '/logos/yale.svg' },
-  { name: 'University of Oxford', src: '/logos/oxford.svg' },
-  { name: 'Harvard University',   src: '/logos/harvard.svg' },
-  { name: 'Univ. of Cambridge',   src: '/logos/cambridge.svg' },
-  { name: 'UC Berkeley',          src: '/logos/berkeley.svg' },
+  { name: 'MIT',               src: '/logos/mit.svg' },
+  { name: 'Stanford',         src: '/logos/stanford-wm.svg' },
+  { name: 'ETH Zürich',       src: '/logos/eth.svg' },
+  { name: 'Harvard',          src: '/logos/harvard-wm.svg' },
+  { name: 'Max Planck',       src: '/logos/maxplanck.svg' },
+  { name: 'Yale University',  src: '/logos/yale-wm.svg' },
+  { name: 'Imperial College', src: '/logos/imperial-wm.svg' },
+  { name: 'UC Berkeley',      src: '/logos/berkeley-wm.svg' },
 ]
 
 function ArrowRight() {
