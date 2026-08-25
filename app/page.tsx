@@ -148,6 +148,104 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── UNIVERSITY LOGOS MARQUEE ─────────────────────────────────── */}
+      <section className="border-t border-slate-100 py-10 bg-white">
+        <p className="text-center text-xs font-semibold tracking-[0.16em] uppercase text-slate-400 mb-7">
+          Used by researchers at
+        </p>
+        <div className="overflow-hidden">
+          <div className="animate-marquee flex items-center gap-0">
+            {[
+              'MIT', 'Stanford University', 'Harvard University', 'University of Oxford',
+              'ETH Zürich', 'CNRS', 'Sorbonne Université', 'Max Planck Institute',
+              'University of Cambridge', 'Imperial College London', 'École Polytechnique',
+              'TU Munich', 'National University of Singapore', 'Caltech',
+              'MIT', 'Stanford University', 'Harvard University', 'University of Oxford',
+              'ETH Zürich', 'CNRS', 'Sorbonne Université', 'Max Planck Institute',
+              'University of Cambridge', 'Imperial College London', 'École Polytechnique',
+              'TU Munich', 'National University of Singapore', 'Caltech',
+            ].map((uni, i) => (
+              <span key={i} className="flex items-center shrink-0">
+                <span className="text-sm font-semibold text-slate-400 tracking-wide whitespace-nowrap px-8">{uni}</span>
+                <span className="text-slate-200 text-lg select-none">·</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
+      <section className="border-t border-slate-100 py-20 md:py-28 bg-[#f8fafc]">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs font-semibold tracking-[0.16em] uppercase text-blue-600 mb-3">
+              Testimonials
+            </span>
+            <h2
+              className="font-bold text-[1.8rem] md:text-[2.5rem] leading-tight tracking-[-0.02em] text-[#0f172a]"
+              style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
+            >
+              Researchers switching from OriginLab &amp; Prism
+            </h2>
+            <p className="mt-4 text-base text-slate-500 max-w-[520px] mx-auto">
+              See why scientists are choosing FigureReady over legacy tools for their publication figures.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            {([
+              {
+                quote: "I used to spend hours reformatting XRD figures in OriginLab. With FigureReady, I get publication-ready output in minutes — no more fighting with axis settings or font sizes.",
+                name: "Dr. Sarah M.",
+                role: "Postdoc, Materials Science",
+                institution: "ETH Zürich",
+                from: "OriginLab",
+              },
+              {
+                quote: "GraphPad Prism handles the stats well, but the figure quality never matched what journals expect. FigureReady gives me Nature-ready dose-response figures straight away.",
+                name: "Thomas K.",
+                role: "PhD candidate, Pharmacology",
+                institution: "Université Paris Cité",
+                from: "Prism GraphPad",
+              },
+              {
+                quote: "OriginLab's learning curve was too steep for quick figures. FigureReady has FTIR and UV-Vis templates pre-configured exactly as I need them — I just import my data and export.",
+                name: "Dr. Amina B.",
+                role: "Researcher, Spectroscopy",
+                institution: "CNRS",
+                from: "OriginLab",
+              },
+              {
+                quote: "I recommended FigureReady to my whole lab. No more inconsistent styling or wasted hours trying to make Prism figures look presentable for submission.",
+                name: "Prof. J. Chen",
+                role: "Principal Investigator",
+                institution: "National University of Singapore",
+                from: "Prism GraphPad",
+              },
+            ] as { quote: string; name: string; role: string; institution: string; from: string }[]).map((t, i) => (
+              <div key={i} className="flex flex-col bg-white border border-slate-200 rounded-2xl p-7 gap-5 shadow-sm">
+                <div className="flex gap-0.5">
+                  {[0,1,2,3,4].map(s => (
+                    <svg key={s} className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-slate-700 leading-relaxed text-[15px] flex-1">&ldquo;{t.quote}&rdquo;</p>
+                <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                  <div>
+                    <p className="font-semibold text-[#0f172a] text-sm">{t.name}</p>
+                    <p className="text-xs text-slate-500">{t.role} · {t.institution}</p>
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full whitespace-nowrap">
+                    Previously: {t.from}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 3. UPLOAD ────────────────────────────────────────────────── */}
       <section className="border-t border-slate-100 py-24 md:py-36">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
