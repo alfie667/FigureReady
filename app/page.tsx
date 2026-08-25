@@ -27,6 +27,23 @@ export const metadata: Metadata = {
   },
 }
 
+const UNIVERSITIES = [
+  { badge: 'MIT',    name: 'MIT',                      color: '#A31F34' },
+  { badge: 'SU',     name: 'Stanford University',       color: '#8C1515' },
+  { badge: 'HU',     name: 'Harvard University',        color: '#A51C30' },
+  { badge: 'OX',     name: 'University of Oxford',      color: '#002147' },
+  { badge: 'ETH',    name: 'ETH Zürich',                color: '#1F407A' },
+  { badge: 'CNRS',   name: 'CNRS',                      color: '#003189' },
+  { badge: 'SB',     name: 'Sorbonne Université',       color: '#1A1A6E' },
+  { badge: 'MPI',    name: 'Max Planck Institute',      color: '#008A93' },
+  { badge: 'CAM',    name: 'Univ. of Cambridge',        color: '#003B5C' },
+  { badge: 'IC',     name: 'Imperial College London',   color: '#003E74' },
+  { badge: 'X',      name: 'École Polytechnique',       color: '#272B5B' },
+  { badge: 'TUM',    name: 'TU Munich',                 color: '#0065BD' },
+  { badge: 'NUS',    name: 'National Univ. Singapore',  color: '#003D7C' },
+  { badge: 'CIT',    name: 'Caltech',                   color: '#FF6C0C' },
+]
+
 function ArrowRight() {
   return (
     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -155,19 +172,16 @@ export default function HomePage() {
         </p>
         <div className="overflow-hidden">
           <div className="animate-marquee flex items-center gap-0">
-            {[
-              'MIT', 'Stanford University', 'Harvard University', 'University of Oxford',
-              'ETH Zürich', 'CNRS', 'Sorbonne Université', 'Max Planck Institute',
-              'University of Cambridge', 'Imperial College London', 'École Polytechnique',
-              'TU Munich', 'National University of Singapore', 'Caltech',
-              'MIT', 'Stanford University', 'Harvard University', 'University of Oxford',
-              'ETH Zürich', 'CNRS', 'Sorbonne Université', 'Max Planck Institute',
-              'University of Cambridge', 'Imperial College London', 'École Polytechnique',
-              'TU Munich', 'National University of Singapore', 'Caltech',
-            ].map((uni, i) => (
-              <span key={i} className="flex items-center shrink-0">
-                <span className="text-sm font-semibold text-slate-400 tracking-wide whitespace-nowrap px-8">{uni}</span>
-                <span className="text-slate-200 text-lg select-none">·</span>
+            {[...UNIVERSITIES, ...UNIVERSITIES].map((uni, i) => (
+              <span key={i} className="flex items-center shrink-0 gap-2.5 px-7">
+                <span
+                  className="inline-flex items-center justify-center rounded-md text-white font-bold text-[10px] tracking-wide shrink-0"
+                  style={{ backgroundColor: uni.color, minWidth: '2rem', height: '1.5rem', padding: '0 6px' }}
+                >
+                  {uni.badge}
+                </span>
+                <span className="text-sm font-medium text-slate-500 whitespace-nowrap">{uni.name}</span>
+                <span className="text-slate-200 text-base select-none ml-7">|</span>
               </span>
             ))}
           </div>
