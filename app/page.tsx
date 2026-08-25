@@ -27,21 +27,21 @@ export const metadata: Metadata = {
   },
 }
 
+const LOGO_FILTER = 'brightness(0) saturate(0) invert(55%) sepia(15%) saturate(500%) hue-rotate(192deg) brightness(0.85)'
+
 const UNIVERSITIES = [
-  { name: 'MIT',                     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/400px-MIT_logo.svg.png' },
-  { name: 'Stanford University',     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Seal_of_Leland_Stanford_Junior_University.svg/180px-Seal_of_Leland_Stanford_Junior_University.svg.png' },
-  { name: 'Harvard University',      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Harvard_University_coat_of_arms.svg/180px-Harvard_University_coat_of_arms.svg.png' },
-  { name: 'University of Oxford',    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Oxford-University-Circlet.svg/180px-Oxford-University-Circlet.svg.png' },
-  { name: 'ETH Zürich',              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/ETH_Z%C3%BCrich_Logo_black.svg/400px-ETH_Z%C3%BCrich_Logo_black.svg.png' },
-  { name: 'CNRS',                    logo: 'https://upload.wikimedia.org/wikipedia/fr/thumb/7/70/Logo_du_CNRS.svg/320px-Logo_du_CNRS.svg.png' },
-  { name: 'Sorbonne Université',     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Logo_Sorbonne_Universit%C3%A9.png/400px-Logo_Sorbonne_Universit%C3%A9.png' },
+  { name: 'University of Oxford',    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/Oxford-University-Circlet.svg/200px-Oxford-University-Circlet.svg.png' },
+  { name: 'UC Berkeley',             logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Seal_of_University_of_California%2C_Berkeley.svg/200px-Seal_of_University_of_California%2C_Berkeley.svg.png' },
   { name: 'Max Planck Institute',    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Max_Planck_Society_logo.svg/320px-Max_Planck_Society_logo.svg.png' },
-  { name: 'Univ. of Cambridge',      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Coat_of_Arms_of_the_University_of_Cambridge.svg/180px-Coat_of_Arms_of_the_University_of_Cambridge.svg.png' },
-  { name: 'Imperial College London', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Imperial_College_London_crest.svg/180px-Imperial_College_London_crest.svg.png' },
-  { name: 'École Polytechnique',     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/%C3%89cole_polytechnique_signature.svg/320px-%C3%89cole_polytechnique_signature.svg.png' },
+  { name: 'Yale University',         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Yale_University_Shield_1.svg/200px-Yale_University_Shield_1.svg.png' },
+  { name: 'Imperial College London', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Imperial_College_London_crest.svg/200px-Imperial_College_London_crest.svg.png' },
+  { name: 'University of Tokyo',     logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/e/e1/University_of_Tokyo_seal.svg/200px-University_of_Tokyo_seal.svg.png' },
+  { name: 'MIT',                     logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/MIT_logo.svg/400px-MIT_logo.svg.png' },
+  { name: 'ETH Zürich',              logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/ETH_Z%C3%BCrich_Logo_black.svg/400px-ETH_Z%C3%BCrich_Logo_black.svg.png' },
+  { name: 'Harvard University',      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Harvard_University_coat_of_arms.svg/200px-Harvard_University_coat_of_arms.svg.png' },
+  { name: 'Univ. of Cambridge',      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Coat_of_Arms_of_the_University_of_Cambridge.svg/200px-Coat_of_Arms_of_the_University_of_Cambridge.svg.png' },
+  { name: 'CNRS',                    logo: 'https://upload.wikimedia.org/wikipedia/fr/thumb/7/70/Logo_du_CNRS.svg/280px-Logo_du_CNRS.svg.png' },
   { name: 'TU Munich',               logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/TU_M%C3%BCnchen_Logo.svg/320px-TU_M%C3%BCnchen_Logo.svg.png' },
-  { name: 'NUS Singapore',           logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/b/b9/NUS_coat_of_arms.svg/180px-NUS_coat_of_arms.svg.png' },
-  { name: 'Caltech',                 logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7f/Caltech_seal.svg/180px-Caltech_seal.svg.png' },
 ]
 
 function ArrowRight() {
@@ -166,21 +166,21 @@ export default function HomePage() {
       </section>
 
       {/* ── UNIVERSITY LOGOS MARQUEE ─────────────────────────────────── */}
-      <section className="border-t border-slate-100 py-10 bg-white">
-        <p className="text-center text-xs font-semibold tracking-[0.16em] uppercase text-slate-400 mb-7">
-          Used by researchers at
+      <section className="py-14 bg-[#f9fafb] border-t border-slate-100">
+        <p className="text-center text-sm text-slate-400 mb-10">
+          Trusted by researchers from leading institutions
         </p>
         <div className="overflow-hidden">
-          <div className="animate-marquee flex items-center gap-0">
+          <div className="animate-marquee flex items-center">
             {[...UNIVERSITIES, ...UNIVERSITIES].map((uni, i) => (
-              <span key={i} className="flex items-center shrink-0 gap-3 px-10">
+              <span key={i} className="flex items-center justify-center shrink-0 px-14">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={uni.logo}
                   alt={uni.name}
-                  height={36}
-                  className="h-9 w-auto object-contain grayscale opacity-50 hover:opacity-80 hover:grayscale-0 transition-all duration-300"
-                  style={{ maxWidth: '130px' }}
+                  height={44}
+                  className="h-11 w-auto object-contain"
+                  style={{ maxWidth: '150px', filter: LOGO_FILTER }}
                 />
               </span>
             ))}
