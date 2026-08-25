@@ -46,7 +46,12 @@ import { SAMPLE_ROWS } from '@/components/SampleDataButton'
 import { getCachedEntitlement, refreshEntitlement, hasLegacyProFlag } from '@/lib/usageLimit'
 import RestoreAccessForm from '@/components/RestoreAccessForm'
 import PaywallModal from '@/components/PaywallModal'
-import { type PanelConfig, type PanelLayout, getLayoutCount, PANEL_LABELS } from '@/lib/panels'
+import { MultiPanelComposerBar } from '@/components/editor/MultiPanelComposerBar'
+import {
+  type PanelConfig, type PanelLayout, type PanelLabelConfig, type ComposerConfig,
+  getLayoutCount, PANEL_LABELS, DEFAULT_LABEL_CONFIG, DEFAULT_COMPOSER_CONFIG,
+  HARMONIZABLE_KEYS,
+} from '@/lib/panels'
 import { parseExcelFile } from '@/lib/parseExcel'
 import { LineThicknessPicker, ToggleSwitch, type NumericPreset } from '@/components/StyleControls'
 import AnnotationToolbar from '@/components/AnnotationToolbar'
@@ -173,7 +178,9 @@ export default function AppPage() {
   const [panelLayout, setPanelLayout] = useState<PanelLayout>('2h')
   const [panels, setPanels] = useState<PanelConfig[]>([])
   const [activePanel, setActivePanel] = useState(0)
-  const [panelAnnotations, setPanelAnnotations] = useState<ChartAnnotation[][]>([[], [], [], []])
+  const [figureStyleOverrides, setFigureStyleOverrides] = useState<StyleOverrides>({})
+  const [labelConfig, setLabelConfig] = useState<PanelLabelConfig>(DEFAULT_LABEL_CONFIG)
+  const [composerConfig, setComposerConfig] = useState<ComposerConfig>(DEFAULT_COMPOSER_CONFIG)
   const [sidebarActiveTool, setSidebarActiveTool] = useState<AnnotationTool>('select')
 
   // ── New shell state ────────────────────────────────────────────────────────
@@ -401,14 +408,21 @@ export default function AppPage() {
     xCol: '', yCols: [], chartType,
     styleOverrides: {}, seriesNames: {}, errorCols: {},
     xAxisLabel: '', yAxisLabel: '',
+    annotations: [],
   })
 
   const toggleMultiPanel = () => {
-    if (!isMultiPanel) {
+    if (!isMultiPanel && panels.length === 0) {
+      const panelA: PanelConfig = {
+        id: 'A', data, columns, xCol, yCols, chartType,
+        styleOverrides, seriesNames, errorCols, xAxisLabel, yAxisLabel, annotations,
+      }
       const count = getLayoutCount(panelLayout)
-      setPanels(Array.from({ length: count }, (_, i) => makeEmptyPanel(PANEL_LABELS[i])))
+      const rest = Array.from({ length: count - 1 }, (_, i) =>
+        makeEmptyPanel(PANEL_LABELS[i + 1])
+      )
+      setPanels([panelA, ...rest])
       setActivePanel(0)
-      setPanelAnnotations([[], [], [], []])
     }
     setIsMultiPanel(v => !v)
   }
@@ -426,6 +440,63 @@ export default function AppPage() {
     })
     if (activePanel >= newCount) setActivePanel(newCount - 1)
     setPanelLayout(newLayout)
+  }
+
+  const handleAddPanel = () => {
+    if (panels.length >= getLayoutCount(panelLayout)) return
+    const newId = PANEL_LABELS[panels.length] ?? `P${panels.length + 1}`
+    setPanels(prev => [...prev, makeEmptyPanel(newId)])
+  }
+
+  const handleDuplicatePanel = () => {
+    if (panels.length >= getLayoutCount(panelLayout)) return
+    const src = panels[activePanel]
+    const newId = PANEL_LABELS[panels.length] ?? `P${panels.length + 1}`
+    setPanels(prev => [...prev, { ...src, id: newId, annotations: [] }])
+    setActivePanel(panels.length)
+  }
+
+  const handleRemovePanel = () => {
+    if (panels.length <= 1) return
+    const idx = activePanel
+    setPanels(prev => prev.filter((_, i) => i !== idx))
+    if (idx >= panels.length - 1) setActivePanel(panels.length - 2)
+  }
+
+  // Copy the current single-figure state into the next empty panel slot, then open the composer.
+  const handleAddCurrentFigureToNextPanel = () => {
+    const emptyIdx = panels.findIndex(p => p.columns.length === 0)
+    if (emptyIdx === -1) return
+    updatePanel(emptyIdx, {
+      data, columns, xCol, yCols, chartType,
+      styleOverrides, seriesNames, errorCols,
+      xAxisLabel, yAxisLabel, annotations,
+    })
+    setIsMultiPanel(true)
+    setActivePanel(emptyIdx)
+  }
+
+  const handleHarmonize = () => {
+    if (panels.length <= 1) return
+    // Effective style = figure-level baseline merged with active panel's own overrides.
+    // This is what the user sees on the active panel right now.
+    const effective = { ...figureStyleOverrides, ...panels[activePanel].styleOverrides } as Record<string, unknown>
+
+    // Extract only the presentation keys on the whitelist that are actually set.
+    const patch: Record<string, unknown> = {}
+    for (const key of HARMONIZABLE_KEYS) {
+      if (effective[key] !== undefined) patch[key] = effective[key]
+    }
+
+    // 1. Write to figure-level — becomes the shared baseline for all panels.
+    setFigureStyleOverrides(prev => ({ ...prev, ...patch }) as StyleOverrides)
+
+    // 2. Strip those keys from every panel's individual overrides — they now inherit figure-level.
+    setPanels(prev => prev.map(p => {
+      const remaining = { ...p.styleOverrides } as Record<string, unknown>
+      for (const key of HARMONIZABLE_KEYS) delete remaining[key]
+      return { ...p, styleOverrides: remaining as StyleOverrides }
+    }))
   }
 
   // Per-panel file upload
@@ -520,8 +591,6 @@ export default function AppPage() {
     setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
-    setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(false)   // fresh upload → State 2 (mapping)
     setSelectedAnnotationId(null)
@@ -574,7 +643,6 @@ export default function AppPage() {
     setStyleOverrides({})
     setAnnotations([])
     setIsMultiPanel(false)
-    setPanels([])
     setSelectedAnnotationId(null)
     setIsDemoMode(true)
     setFigureConfigured(true)
@@ -599,7 +667,6 @@ export default function AppPage() {
     setStyleOverrides(buildTemplateOverrides(FTIR_DEV_TEMPLATE, FTIR_Y_COLS))
     setAnnotations([])
     setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -625,7 +692,6 @@ export default function AppPage() {
     setStyleOverrides(buildTemplateOverrides(PL_DEV_TEMPLATE_OVERLAY, PL_Y_COLS))
     setAnnotations([])
     setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -651,7 +717,6 @@ export default function AppPage() {
     setStyleOverrides(buildTemplateOverrides(UVVIS_DEV_TEMPLATE_OVERLAY, UVVIS_Y_COLS))
     setAnnotations([])
     setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -702,7 +767,6 @@ export default function AppPage() {
     setStyleOverrides(buildTemplateOverrides(DOSE_RESPONSE_DEV_TEMPLATE, DR_Y_COLS))
     setAnnotations([])
     setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -728,7 +792,6 @@ export default function AppPage() {
     setStyleOverrides(buildTemplateOverrides(XRD_DEV_TEMPLATE, XRD_Y_COLS))
     setAnnotations([])
     setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -774,8 +837,6 @@ export default function AppPage() {
     setSeriesNames({})
     setErrorCols({})
     setAnnotations([])
-    setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setSelectedAnnotationId(null)
   }
@@ -791,8 +852,6 @@ export default function AppPage() {
       'Compound B': 'Compound B error',
     })
     setAnnotations([])
-    setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setSelectedAnnotationId(null)
   }
@@ -990,7 +1049,17 @@ export default function AppPage() {
                   const yCands = cols.filter(c => c !== x && !isErrorColumn(c))
                   const initialY = yCands[0] ? [yCands[0]] : cols[1] ? [cols[1]] : []
                   trackUploadCompleted({ source: 'compact', file_type: 'xlsx', row_count: rows.length, column_count: cols.length, series_count: initialY.length })
-                  handleData(cols, rows)
+                  if (isMultiPanel) {
+                    const initialErrCols: Record<string, string> = {}
+                    initialY.forEach(y => { const match = matchErrorColumn(y, cols); if (match) initialErrCols[y] = match })
+                    updatePanel(activePanel, {
+                      data: rows, columns: cols, xCol: x, yCols: initialY,
+                      seriesNames: {}, errorCols: initialErrCols,
+                      xAxisLabel: x, yAxisLabel: initialY[0] ?? '', styleOverrides: {},
+                    })
+                  } else {
+                    handleData(cols, rows)
+                  }
                 }}
                 compact
               />
@@ -1009,29 +1078,127 @@ export default function AppPage() {
                 </button>
               </div>
 
+              {/* Add current figure to the next empty panel slot */}
+              {!isMultiPanel && panels.length > 0 && columns.length > 0 && panels.some(p => p.columns.length === 0) && (
+                <button
+                  onClick={handleAddCurrentFigureToNextPanel}
+                  className="mb-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#2563eb] bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors"
+                >
+                  <span className="text-sm leading-none">+</span>
+                  <span>Add to multi-panel</span>
+                </button>
+              )}
+
               {isMultiPanel && (
-                <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3 mb-3">
+                <div className="space-y-4 rounded-2xl bg-slate-50 border border-slate-100 p-3 mb-3">
                   <div>
-                    <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Layout</p>
                     <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
-                    <div className="flex gap-1.5">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Panels</p>
+                    <div className="space-y-1">
                       {panels.map((p, i) => (
-                        <button key={p.id} onClick={() => setActivePanel(i)}
-                          className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#2563eb] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
-                        >{p.id}</button>
+                        <button
+                          key={p.id}
+                          onClick={() => setActivePanel(i)}
+                          className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                            i === activePanel
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                          }`}
+                        >
+                          <span className="font-bold w-4 shrink-0">{p.id}</span>
+                          <span className="flex-1 truncate text-[11px]">
+                            {p.columns.length > 0 ? `${p.columns.length} cols` : 'No data'}
+                          </span>
+                        </button>
                       ))}
+                    </div>
+                    {panels.length < getLayoutCount(panelLayout) && (
+                      <button
+                        onClick={handleAddPanel}
+                        className="mt-1.5 flex items-center gap-1 w-full px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                      >
+                        <span className="text-sm leading-none">+</span>
+                        <span>Add panel</span>
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Spacing</p>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-400 w-12">Gap H</span>
+                        <input type="number" min={0} max={120} step={4}
+                          value={composerConfig.gapH}
+                          onChange={e => setComposerConfig(c => ({ ...c, gapH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                        />
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-400 w-12">Gap V</span>
+                        <input type="number" min={0} max={120} step={4}
+                          value={composerConfig.gapV}
+                          onChange={e => setComposerConfig(c => ({ ...c, gapV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                        />
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-400 w-12">Margin H</span>
+                        <input type="number" min={0} max={120} step={4}
+                          value={composerConfig.paddingH}
+                          onChange={e => setComposerConfig(c => ({ ...c, paddingH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                        />
+                      </label>
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-400 w-12">Margin V</span>
+                        <input type="number" min={0} max={120} step={4}
+                          value={composerConfig.paddingV}
+                          onChange={e => setComposerConfig(c => ({ ...c, paddingV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                        />
+                      </label>
                     </div>
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-[#1d4ed8] mb-2">Excel file — Panel {panels[activePanel]?.id}</p>
-                    <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#93c5fd] cursor-pointer hover:bg-violet-50 transition-colors">
-                      <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Labels</p>
+                    <div className="flex gap-1.5">
+                      <select
+                        value={labelConfig.format}
+                        onChange={e => setLabelConfig(c => ({ ...c, format: e.target.value as PanelLabelConfig['format'] }))}
+                        className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
+                      >
+                        <option value="paren-lower">(a)</option>
+                        <option value="paren-upper">(A)</option>
+                        <option value="lowercase">a</option>
+                        <option value="uppercase">A</option>
+                        <option value="none">None</option>
+                      </select>
+                      {labelConfig.format !== 'none' && (
+                        <select
+                          value={labelConfig.position}
+                          onChange={e => setLabelConfig(c => ({ ...c, position: e.target.value as PanelLabelConfig['position'] }))}
+                          className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
+                        >
+                          <option value="top-left">↖ Top-left</option>
+                          <option value="top-right">↗ Top-right</option>
+                          <option value="bottom-left">↙ Bot-left</option>
+                          <option value="bottom-right">↘ Bot-right</option>
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                      Excel — Panel {panels[activePanel]?.id}
+                    </p>
+                    <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                      <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                       </svg>
-                      <span className="text-xs text-slate-600 flex-1 truncate">
+                      <span className="text-xs text-slate-500 flex-1 truncate">
                         {panels[activePanel]?.columns.length > 0 ? `${panels[activePanel].columns.length} columns loaded` : 'Upload a .xlsx file…'}
                       </span>
                       <input type="file" accept=".xlsx" className="hidden" onChange={handlePanelFileChange} />
@@ -1100,7 +1267,17 @@ export default function AppPage() {
                 const yCands = cols.filter(c => c !== x && !isErrorColumn(c))
                 const initialY = yCands[0] ? [yCands[0]] : cols[1] ? [cols[1]] : []
                 trackUploadCompleted({ source: 'compact', file_type: 'xlsx', row_count: rows.length, column_count: cols.length, series_count: initialY.length })
-                handleData(cols, rows)
+                if (isMultiPanel) {
+                  const initialErrCols: Record<string, string> = {}
+                  initialY.forEach(y => { const match = matchErrorColumn(y, cols); if (match) initialErrCols[y] = match })
+                  updatePanel(activePanel, {
+                    data: rows, columns: cols, xCol: x, yCols: initialY,
+                    seriesNames: {}, errorCols: initialErrCols,
+                    xAxisLabel: x, yAxisLabel: initialY[0] ?? '', styleOverrides: {},
+                  })
+                } else {
+                  handleData(cols, rows)
+                }
               }}
               compact
             />
@@ -1119,29 +1296,127 @@ export default function AppPage() {
               </button>
             </div>
 
+            {/* Add current figure to the next empty panel slot */}
+            {!isMultiPanel && panels.length > 0 && columns.length > 0 && panels.some(p => p.columns.length === 0) && (
+              <button
+                onClick={handleAddCurrentFigureToNextPanel}
+                className="mb-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#2563eb] bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors"
+              >
+                <span className="text-sm leading-none">+</span>
+                <span>Add to multi-panel</span>
+              </button>
+            )}
+
             {isMultiPanel && (
-              <div className="space-y-3 rounded-2xl bg-[#dbeafe] p-3 mb-3">
+              <div className="space-y-4 rounded-2xl bg-slate-50 border border-slate-100 p-3 mb-3">
                 <div>
-                  <p className="text-xs font-medium text-[#1d4ed8] mb-2">Layout</p>
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Layout</p>
                   <PanelLayoutSelector value={panelLayout} onChange={handleLayoutChange} />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-[#1d4ed8] mb-2">Editing panel</p>
-                  <div className="flex gap-1.5">
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Panels</p>
+                  <div className="space-y-1">
                     {panels.map((p, i) => (
-                      <button key={p.id} onClick={() => setActivePanel(i)}
-                        className={`w-9 h-9 text-sm font-bold rounded-xl transition-all ${i === activePanel ? 'bg-[#2563eb] text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`}
-                      >{p.id}</button>
+                      <button
+                        key={p.id}
+                        onClick={() => setActivePanel(i)}
+                        className={`flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-xs text-left transition-colors ${
+                          i === activePanel
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                        }`}
+                      >
+                        <span className="font-bold w-4 shrink-0">{p.id}</span>
+                        <span className="flex-1 truncate text-[11px]">
+                          {p.columns.length > 0 ? `${p.columns.length} cols` : 'No data'}
+                        </span>
+                      </button>
                     ))}
+                  </div>
+                  {panels.length < getLayoutCount(panelLayout) && (
+                    <button
+                      onClick={handleAddPanel}
+                      className="mt-1.5 flex items-center gap-1 w-full px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                    >
+                      <span className="text-sm leading-none">+</span>
+                      <span>Add panel</span>
+                    </button>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Spacing</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                    <label className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-400 w-12">Gap H</span>
+                      <input type="number" min={0} max={120} step={4}
+                        value={composerConfig.gapH}
+                        onChange={e => setComposerConfig(c => ({ ...c, gapH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-400 w-12">Gap V</span>
+                      <input type="number" min={0} max={120} step={4}
+                        value={composerConfig.gapV}
+                        onChange={e => setComposerConfig(c => ({ ...c, gapV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-400 w-12">Margin H</span>
+                      <input type="number" min={0} max={120} step={4}
+                        value={composerConfig.paddingH}
+                        onChange={e => setComposerConfig(c => ({ ...c, paddingH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                      />
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      <span className="text-[11px] text-slate-400 w-12">Margin V</span>
+                      <input type="number" min={0} max={120} step={4}
+                        value={composerConfig.paddingV}
+                        onChange={e => setComposerConfig(c => ({ ...c, paddingV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
+                      />
+                    </label>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-[#1d4ed8] mb-2">Excel file — Panel {panels[activePanel]?.id}</p>
-                  <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-[#93c5fd] cursor-pointer hover:bg-violet-50 transition-colors">
-                    <svg className="w-4 h-4 text-[#2563eb] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Labels</p>
+                  <div className="flex gap-1.5">
+                    <select
+                      value={labelConfig.format}
+                      onChange={e => setLabelConfig(c => ({ ...c, format: e.target.value as PanelLabelConfig['format'] }))}
+                      className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
+                    >
+                      <option value="paren-lower">(a)</option>
+                      <option value="paren-upper">(A)</option>
+                      <option value="lowercase">a</option>
+                      <option value="uppercase">A</option>
+                      <option value="none">None</option>
+                    </select>
+                    {labelConfig.format !== 'none' && (
+                      <select
+                        value={labelConfig.position}
+                        onChange={e => setLabelConfig(c => ({ ...c, position: e.target.value as PanelLabelConfig['position'] }))}
+                        className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
+                      >
+                        <option value="top-left">↖ Top-left</option>
+                        <option value="top-right">↗ Top-right</option>
+                        <option value="bottom-left">↙ Bot-left</option>
+                        <option value="bottom-right">↘ Bot-right</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                    Excel — Panel {panels[activePanel]?.id}
+                  </p>
+                  <label className="flex items-center gap-2 w-full py-2 px-3 rounded-xl bg-white border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors">
+                    <svg className="w-4 h-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                     </svg>
-                    <span className="text-xs text-slate-600 flex-1 truncate">
+                    <span className="text-xs text-slate-500 flex-1 truncate">
                       {panels[activePanel]?.columns.length > 0 ? `${panels[activePanel].columns.length} columns loaded` : 'Upload a .xlsx file…'}
                     </span>
                     <input type="file" accept=".xlsx" className="hidden" onChange={handlePanelFileChange} />
@@ -1585,10 +1860,10 @@ export default function AppPage() {
                 layout={panelLayout}
                 activePanel={activePanel}
                 styleName={styleName}
-                panelAnnotations={panelAnnotations}
-                onAnnotationsChange={(idx, anns) =>
-                  setPanelAnnotations(prev => prev.map((a, i) => i === idx ? anns : a))
-                }
+                figureStyleOverrides={figureStyleOverrides}
+                labelConfig={labelConfig}
+                composerConfig={composerConfig}
+                onAnnotationsChange={(idx, anns) => updatePanel(idx, { annotations: anns })}
                 onStyleChange={(idx, patch) =>
                   updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
                 }

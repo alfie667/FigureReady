@@ -114,7 +114,41 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 2. UPLOAD ────────────────────────────────────────────────── */}
+      {/* ── 2. DEMO VIDEO ────────────────────────────────────────────── */}
+      <section className="border-t border-slate-100 py-20 md:py-28 bg-[#f8fafc]">
+        <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-semibold tracking-[0.16em] uppercase text-blue-600 mb-3">
+              See it in action
+            </span>
+            <h2
+              className="font-bold text-[1.8rem] md:text-[2.5rem] leading-tight tracking-[-0.02em] text-[#0f172a]"
+              style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
+            >
+              From raw data to publication-ready figure in seconds
+            </h2>
+          </div>
+          <div className="relative mx-auto max-w-[960px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-900/10">
+            {/* Browser chrome bar */}
+            <div className="flex items-center gap-1.5 px-4 h-9 bg-slate-100 border-b border-slate-200">
+              <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+              <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+              <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+              <span className="mx-auto text-xs text-slate-400 font-medium">figureready.com/app</span>
+            </div>
+            <video
+              src="/home-v2/demo.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full block"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 3. UPLOAD ────────────────────────────────────────────────── */}
       <section className="border-t border-slate-100 py-24 md:py-36">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">

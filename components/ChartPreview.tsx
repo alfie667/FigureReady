@@ -1,5 +1,6 @@
 ﻿'use client'
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState, type Key } from 'react'
+import { flushSync } from 'react-dom'
 import { trackExport, trackFirstFreeExport, trackExportCompleted, trackExportPaywallShown } from '@/lib/analytics'
 import { isProUser, hasUsedFreeExport, recordFreeExport } from '@/lib/usageLimit'
 import PaywallModal from '@/components/PaywallModal'
@@ -249,6 +250,7 @@ function DraggableLegend({
   return (
     <div
       ref={selfRef}
+      className="legend-overlay"
       style={{
         position: 'absolute', left: `${xPct}%`, top: `${yPct}%`,
         transform: 'translate(-50%, 0)', zIndex: 12, userSelect: 'none',
@@ -537,6 +539,8 @@ interface Props {
   onStyleChange?: (patch: Partial<StyleOverrides>) => void
   onSaveTemplate?: () => void
   compact?: boolean
+  panelWidth?: number
+  panelHeight?: number
   drawInsetActive?: boolean
   onDrawInsetActiveChange?: (active: boolean) => void
   annotOpen?: boolean
@@ -553,7 +557,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   data, xCol, yCols, seriesNames, errorCols,
   xAxisLabel, yAxisLabel, chartType, styleName, styleOverrides,
   annotations, onAnnotationsChange, onStyleChange, onSaveTemplate,
-  compact = false, drawInsetActive, onDrawInsetActiveChange, annotOpen,
+  compact = false, panelWidth, panelHeight, drawInsetActive, onDrawInsetActiveChange, annotOpen,
   onSelectionChange, onElementSelect, selectedElement,
   dataSource = 'sample',
   figureWorkflow = 'user_upload',
@@ -583,6 +587,9 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const [insetSelected, setInsetSelected] = useState(false)
   const [annotExpanded, setAnnotExpanded] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  // exportCaptureWidth: when non-null, overrides the card width/maxWidth via React during PNG capture
+  // so that React reconciliation cannot reset our manually-set inline styles mid-export.
+  const [exportCaptureWidth, setExportCaptureWidth] = useState<number | null>(null)
 
   // Sync external drawInsetActive prop → local state
   useEffect(() => {
@@ -1429,36 +1436,60 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // ─── Export ──────────────────────────────────────────────────────────────────
 
-  // Temporarily pins the chart to explicit pixel dimensions so html-to-image
-  // captures the full chart at the intended width (bypasses maxWidth:100% and
-  // parent overflow:hidden that would otherwise crop the right side).
   async function captureChartPng(pixelRatio: number): Promise<string> {
     const el = chartRef.current!
     const targetWidth = figureWidth || 700
+    const parent = el.parentElement
+    const prevParentOverflow = parent ? parent.style.overflow : ''
 
-    const prevWidth    = el.style.width
-    const prevMaxWidth = el.style.maxWidth
-    const parent       = el.parentElement
-    const prevOverflow = parent ? parent.style.overflow : ''
-
-    el.style.width    = `${targetWidth}px`
-    el.style.maxWidth = 'none'
+    // Force the card to targetWidth via React state (flushSync = synchronous re-render).
+    // This prevents React reconciliation from resetting maxWidth/'100%' during the async
+    // polling loop, which was the root cause of the right-side clipping bug on narrow viewports.
+    flushSync(() => setExportCaptureWidth(targetWidth))
     if (parent) parent.style.overflow = 'visible'
 
-    // ResizeObserver fires asynchronously — give Recharts time to re-render.
-    await new Promise(r => setTimeout(r, 150))
+    // Compute the inner content width the Recharts SVG should reach after re-render.
+    const cs = window.getComputedStyle(el)
+    const horizInset = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0)
+                     + (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0)
+    const expectedSvgWidth = targetWidth - horizInset
+
+    // Poll until Recharts has re-rendered at targetWidth (max 800ms).
+    // On desktop where the card is already targetWidth, exits after one 50ms tick.
+    // On narrow viewports Recharts ResizeObserver fires after ~200ms debounce.
+    const svgEl = el.querySelector('.recharts-surface') ?? el.querySelector('svg')
+    let waited = 0
+    while (waited < 800) {
+      await new Promise(r => setTimeout(r, 50))
+      waited += 50
+      if (!svgEl) break
+      const svgW = svgEl.getBoundingClientRect().width
+      if (svgW > 0 && Math.abs(svgW - expectedSvgWidth) < 5) break
+    }
+
+    // Measure the actual rendered right edge of the legend via getBoundingClientRect().
+    let captureWidth = targetWidth
+    const legendEl = el.querySelector('.legend-overlay') as HTMLElement | null
+    if (legendEl) {
+      const cardRect   = el.getBoundingClientRect()
+      const legendRect = legendEl.getBoundingClientRect()
+      const legendRight = legendRect.right - cardRect.left
+      if (legendRight > targetWidth) {
+        captureWidth = Math.ceil(legendRight) + 8
+      }
+    }
 
     const { toPng } = await import('html-to-image')
     try {
       return await toPng(el, {
         backgroundColor: 'white',
         pixelRatio,
-        style: { boxShadow: 'none', borderRadius: '0', border: 'none' },
+        width: captureWidth,
+        style: { boxShadow: 'none', borderRadius: '0', border: 'none', marginLeft: '0', marginRight: '0' },
       })
     } finally {
-      el.style.width    = prevWidth
-      el.style.maxWidth = prevMaxWidth
-      if (parent) parent.style.overflow = prevOverflow
+      if (parent) parent.style.overflow = prevParentOverflow
+      flushSync(() => setExportCaptureWidth(null))
     }
   }
 
@@ -1729,14 +1760,18 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   // ─── JSX ─────────────────────────────────────────────────────────────────────
 
-  // Compact mode: just the chart canvas — no toolbar, no workspace chrome
+  // Compact mode: just the chart canvas — no toolbar, no workspace chrome.
+  // panelWidth/panelHeight are the artboard-derived pixel dimensions from MultiPanelPreview.
+  // Using explicit px values (not "100%") avoids ResponsiveContainer measuring a stale parent.
   if (compact) {
+    const compactW = panelWidth ? `${panelWidth}px` : '100%'
+    const compactH = panelHeight ?? figureHeight
     return (
       <div
         ref={chartRef}
-        style={{ fontFamily, width: '100%', position: 'relative', userSelect: 'none' }}
+        style={{ fontFamily, width: compactW, position: 'relative', userSelect: 'none' }}
       >
-        <ResponsiveContainer width="100%" height={figureHeight}>
+        <ResponsiveContainer width="100%" height={compactH}>
           {renderChart() as React.ReactElement}
         </ResponsiveContainer>
       </div>
@@ -1773,8 +1808,8 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
                     : '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
                   fontFamily,
                   cursor: interaction.activeTool === 'text' ? 'text' : (interaction.activeTool !== 'select') ? 'crosshair' : drawInsetMode ? 'crosshair' : interaction.isDragging ? 'grabbing' : 'default',
-                  width: figureWidth ? `${figureWidth}px` : '700px',
-                  maxWidth: '100%',
+                  width: exportCaptureWidth != null ? `${exportCaptureWidth}px` : figureWidth ? `${figureWidth}px` : '700px',
+                  maxWidth: exportCaptureWidth != null ? 'none' : '100%',
                   userSelect: 'none',
                 }}
                 onContextMenu={e => e.preventDefault()}

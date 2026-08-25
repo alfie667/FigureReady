@@ -1,28 +1,64 @@
 'use client'
-import { forwardRef, useImperativeHandle, useRef } from 'react'
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import ChartPreview from './ChartPreview'
-import type { PanelConfig, PanelLayout } from '@/lib/panels'
-import { PANEL_LABELS } from '@/lib/panels'
+import type { PanelConfig, PanelLayout, PanelLabelConfig, ComposerConfig } from '@/lib/panels'
+import { getLabelText, DEFAULT_LABEL_CONFIG, DEFAULT_COMPOSER_CONFIG } from '@/lib/panels'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
 import type { ChartAnnotation } from '@/lib/annotations'
 
+// CSS column count per layout
+const COLS: Record<PanelLayout, number> = { '1': 1, '2h': 2, '2v': 1, '4': 2, '3h': 3 }
+
+// Default CSS panel widths (visual sizing only — real export resolution is driven by figureWidthMm + DPI)
 const PANEL_W: Record<PanelLayout, number> = {
-  '1':  700,
-  '2h': 560,
-  '2v': 700,
-  '4':  560,
+  '1': 700, '2h': 540, '2v': 700, '4': 540, '3h': 380,
 }
-const COLS: Record<PanelLayout, number> = { '1': 1, '2h': 2, '2v': 1, '4': 2 }
 const PANEL_H = 440
-const GAP = 20
+
+// ── PNG DPI injection ─────────────────────────────────────────────────────────
+
+function crc32(data: Uint8Array): number {
+  let crc = 0xffffffff
+  for (let i = 0; i < data.length; i++) {
+    crc ^= data[i]
+    for (let j = 0; j < 8; j++) crc = (crc & 1) ? (0xedb88320 ^ (crc >>> 1)) : (crc >>> 1)
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+function injectPngDpi(dataUrl: string, dpi: number): string {
+  const binary = atob(dataUrl.split(',')[1])
+  const src = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) src[i] = binary.charCodeAt(i)
+  const ppm = Math.round(dpi / 0.0254)
+  const chunk = new Uint8Array(21)
+  chunk[3] = 9
+  chunk[4] = 0x70; chunk[5] = 0x48; chunk[6] = 0x59; chunk[7] = 0x73 // "pHYs"
+  chunk[8]  = (ppm >>> 24) & 0xff; chunk[9]  = (ppm >>> 16) & 0xff
+  chunk[10] = (ppm >>>  8) & 0xff; chunk[11] = ppm & 0xff
+  chunk[12] = chunk[8]; chunk[13] = chunk[9]; chunk[14] = chunk[10]; chunk[15] = chunk[11]
+  chunk[16] = 1 // unit = metre
+  const crc = crc32(chunk.slice(4, 17))
+  chunk[17] = (crc >>> 24) & 0xff; chunk[18] = (crc >>> 16) & 0xff
+  chunk[19] = (crc >>>  8) & 0xff; chunk[20] = crc & 0xff
+  const out = new Uint8Array(src.length + 21)
+  out.set(src.slice(0, 33)); out.set(chunk, 33); out.set(src.slice(33), 54)
+  let str = ''
+  out.forEach(b => { str += String.fromCharCode(b) })
+  return 'data:image/png;base64,' + btoa(str)
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Props {
   panels: PanelConfig[]
   layout: PanelLayout
   activePanel: number
   styleName: StyleName
-  panelAnnotations: ChartAnnotation[][]
+  figureStyleOverrides: StyleOverrides
+  labelConfig?: PanelLabelConfig
+  composerConfig?: ComposerConfig
   onAnnotationsChange: (idx: number, anns: ChartAnnotation[]) => void
   onStyleChange: (idx: number, patch: Partial<StyleOverrides>) => void
   onPanelClick: (idx: number) => void
@@ -30,32 +66,50 @@ interface Props {
 }
 
 export interface MultiPanelPreviewHandle {
-  exportPNG: () => void
+  exportPNG: (dpi?: number) => Promise<void>
 }
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function MultiPanelPreview({
   panels, layout, activePanel, styleName,
-  panelAnnotations, onAnnotationsChange, onStyleChange, onPanelClick,
+  figureStyleOverrides,
+  labelConfig  = DEFAULT_LABEL_CONFIG,
+  composerConfig = DEFAULT_COMPOSER_CONFIG,
+  onAnnotationsChange, onStyleChange, onPanelClick,
 }: Props, ref) {
   const gridRef = useRef<HTMLDivElement>(null)
-  const cols = COLS[layout]
-  const panelW = PANEL_W[layout]
+  const [hoveredPanel, setHoveredPanel] = useState<number | null>(null)
 
-  const handleExport = async () => {
+  const cols   = COLS[layout]
+  const panelW = PANEL_W[layout]
+  const { gapH, gapV, paddingH, paddingV, figureWidthMm } =
+    { ...DEFAULT_COMPOSER_CONFIG, ...composerConfig }
+
+  const handleExport = async (dpi = 300) => {
     if (!gridRef.current) return
-    const el = gridRef.current
+    const el     = gridRef.current
     const parent = el.parentElement
-    const prevOverflow = parent ? parent.style.overflow : ''
+    const prevOverflow = parent?.style.overflow ?? ''
     if (parent) parent.style.overflow = 'visible'
-    await new Promise(r => setTimeout(r, 100))
+    await new Promise<void>(r => setTimeout(r, 100))
     try {
-      const url = await toPng(el, { pixelRatio: 300 / 96, backgroundColor: 'white', style: { boxShadow: 'none', borderRadius: '0', border: 'none' } })
+      const cssWidth = el.getBoundingClientRect().width
+      // Real resolution: pixelWidth = figureWidthMm / 25.4 * dpi
+      const targetPx   = (figureWidthMm / 25.4) * dpi
+      const pixelRatio = cssWidth > 0 ? targetPx / cssWidth : dpi / 96
+      const raw = await toPng(el, {
+        pixelRatio,
+        backgroundColor: 'white',
+        style: { boxShadow: 'none', borderRadius: '0', border: 'none' },
+      })
+      const url = injectPngDpi(raw, dpi)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'figure-multipanel.png'
+      a.download = `figure-multipanel-${dpi}dpi.png`
       a.click()
     } catch (e) {
-      console.error('Export failed', e)
+      console.error('Multi-panel export failed', e)
     } finally {
       if (parent) parent.style.overflow = prevOverflow
     }
@@ -64,97 +118,108 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
   useImperativeHandle(ref, () => ({ exportPNG: handleExport }))
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Hint bar */}
-      <div className="flex items-center px-4 py-2 bg-white border-b border-slate-200 shrink-0 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-        <p className="text-xs text-slate-500 font-medium">
-          Multi-panel — click a panel to edit it
-        </p>
-      </div>
-
-      {/* Workspace */}
-      <div className="flex-1 overflow-auto bg-[#eff6ff] flex items-start justify-center p-6 lg:p-10">
+    <div className="flex-1 flex flex-col min-h-0">
+      {/* Workspace — text-align:center so inline-block artboard centers when it fits,
+           and overflows to the RIGHT (not left) when wider than the viewport.
+           flex justify-center caused left-side clipping on 1280–1440px screens. */}
+      <div className="flex-1 overflow-auto bg-slate-100 p-6 lg:p-10" style={{ textAlign: 'center' }}>
         <div
           ref={gridRef}
           style={{
             background: 'white',
-            padding: 24,
+            padding: `${paddingV}px ${paddingH}px`,
             borderRadius: 24,
             boxShadow: '0 4px 24px rgba(0,0,0,0.10), 0 20px 80px rgba(0,0,0,0.16)',
             display: 'inline-block',
+            textAlign: 'left',
           }}
         >
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: `repeat(${cols}, ${panelW}px)`,
-              gap: GAP,
+              columnGap: gapH,
+              rowGap: gapV,
             }}
           >
-            {panels.map((panel, i) => (
-              <div
-                key={panel.id}
-                onClick={() => onPanelClick(i)}
-                style={{
-                  position: 'relative',
-                  width: panelW,
-                  cursor: 'pointer',
-                  borderRadius: 8,
-                  outline: i === activePanel ? '2px solid #2563eb' : '2px solid transparent',
-                  outlineOffset: 3,
-                  transition: 'outline-color 0.15s',
-                }}
-              >
-                {/* Panel label */}
-                <div style={{
-                  fontFamily: 'Arial, Helvetica, sans-serif',
-                  fontWeight: 700, fontSize: 13,
-                  color: '#1a1a1a', marginBottom: 4,
-                  lineHeight: 1, userSelect: 'none',
-                }}>
-                  {PANEL_LABELS[i]}
-                </div>
+            {panels.map((panel, i) => {
+              const effectiveStyle: StyleOverrides = { ...figureStyleOverrides, ...panel.styleOverrides }
+              const labelText = getLabelText(i, labelConfig)
+              const labelFont = effectiveStyle.fontFamily ?? 'Arial, Helvetica, sans-serif'
+              const isTop   = labelConfig.position.startsWith('top')
+              const isRight = labelConfig.position.endsWith('right')
 
-                {/* Chart or placeholder */}
-                {panel.data.length > 0 && panel.yCols.length > 0 ? (
-                  <ChartPreview
-                    data={panel.data}
-                    xCol={panel.xCol}
-                    yCols={panel.yCols}
-                    seriesNames={panel.seriesNames}
-                    errorCols={panel.errorCols}
-                    xAxisLabel={panel.xAxisLabel}
-                    yAxisLabel={panel.yAxisLabel}
-                    chartType={panel.chartType}
-                    styleName={styleName}
-                    styleOverrides={panel.styleOverrides}
-                    annotations={panelAnnotations[i] ?? []}
-                    onAnnotationsChange={(anns) => onAnnotationsChange(i, anns)}
-                    onStyleChange={(patch) => onStyleChange(i, patch)}
-                    compact
-                  />
-                ) : (
-                  <div style={{
-                    width: panelW, height: PANEL_H,
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    gap: 8, background: '#f8f7ff', borderRadius: 8,
-                    border: '2px dashed #93c5fd',
-                  }}>
-                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="#93c5fd" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round"
-                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                    </svg>
-                    <p style={{ fontSize: 12, color: '#60a5fa', fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>
-                      Panel {panel.id} — no data
-                    </p>
-                    <p style={{ fontSize: 11, color: '#93c5fd', fontFamily: 'Arial, sans-serif' }}>
-                      Select this panel and upload a file
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+              const labelEl = labelText ? (
+                <div style={{
+                  fontFamily: labelFont,
+                  fontWeight: 700,
+                  fontSize: labelConfig.fontSize,
+                  color: '#1a1a1a',
+                  lineHeight: 1,
+                  userSelect: 'none',
+                  textAlign: isRight ? 'right' : 'left',
+                }}>
+                  {labelText}
+                </div>
+              ) : null
+
+              return (
+                <div
+                  key={panel.id}
+                  onClick={() => onPanelClick(i)}
+                  onMouseEnter={() => setHoveredPanel(i)}
+                  onMouseLeave={() => setHoveredPanel(null)}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                    width: panelW,
+                    cursor: 'pointer',
+                    borderRadius: 8,
+                    outline: i === activePanel
+                      ? '1.5px solid #3b82f6'
+                      : (i === hoveredPanel ? '1px solid rgba(0,0,0,0.12)' : 'none'),
+                    outlineOffset: 3,
+                    transition: 'outline-color 0.15s',
+                  }}
+                >
+                  {isTop && labelEl}
+
+                  {panel.data.length > 0 && panel.yCols.length > 0 ? (
+                    <ChartPreview
+                      data={panel.data}
+                      xCol={panel.xCol}
+                      yCols={panel.yCols}
+                      seriesNames={panel.seriesNames}
+                      errorCols={panel.errorCols}
+                      xAxisLabel={panel.xAxisLabel}
+                      yAxisLabel={panel.yAxisLabel}
+                      chartType={panel.chartType}
+                      styleName={styleName}
+                      styleOverrides={effectiveStyle}
+                      annotations={panel.annotations}
+                      onAnnotationsChange={(anns) => onAnnotationsChange(i, anns)}
+                      onStyleChange={(patch) => onStyleChange(i, patch)}
+                      compact
+                      panelWidth={panelW}
+                      panelHeight={PANEL_H}
+                    />
+                  ) : (
+                    <div style={{
+                      width: panelW, height: PANEL_H,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: '#f9fafb', borderRadius: 8,
+                    }}>
+                      <span style={{ fontSize: 13, color: '#94a3b8', fontFamily: 'Arial, sans-serif' }}>
+                        + Add panel
+                      </span>
+                    </div>
+                  )}
+
+                  {!isTop && labelEl}
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
