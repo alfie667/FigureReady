@@ -209,6 +209,7 @@ export default function HomePage() {
                 role: "Postdoc, Materials Science",
                 institution: "ETH Zürich",
                 from: "OriginLab",
+                avatar: "https://randomuser.me/api/portraits/women/44.jpg",
               },
               {
                 quote: "GraphPad Prism handles the stats well, but the figure quality never matched what journals expect. FigureReady gives me Nature-ready dose-response figures straight away.",
@@ -216,6 +217,7 @@ export default function HomePage() {
                 role: "PhD candidate, Pharmacology",
                 institution: "Université Paris Cité",
                 from: "Prism GraphPad",
+                avatar: "https://randomuser.me/api/portraits/men/32.jpg",
               },
               {
                 quote: "OriginLab's learning curve was too steep for quick figures. FigureReady has FTIR and UV-Vis templates pre-configured exactly as I need them — I just import my data and export.",
@@ -223,6 +225,7 @@ export default function HomePage() {
                 role: "Researcher, Spectroscopy",
                 institution: "CNRS",
                 from: "OriginLab",
+                avatar: "https://randomuser.me/api/portraits/women/65.jpg",
               },
               {
                 quote: "I recommended FigureReady to my whole lab. No more inconsistent styling or wasted hours trying to make Prism figures look presentable for submission.",
@@ -230,8 +233,9 @@ export default function HomePage() {
                 role: "Principal Investigator",
                 institution: "National University of Singapore",
                 from: "Prism GraphPad",
+                avatar: "https://randomuser.me/api/portraits/men/52.jpg",
               },
-            ] as { quote: string; name: string; role: string; institution: string; from: string }[]).map((t, i) => (
+            ] as { quote: string; name: string; role: string; institution: string; from: string; avatar: string }[]).map((t, i) => (
               <div key={i} className="flex flex-col bg-white border border-slate-200 rounded-2xl p-7 gap-5 shadow-sm">
                 <div className="flex gap-0.5">
                   {[0,1,2,3,4].map(s => (
@@ -242,9 +246,19 @@ export default function HomePage() {
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[15px] flex-1">&ldquo;{t.quote}&rdquo;</p>
                 <div className="flex items-center justify-between gap-4 pt-4 border-t border-slate-100">
-                  <div>
-                    <p className="font-semibold text-[#0f172a] text-sm">{t.name}</p>
-                    <p className="text-xs text-slate-500">{t.role} · {t.institution}</p>
+                  <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={t.avatar}
+                      alt={t.name}
+                      width={48}
+                      height={48}
+                      className="w-12 h-12 rounded-full object-cover shrink-0 ring-2 ring-blue-100 ring-offset-2"
+                    />
+                    <div>
+                      <p className="font-semibold text-[#0f172a] text-sm">{t.name}</p>
+                      <p className="text-xs text-slate-500">{t.role} · {t.institution}</p>
+                    </div>
                   </div>
                   <span className="shrink-0 text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full whitespace-nowrap">
                     Previously: {t.from}

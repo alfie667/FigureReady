@@ -89,7 +89,7 @@ export default function TestimonialsMarquee() {
             >
               {/* Figure on vivid tinted bg */}
               <div
-                className="relative overflow-hidden flex items-center justify-center"
+                className="relative flex items-center justify-center"
                 style={{ aspectRatio: '4/3', background: t.figureBg }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -103,10 +103,22 @@ export default function TestimonialsMarquee() {
                   className="absolute top-0 left-0 w-16 h-16 pointer-events-none"
                   style={{ background: `radial-gradient(ellipse at top left, ${t.figureBg} 0%, transparent 65%)` }}
                 />
+                {/* Avatar floats on the bottom edge of the figure */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={t.avatar}
+                  alt={t.name}
+                  width={72}
+                  height={72}
+                  className="absolute -bottom-9 left-6 w-[72px] h-[72px] rounded-full object-cover shrink-0 z-10"
+                  style={{
+                    boxShadow: `0 0 0 3px white, 0 0 0 5px ${t.accent}, 0 4px 16px rgba(0,0,0,0.18)`,
+                  }}
+                />
               </div>
 
               {/* Content */}
-              <div className="p-6 flex flex-col flex-1">
+              <div className="pt-12 px-6 pb-6 flex flex-col flex-1">
                 {/* Journal badge — solid vivid color */}
                 <span
                   className="inline-flex items-center gap-1.5 self-start px-2.5 py-1 rounded-full text-[11px] font-bold mb-4 text-white"
@@ -121,24 +133,11 @@ export default function TestimonialsMarquee() {
                   &ldquo;{t.quote}&rdquo;
                 </p>
 
-                {/* Author with real photo */}
-                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={t.avatar}
-                    alt={t.name}
-                    width={44}
-                    height={44}
-                    className="w-11 h-11 rounded-full object-cover shrink-0"
-                    style={{
-                      boxShadow: `0 0 0 2px white, 0 0 0 4px ${t.accent}`,
-                    }}
-                  />
-                  <div>
-                    <p className="text-sm font-bold text-slate-900">{t.name}</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{t.role}</p>
-                    <p className="text-[11px] text-slate-400">{t.institution}</p>
-                  </div>
+                {/* Author info */}
+                <div className="pt-4 border-t border-slate-100">
+                  <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{t.role}</p>
+                  <p className="text-[11px] text-slate-400">{t.institution}</p>
                 </div>
               </div>
             </div>
