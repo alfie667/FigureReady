@@ -3,27 +3,39 @@ import { useState } from 'react'
 import LandingCheckoutButton from '@/components/LandingCheckoutButton'
 import Link from 'next/link'
 
-/* ── Icon primitives ──────────────────────────────────────────────────────── */
+/* ── Table icons ──────────────────────────────────────────────────────────── */
 
-function CheckIcon({ blue }: { blue?: boolean }) {
+function TCheck({ blue }: { blue?: boolean }) {
   return (
-    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full shrink-0 ${blue ? 'bg-blue-600' : 'bg-emerald-50'}`}>
-      <svg className={`w-3.5 h-3.5 ${blue ? 'text-white' : 'text-emerald-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-      </svg>
+    <svg
+      className={`w-[18px] h-[18px] mx-auto ${blue ? 'text-blue-600' : 'text-emerald-500'}`}
+      viewBox="0 0 20 20" fill="currentColor" aria-hidden
+    >
+      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+    </svg>
+  )
+}
+
+function TDash() {
+  return <span className="block w-5 h-px bg-slate-250 mx-auto" style={{ background: '#cbd5e1' }} />
+}
+
+function Cell({ val, isBlue }: { val: string; isBlue?: boolean }) {
+  if (val === '✅') return <TCheck blue={isBlue} />
+  if (val === '❌') return <TDash />
+  if (val === '⚠️ Limited') return (
+    <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+      Limited
+    </span>
+  )
+  return (
+    <span className={`text-[13px] font-${isBlue ? 'semibold' : 'normal'} ${isBlue ? 'text-blue-700' : 'text-slate-400'}`}>
+      {val}
     </span>
   )
 }
 
-function XIcon() {
-  return (
-    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full shrink-0 bg-slate-100">
-      <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </span>
-  )
-}
+/* ── Feature list icons ────────────────────────────────────────────────────── */
 
 function FeatureCheck() {
   return (
@@ -41,34 +53,20 @@ function FeatureCross() {
   )
 }
 
-/* ── Table cell value renderer ────────────────────────────────────────────── */
+/* ── Data ──────────────────────────────────────────────────────────────────── */
 
-function Cell({ val, isBlue }: { val: string; isBlue?: boolean }) {
-  if (val === '✅') return <CheckIcon blue={isBlue} />
-  if (val === '❌') return <XIcon />
-  if (val === '⚠️ Limited') return (
-    <span className="inline-block text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-      Limited
-    </span>
-  )
-  if (isBlue) return <span className="text-sm font-bold text-blue-700">{val}</span>
-  return <span className="text-sm text-slate-400">{val}</span>
-}
-
-/* ── Data ─────────────────────────────────────────────────────────────────── */
-
-const COMPARISON = [
-  { feature: 'Price',                 fr: '€99/year',   prism: '$840/year',  origin: '$1,500/year', excel: 'Included'  },
-  { feature: 'Browser-based',         fr: '✅',          prism: '❌',          origin: '❌',           excel: '❌'         },
-  { feature: 'No installation',       fr: '✅',          prism: '❌',          origin: '❌',           excel: '✅'         },
-  { feature: 'Excel upload',          fr: '✅',          prism: '⚠️ Limited',  origin: '✅',           excel: '✅'         },
-  { feature: 'TIFF 300 dpi export',   fr: '✅',          prism: '✅',          origin: '✅',           excel: '❌'         },
-  { feature: 'Journal templates',     fr: '✅',          prism: '❌',          origin: '❌',           excel: '❌'         },
-  { feature: 'Colorblind palettes',   fr: '✅',          prism: '❌',          origin: '❌',           excel: '❌'         },
-  { feature: 'Statistical annotations', fr: '✅',        prism: '✅',          origin: '✅',           excel: '❌'         },
-  { feature: 'Panel figures',         fr: '✅',          prism: '✅',          origin: '✅',           excel: '❌'         },
-  { feature: 'Time to first figure',  fr: '30 seconds', prism: '30 minutes', origin: '45 minutes',  excel: '2 hours'   },
-  { feature: 'Learning curve',        fr: 'None',       prism: 'Steep',      origin: 'Very steep',  excel: 'Medium'    },
+const COMPARISON: { feature: string; fr: string; prism: string; origin: string; excel: string }[] = [
+  { feature: 'Price',                   fr: '€99 / year',  prism: '$840 / year',  origin: '$1,500 / year', excel: 'Included'  },
+  { feature: 'Browser-based',           fr: '✅',           prism: '❌',            origin: '❌',             excel: '❌'         },
+  { feature: 'No installation',         fr: '✅',           prism: '❌',            origin: '❌',             excel: '✅'         },
+  { feature: 'Excel upload',            fr: '✅',           prism: '⚠️ Limited',   origin: '✅',             excel: '✅'         },
+  { feature: 'TIFF 300 dpi export',     fr: '✅',           prism: '✅',            origin: '✅',             excel: '❌'         },
+  { feature: 'Journal templates',       fr: '✅',           prism: '❌',            origin: '❌',             excel: '❌'         },
+  { feature: 'Colorblind palettes',     fr: '✅',           prism: '❌',            origin: '❌',             excel: '❌'         },
+  { feature: 'Statistical annotations', fr: '✅',           prism: '✅',            origin: '✅',             excel: '❌'         },
+  { feature: 'Panel figures',           fr: '✅',           prism: '✅',            origin: '✅',             excel: '❌'         },
+  { feature: 'Time to first figure',    fr: '30 seconds',  prism: '30 minutes',   origin: '45 minutes',    excel: '2 hours'   },
+  { feature: 'Learning curve',          fr: 'None',        prism: 'Steep',        origin: 'Very steep',    excel: 'Medium'    },
 ]
 
 const FREE_FEATURES = [
@@ -103,7 +101,13 @@ const PRO_FEATURES = [
   'Priority support',
 ]
 
-/* ── Component ────────────────────────────────────────────────────────────── */
+const COLS = [
+  { key: 'prism',  label: 'GraphPad Prism' },
+  { key: 'origin', label: 'OriginPro'      },
+  { key: 'excel',  label: 'Excel'          },
+] as const
+
+/* ── Component ─────────────────────────────────────────────────────────────── */
 
 export default function PricingSection() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly')
@@ -112,78 +116,87 @@ export default function PricingSection() {
     <section id="pricing" className="border-t border-slate-100 py-24 md:py-36">
       <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
 
-        {/* ── Comparison table ────────────────────────────────────────── */}
+        {/* ── Comparison table ──────────────────────────────────────── */}
         <div className="mb-24">
           <div className="text-center mb-12">
             <h2
-              className="font-bold text-[2rem] md:text-[2.75rem] leading-tight tracking-[-0.02em] text-[#0f172a] mb-4"
+              className="font-bold text-[2rem] md:text-[2.75rem] leading-tight tracking-[-0.02em] text-[#0f172a] mb-3"
               style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
             >
               Why researchers choose FigureReady
             </h2>
-            <p className="text-lg text-slate-500 max-w-[480px] mx-auto">
-              See how FigureReady compares to the tools you already know.
+            <p className="text-[17px] text-slate-500 max-w-[460px] mx-auto leading-relaxed">
+              See how we compare to the tools you already know.
             </p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] border-separate border-spacing-0 text-sm">
-              <thead>
-                <tr>
-                  {/* Feature label column */}
-                  <th className="text-left px-6 py-4 bg-white text-slate-400 font-semibold text-xs uppercase tracking-widest border-b-2 border-slate-100 w-52" />
+          {/* Scrollable wrapper */}
+          <div className="overflow-x-auto -mx-4 px-4">
+            <div className="min-w-[700px]">
+              <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-[0_2px_16px_rgba(0,0,0,0.06)]">
+                <table className="w-full text-sm border-collapse">
 
-                  {/* FigureReady Pro — highlighted column */}
-                  <th className="px-6 py-0 text-center w-44">
-                    <div className="bg-blue-600 text-white rounded-t-2xl pt-4 pb-4 px-2">
-                      <span className="block text-[10px] font-bold uppercase tracking-widest text-blue-200 mb-1">Best value</span>
-                      <span className="block text-[15px] font-bold leading-tight">FigureReady Pro</span>
-                    </div>
-                  </th>
-
-                  {/* Competitor columns */}
-                  {(['GraphPad Prism', 'OriginPro', 'Excel'] as const).map(name => (
-                    <th key={name} className="px-6 py-4 text-center text-slate-500 font-semibold border-b-2 border-slate-100 w-36">
-                      {name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {COMPARISON.map((row, i) => {
-                  const isLast = i === COMPARISON.length - 1
-                  const rowBg = i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'
-                  const border = isLast ? '' : 'border-b border-slate-100'
-                  return (
-                    <tr key={row.feature} className={rowBg}>
+                  {/* ── Header ──────────────────────────── */}
+                  <thead>
+                    <tr>
                       {/* Feature label */}
-                      <td className={`px-6 py-4 text-slate-700 font-medium ${border}`}>
-                        {row.feature}
-                      </td>
+                      <th className="text-left px-7 py-5 bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-widest text-slate-400 w-[230px]">
+                        Feature
+                      </th>
 
-                      {/* FigureReady value */}
-                      <td className={`px-6 py-4 text-center bg-blue-50 ${isLast ? 'rounded-b-2xl' : border.replace('border-slate-100', 'border-blue-100')}`}>
-                        <Cell val={row.fr} isBlue />
-                      </td>
+                      {/* FigureReady Pro — blue accent top */}
+                      <th className="px-5 py-0 bg-white border-b border-slate-200 relative w-[175px]">
+                        <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-blue-500 to-blue-600" />
+                        <div className="pt-5 pb-4 text-center">
+                          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-full tracking-wide mb-2">
+                            <svg className="w-2.5 h-2.5" viewBox="0 0 20 20" fill="currentColor"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            Recommended
+                          </span>
+                          <span className="block text-slate-900 font-bold text-[14px] leading-snug">FigureReady Pro</span>
+                        </div>
+                      </th>
 
-                      {/* Competitor values */}
-                      <td className={`px-6 py-4 text-center ${border}`}><Cell val={row.prism} /></td>
-                      <td className={`px-6 py-4 text-center ${border}`}><Cell val={row.origin} /></td>
-                      <td className={`px-6 py-4 text-center ${border}`}><Cell val={row.excel} /></td>
+                      {/* Competitors */}
+                      {COLS.map(c => (
+                        <th key={c.key} className="px-5 py-5 bg-slate-50 border-b border-slate-200 text-center text-[13px] font-semibold text-slate-400 w-[130px]">
+                          {c.label}
+                        </th>
+                      ))}
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                  </thead>
+
+                  {/* ── Body ────────────────────────────── */}
+                  <tbody>
+                    {COMPARISON.map((row, i) => {
+                      const isLast = i === COMPARISON.length - 1
+                      const rowClass = i % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'
+                      const divider = !isLast ? 'border-b border-slate-100' : ''
+                      return (
+                        <tr key={row.feature} className={rowClass}>
+                          <td className={`px-7 py-4 text-[13px] text-slate-700 font-medium ${divider}`}>
+                            {row.feature}
+                          </td>
+                          <td className={`px-5 py-4 text-center bg-[#f0f7ff] ${!isLast ? 'border-b border-blue-100' : ''}`}>
+                            <Cell val={row.fr} isBlue />
+                          </td>
+                          <td className={`px-5 py-4 text-center ${divider}`}><Cell val={row.prism} /></td>
+                          <td className={`px-5 py-4 text-center ${divider}`}><Cell val={row.origin} /></td>
+                          <td className={`px-5 py-4 text-center ${divider}`}><Cell val={row.excel} /></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           <p className="mt-4 text-xs text-slate-400 text-center">
-            Prices as of 2026. GraphPad and OriginPro require institutional license or personal purchase.
+            Prices as of 2026. GraphPad and OriginPro require an institutional or personal license.
           </p>
         </div>
 
-        {/* ── Pricing plans ───────────────────────────────────────────── */}
+        {/* ── Pricing plans ─────────────────────────────────────────── */}
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Pricing</p>
           <h2
@@ -193,7 +206,7 @@ export default function PricingSection() {
             Choose the plan that fits your research
           </h2>
           <p className="text-slate-500 max-w-[420px] mx-auto">
-            Start creating scientific figures for free, then upgrade when you need more.
+            Start for free, upgrade when you need more.
           </p>
         </div>
 
@@ -203,9 +216,7 @@ export default function PricingSection() {
             <button
               onClick={() => setBilling('monthly')}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all ${
-                billing === 'monthly'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                billing === 'monthly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               Monthly
@@ -213,15 +224,11 @@ export default function PricingSection() {
             <button
               onClick={() => setBilling('yearly')}
               className={`px-5 py-2 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 ${
-                billing === 'yearly'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
+                billing === 'yearly' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               Yearly
-              <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                Save 31%
-              </span>
+              <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">Save 31%</span>
             </button>
           </div>
         </div>
@@ -245,13 +252,13 @@ export default function PricingSection() {
               Start for free
             </Link>
             <ul className="space-y-3.5">
-              {FREE_FEATURES.map((f) => (
+              {FREE_FEATURES.map(f => (
                 <li key={f} className="flex items-start gap-2.5">
                   <FeatureCheck />
                   <span className="text-[13px] text-slate-600 leading-snug">{f}</span>
                 </li>
               ))}
-              {FREE_LOCKED.map((f) => (
+              {FREE_LOCKED.map(f => (
                 <li key={f} className="flex items-start gap-2.5">
                   <FeatureCross />
                   <span className="text-[13px] text-slate-400 leading-snug line-through">{f}</span>
@@ -264,12 +271,9 @@ export default function PricingSection() {
           <div className="bg-white border-2 border-blue-600 rounded-2xl p-8 flex flex-col relative">
             {billing === 'yearly' && (
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                <span className="bg-blue-600 text-white text-[11px] font-semibold px-3 py-1 rounded-full">
-                  Most popular
-                </span>
+                <span className="bg-blue-600 text-white text-[11px] font-semibold px-3 py-1 rounded-full">Most popular</span>
               </div>
             )}
-
             <div className="mb-7">
               <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-3">Pro</p>
               {billing === 'yearly' ? (
@@ -290,16 +294,14 @@ export default function PricingSection() {
                 </>
               )}
             </div>
-
             <LandingCheckoutButton
               plan={billing}
               className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm mb-7 transition-colors shadow-sm"
             >
               Get Pro
             </LandingCheckoutButton>
-
             <ul className="space-y-3.5 mt-auto">
-              {PRO_FEATURES.map((f) => (
+              {PRO_FEATURES.map(f => (
                 <li key={f} className="flex items-start gap-2.5">
                   <FeatureCheck />
                   <span className="text-[13px] text-slate-600 leading-snug">{f}</span>
