@@ -121,7 +121,7 @@ export default function PricingSection() {
             >
               Start for free
             </Link>
-            <ul className="space-y-3.5 mt-auto">
+            <ul className="space-y-3.5">
               {FREE_FEATURES.map((f) => (
                 <li key={f} className="flex items-start gap-2.5">
                   <Check />
