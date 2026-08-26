@@ -36,6 +36,20 @@ const FREE_LOCKED = [
   'Priority support',
 ]
 
+const COMPARISON = [
+  { feature: 'Price',                fr: '€99/year',   prism: '$840/year',   origin: '$1,500/year', excel: 'Included'  },
+  { feature: 'Browser-based',        fr: '✅',          prism: '❌',           origin: '❌',           excel: '❌'         },
+  { feature: 'No installation',      fr: '✅',          prism: '❌',           origin: '❌',           excel: '✅'         },
+  { feature: 'Excel upload',         fr: '✅',          prism: '⚠️ Limited',   origin: '✅',           excel: '✅'         },
+  { feature: 'TIFF 300 dpi export',  fr: '✅',          prism: '✅',           origin: '✅',           excel: '❌'         },
+  { feature: 'Journal templates',    fr: '✅',          prism: '❌',           origin: '❌',           excel: '❌'         },
+  { feature: 'Colorblind palettes',  fr: '✅',          prism: '❌',           origin: '❌',           excel: '❌'         },
+  { feature: 'Statistical annotations', fr: '✅',       prism: '✅',           origin: '✅',           excel: '❌'         },
+  { feature: 'Panel figures',        fr: '✅',          prism: '✅',           origin: '✅',           excel: '❌'         },
+  { feature: 'Time to first figure', fr: '30 seconds', prism: '30 minutes',  origin: '45 minutes',  excel: '2 hours'   },
+  { feature: 'Learning curve',       fr: 'None',       prism: 'Steep',       origin: 'Very steep',  excel: 'Medium'    },
+]
+
 const PRO_FEATURES = [
   'Unlimited exports',
   'PNG · SVG · PDF · TIFF · EPS',
@@ -68,6 +82,43 @@ export default function PricingSection() {
           </h2>
           <p className="text-lg text-slate-500 max-w-[460px] mx-auto leading-relaxed">
             Start creating scientific figures for free, then upgrade when you need more.
+          </p>
+        </div>
+
+        {/* ── COMPARISON TABLE ─────────────────────────────────────────── */}
+        <div className="mb-20">
+          <h2
+            className="font-bold text-[1.75rem] md:text-[2.25rem] leading-tight tracking-[-0.02em] text-[#0f172a] mb-10 text-center"
+            style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
+          >
+            Why researchers choose FigureReady
+          </h2>
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+            <table className="w-full min-w-[640px] text-sm border-collapse">
+              <thead>
+                <tr>
+                  <th className="text-left px-5 py-4 bg-slate-50 text-slate-400 font-semibold text-xs uppercase tracking-wider border-b border-slate-200 w-48">Feature</th>
+                  <th className="px-5 py-4 bg-blue-600 text-white font-bold text-center border-b border-blue-500 text-sm">FigureReady Pro</th>
+                  <th className="px-5 py-4 bg-slate-50 text-slate-500 font-semibold text-center border-b border-slate-200 text-sm">GraphPad Prism</th>
+                  <th className="px-5 py-4 bg-slate-50 text-slate-500 font-semibold text-center border-b border-slate-200 text-sm">OriginPro</th>
+                  <th className="px-5 py-4 bg-slate-50 text-slate-500 font-semibold text-center border-b border-slate-200 text-sm">Excel</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARISON.map((row, i) => (
+                  <tr key={row.feature} className={i % 2 === 0 ? '' : 'bg-slate-50/60'}>
+                    <td className="px-5 py-3 text-slate-700 font-medium border-b border-slate-100">{row.feature}</td>
+                    <td className="px-5 py-3 text-center bg-blue-50 font-semibold text-slate-900 border-b border-blue-100">{row.fr}</td>
+                    <td className="px-5 py-3 text-center text-slate-500 border-b border-slate-100">{row.prism}</td>
+                    <td className="px-5 py-3 text-center text-slate-500 border-b border-slate-100">{row.origin}</td>
+                    <td className="px-5 py-3 text-center text-slate-500 border-b border-slate-100">{row.excel}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs text-slate-400 text-center">
+            Prices as of 2026. GraphPad and OriginPro require institutional license or personal purchase.
           </p>
         </div>
 
