@@ -11,12 +11,29 @@ function Check() {
   )
 }
 
+function Cross() {
+  return (
+    <svg className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  )
+}
+
 const FREE_FEATURES = [
   '1 free export',
   'PNG at 150 DPI',
   'Line, bar & scatter charts',
   'Excel upload (.xlsx)',
   'Watermark included',
+]
+
+const FREE_LOCKED = [
+  'TIFF / EPS export',
+  'Custom figure size (mm/cm)',
+  'Statistical significance annotations',
+  'Panel figures (Fig. 1A, 1B, 1C)',
+  'Journal-specific templates',
+  'Priority support',
 ]
 
 const PRO_FEATURES = [
@@ -109,6 +126,12 @@ export default function PricingSection() {
                 <li key={f} className="flex items-start gap-2.5">
                   <Check />
                   <span className="text-[13px] text-slate-600 leading-snug">{f}</span>
+                </li>
+              ))}
+              {FREE_LOCKED.map((f) => (
+                <li key={f} className="flex items-start gap-2.5">
+                  <Cross />
+                  <span className="text-[13px] text-slate-400 leading-snug line-through">{f}</span>
                 </li>
               ))}
             </ul>
