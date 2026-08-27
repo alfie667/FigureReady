@@ -5,6 +5,7 @@ import { LogoFull } from '@/components/Logo'
 import PricingSection from './home-v2/PricingSection'
 import HeroTypewriter from '@/components/HeroTypewriter'
 import FadeIn from '@/components/FadeIn'
+import DemoMockup from '@/components/DemoMockup'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Turn scientific data into publication-ready figures',
@@ -152,25 +153,7 @@ export default function HomePage() {
               From raw data to publication-ready figure in seconds
             </h2>
           </FadeIn>
-          <FadeIn delay={120}>
-            <div className="relative mx-auto max-w-[960px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-900/10">
-              {/* Browser chrome bar */}
-              <div className="flex items-center gap-1.5 px-4 h-9 bg-slate-100 border-b border-slate-200">
-                <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-                <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-                <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-                <span className="mx-auto text-xs text-slate-400 font-medium">figureready.com/app</span>
-              </div>
-              <video
-                src="/home-v2/demo.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-full block"
-              />
-            </div>
-          </FadeIn>
+          <DemoMockup />
         </div>
       </section>
 
