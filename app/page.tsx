@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { LogoFull } from '@/components/Logo'
 import PricingSection from './home-v2/PricingSection'
+import HeroTypewriter from '@/components/HeroTypewriter'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Turn scientific data into publication-ready figures',
@@ -91,10 +92,13 @@ export default function HomePage() {
           {/* Text — 45% */}
           <div className="w-full md:w-[44%] shrink-0">
             <h1
-              className="font-extrabold text-[2.5rem] leading-[1.08] tracking-[-0.03em] md:text-[3.5rem] text-[#0f172a] mb-6"
+              className="font-extrabold text-[2.5rem] leading-[1.12] tracking-[-0.03em] md:text-[3.5rem] text-[#0f172a] mb-6"
               style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
             >
-              Turn scientific data into publication-ready figures.
+              Turn your{' '}
+              <HeroTypewriter />
+              <br />
+              into publication-ready figures.
             </h1>
             <p className="text-lg md:text-xl text-slate-500 leading-relaxed mb-9 max-w-[460px]">
               Upload your data, choose a scientific template, refine your figure, and export it for
