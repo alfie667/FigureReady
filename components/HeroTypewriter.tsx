@@ -9,10 +9,10 @@ const WORDS = [
   'scientific data',
 ]
 
-const TYPE_SPEED  = 55   // ms per character typed
-const DELETE_SPEED = 30  // ms per character deleted
-const PAUSE_FULL  = 1800 // ms pause when word is complete
-const PAUSE_EMPTY = 300  // ms pause before typing next word
+const TYPE_SPEED  = 90   // ms per character typed
+const DELETE_SPEED = 45  // ms per character deleted
+const PAUSE_FULL  = 2200 // ms pause when word is complete
+const PAUSE_EMPTY = 400  // ms pause before typing next word
 
 export default function HeroTypewriter() {
   const [displayed, setDisplayed] = useState('')

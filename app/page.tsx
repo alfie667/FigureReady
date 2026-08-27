@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { LogoFull } from '@/components/Logo'
 import PricingSection from './home-v2/PricingSection'
 import HeroTypewriter from '@/components/HeroTypewriter'
+import FadeIn from '@/components/FadeIn'
 
 export const metadata: Metadata = {
   title: 'FigureReady — Turn scientific data into publication-ready figures',
@@ -140,7 +141,7 @@ export default function HomePage() {
       {/* ── 2. DEMO VIDEO ────────────────────────────────────────────── */}
       <section className="border-t border-slate-100 py-20 md:py-28 bg-[#f8fafc]">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
-          <div className="text-center mb-10">
+          <FadeIn className="text-center mb-10">
             <span className="inline-block text-xs font-semibold tracking-[0.16em] uppercase text-blue-600 mb-3">
               See it in action
             </span>
@@ -150,32 +151,36 @@ export default function HomePage() {
             >
               From raw data to publication-ready figure in seconds
             </h2>
-          </div>
-          <div className="relative mx-auto max-w-[960px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-900/10">
-            {/* Browser chrome bar */}
-            <div className="flex items-center gap-1.5 px-4 h-9 bg-slate-100 border-b border-slate-200">
-              <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
-              <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
-              <span className="w-3 h-3 rounded-full bg-[#28c840]" />
-              <span className="mx-auto text-xs text-slate-400 font-medium">figureready.com/app</span>
+          </FadeIn>
+          <FadeIn delay={120}>
+            <div className="relative mx-auto max-w-[960px] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-slate-900/10">
+              {/* Browser chrome bar */}
+              <div className="flex items-center gap-1.5 px-4 h-9 bg-slate-100 border-b border-slate-200">
+                <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+                <span className="mx-auto text-xs text-slate-400 font-medium">figureready.com/app</span>
+              </div>
+              <video
+                src="/home-v2/demo.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full block"
+              />
             </div>
-            <video
-              src="/home-v2/demo.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="w-full block"
-            />
-          </div>
+          </FadeIn>
         </div>
       </section>
 
       {/* ── UNIVERSITY LOGOS MARQUEE ─────────────────────────────────── */}
       <section className="py-14 bg-[#f9fafb] border-t border-slate-100">
+        <FadeIn>
         <p className="text-center text-sm text-slate-400 mb-10 tracking-wide">
           Trusted by researchers from leading institutions
         </p>
+        </FadeIn>
         <div className="overflow-hidden">
           <div className="animate-marquee flex items-center">
             {[...LOGOS, ...LOGOS].map((logo, i) => (
@@ -191,7 +196,7 @@ export default function HomePage() {
       {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
       <section className="border-t border-slate-100 py-20 md:py-28 bg-[#f8fafc]">
         <div className="max-w-[1280px] mx-auto px-6 lg:px-10">
-          <div className="text-center mb-12">
+          <FadeIn className="text-center mb-12">
             <span className="inline-block text-xs font-semibold tracking-[0.16em] uppercase text-blue-600 mb-3">
               Testimonials
             </span>
@@ -204,7 +209,7 @@ export default function HomePage() {
             <p className="mt-4 text-base text-slate-500 max-w-[520px] mx-auto">
               See why scientists are choosing FigureReady over legacy tools for their publication figures.
             </p>
-          </div>
+          </FadeIn>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {([
               {
@@ -240,7 +245,8 @@ export default function HomePage() {
                 avatar: "https://randomuser.me/api/portraits/men/52.jpg",
               },
             ] as { quote: string; name: string; role: string; institution: string; from: string; avatar: string }[]).map((t, i) => (
-              <div key={i} className="flex flex-col bg-white border border-slate-200 rounded-2xl p-7 gap-5 shadow-sm">
+              <FadeIn key={i} delay={i * 110}>
+              <div className="flex flex-col bg-white border border-slate-200 rounded-2xl p-7 gap-5 shadow-sm h-full">
                 <div className="flex gap-0.5">
                   {[0,1,2,3,4].map(s => (
                     <svg key={s} className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 20 20">
@@ -269,6 +275,7 @@ export default function HomePage() {
                   </span>
                 </div>
               </div>
+              </FadeIn>
             ))}
           </div>
         </div>
@@ -280,7 +287,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
 
             {/* Text left */}
-            <div className="w-full md:w-[42%] order-2 md:order-1">
+            <FadeIn className="w-full md:w-[42%] order-2 md:order-1">
               <h2
                 className="font-bold text-[2rem] md:text-[2.75rem] leading-[1.1] tracking-[-0.02em] text-[#0f172a] mb-5"
                 style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
@@ -298,10 +305,10 @@ export default function HomePage() {
               >
                 Upload your data <ArrowRight />
               </Link>
-            </div>
+            </FadeIn>
 
             {/* Image right */}
-            <div className="w-full md:w-[58%] order-1 md:order-2">
+            <FadeIn delay={140} className="w-full md:w-[58%] order-1 md:order-2">
               <Image
                 src="/home-v2/upload.png"
                 alt="Excel spreadsheet imported into FigureReady generating an XRD scientific figure"
@@ -309,7 +316,7 @@ export default function HomePage() {
                 height={500}
                 className="w-full h-auto"
               />
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -320,7 +327,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
 
             {/* Image left */}
-            <div className="w-full md:w-[55%]">
+            <FadeIn className="w-full md:w-[55%]">
               <Image
                 src="/home-v2/templates.png"
                 alt="Scientific template cards — FTIR, XRD (Popular), Dose-Response"
@@ -328,10 +335,10 @@ export default function HomePage() {
                 height={500}
                 className="w-full h-auto"
               />
-            </div>
+            </FadeIn>
 
             {/* Text right */}
-            <div className="w-full md:w-[45%]">
+            <FadeIn delay={140} className="w-full md:w-[45%]">
               <h2
                 className="font-bold text-[2rem] md:text-[2.75rem] leading-[1.1] tracking-[-0.02em] text-[#0f172a] mb-5"
                 style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
@@ -349,7 +356,7 @@ export default function HomePage() {
                 Explore scientific templates <ArrowRight />
               </Link>
               <p className="text-sm text-slate-400 mt-3">More templates added regularly.</p>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -360,7 +367,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
 
             {/* Text left */}
-            <div className="w-full md:w-[42%] order-2 md:order-1">
+            <FadeIn className="w-full md:w-[42%] order-2 md:order-1">
               <h2
                 className="font-bold text-[2rem] md:text-[2.75rem] leading-[1.1] tracking-[-0.02em] text-[#0f172a] mb-5"
                 style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
@@ -377,10 +384,10 @@ export default function HomePage() {
               >
                 Explore the editor <ArrowRight />
               </Link>
-            </div>
+            </FadeIn>
 
             {/* Image right */}
-            <div className="w-full md:w-[58%] order-1 md:order-2">
+            <FadeIn delay={140} className="w-full md:w-[58%] order-1 md:order-2">
               <Image
                 src="/home-v2/edit-annotate.png"
                 alt="FigureReady annotation toolbar with peak label on UV-Vis spectrum"
@@ -388,7 +395,7 @@ export default function HomePage() {
                 height={500}
                 className="w-full h-auto"
               />
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -399,7 +406,7 @@ export default function HomePage() {
           <div className="flex flex-col md:flex-row items-center gap-12 md:gap-20">
 
             {/* Image left */}
-            <div className="w-full md:w-[55%]">
+            <FadeIn className="w-full md:w-[55%]">
               <Image
                 src="/home-v2/export.png"
                 alt="XRD scientific figure exported to SVG, PDF and PNG"
@@ -407,10 +414,10 @@ export default function HomePage() {
                 height={500}
                 className="w-full h-auto"
               />
-            </div>
+            </FadeIn>
 
             {/* Text right */}
-            <div className="w-full md:w-[45%]">
+            <FadeIn delay={140} className="w-full md:w-[45%]">
               <h2
                 className="font-bold text-[2rem] md:text-[2.75rem] leading-[1.1] tracking-[-0.02em] text-[#0f172a] mb-5"
                 style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
@@ -430,7 +437,7 @@ export default function HomePage() {
               >
                 Create your first figure
               </Link>
-            </div>
+            </FadeIn>
           </div>
         </div>
       </section>
@@ -440,7 +447,7 @@ export default function HomePage() {
 
       {/* ── 7. FINAL CTA ─────────────────────────────────────────────── */}
       <section className="bg-[#f0f7ff] py-24 md:py-28">
-        <div className="max-w-[680px] mx-auto px-6 text-center">
+        <FadeIn className="max-w-[680px] mx-auto px-6 text-center">
           <h2
             className="font-bold text-[2rem] md:text-[2.5rem] leading-tight tracking-[-0.02em] text-[#0f172a] mb-4"
             style={{ fontFamily: 'var(--font-plus-jakarta), Inter, sans-serif' }}
@@ -465,7 +472,7 @@ export default function HomePage() {
             </Link>
           </div>
           <p className="text-sm text-slate-400">Start free · No installation required</p>
-        </div>
+        </FadeIn>
       </section>
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
