@@ -2,19 +2,23 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react'
 import { toPng } from 'html-to-image'
 import ChartPreview from './ChartPreview'
-import type { PanelConfig, PanelLayout, PanelLabelConfig, ComposerConfig } from '@/lib/panels'
+import type { PanelLayout, PanelLabelConfig, ComposerConfig } from '@/lib/panels'
 import { getLabelText, DEFAULT_LABEL_CONFIG, DEFAULT_COMPOSER_CONFIG } from '@/lib/panels'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
-import type { ChartAnnotation } from '@/lib/annotations'
+import { useProjectStore, type PanelSlot } from '@/lib/projectStore'
+import { loadDataForFigure } from '@/lib/projectStore'
 
 // CSS column count per layout
 const COLS: Record<PanelLayout, number> = { '1': 1, '2h': 2, '2v': 1, '4': 2, '3h': 3 }
 
 // Default CSS panel widths (visual sizing only — real export resolution is driven by figureWidthMm + DPI)
+// Each panel renders at the same size as the standalone full-screen view so figures look identical.
+// The artboard scrolls horizontally when the composite is wider than the viewport.
 const PANEL_W: Record<PanelLayout, number> = {
-  '1': 700, '2h': 540, '2v': 700, '4': 540, '3h': 380,
+  '1': 700, '2h': 700, '2v': 700, '4': 620, '3h': 560,
 }
-const PANEL_H = 440
+// Responsive height: maintains ~440/700 aspect ratio from the ACS base style, min 280px.
+const panelHeight = (w: number) => Math.max(Math.round(w * (440 / 700)), 280)
 
 // ── PNG DPI injection ─────────────────────────────────────────────────────────
 
@@ -52,16 +56,14 @@ function injectPngDpi(dataUrl: string, dpi: number): string {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface Props {
-  panels: PanelConfig[]
+  slots: PanelSlot[]
   layout: PanelLayout
   activePanel: number
   styleName: StyleName
   figureStyleOverrides: StyleOverrides
   labelConfig?: PanelLabelConfig
   composerConfig?: ComposerConfig
-  onAnnotationsChange: (idx: number, anns: ChartAnnotation[]) => void
-  onStyleChange: (idx: number, patch: Partial<StyleOverrides>) => void
-  onPanelClick: (idx: number) => void
+  onPanelClick: (idx: number, figureId: string | null) => void
   onSaveTemplate?: () => void
 }
 
@@ -72,35 +74,44 @@ export interface MultiPanelPreviewHandle {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function MultiPanelPreview({
-  panels, layout, activePanel, styleName,
+  slots, layout, activePanel, styleName,
   figureStyleOverrides,
   labelConfig  = DEFAULT_LABEL_CONFIG,
   composerConfig = DEFAULT_COMPOSER_CONFIG,
-  onAnnotationsChange, onStyleChange, onPanelClick,
+  onPanelClick,
 }: Props, ref) {
   const gridRef = useRef<HTMLDivElement>(null)
   const [hoveredPanel, setHoveredPanel] = useState<number | null>(null)
+  const [exporting, setExporting] = useState(false)
+
+  // Resolve figures from the store
+  const storeFigures   = useProjectStore(s => s.figures)
+  const updateFigure   = useProjectStore(s => s.updateFigure)
 
   const cols   = COLS[layout]
   const panelW = PANEL_W[layout]
+  const panelH = panelHeight(panelW)
   const { gapH, gapV, paddingH, paddingV, figureWidthMm } =
     { ...DEFAULT_COMPOSER_CONFIG, ...composerConfig }
 
   const handleExport = async (dpi = 300) => {
-    if (!gridRef.current) return
+    if (!gridRef.current || exporting) return
+    setExporting(true)
     const el     = gridRef.current
     const parent = el.parentElement
     const prevOverflow = parent?.style.overflow ?? ''
     if (parent) parent.style.overflow = 'visible'
-    await new Promise<void>(r => setTimeout(r, 100))
+    // Let the browser repaint before capture
+    await new Promise<void>(r => setTimeout(r, 150))
     try {
-      const cssWidth = el.getBoundingClientRect().width
-      // Real resolution: pixelWidth = figureWidthMm / 25.4 * dpi
+      const cssWidth = el.scrollWidth || el.getBoundingClientRect().width
       const targetPx   = (figureWidthMm / 25.4) * dpi
       const pixelRatio = cssWidth > 0 ? targetPx / cssWidth : dpi / 96
       const raw = await toPng(el, {
         pixelRatio,
         backgroundColor: 'white',
+        width: el.scrollWidth,
+        height: el.scrollHeight,
         style: { boxShadow: 'none', borderRadius: '0', border: 'none' },
       })
       const url = injectPngDpi(raw, dpi)
@@ -110,15 +121,36 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
       a.click()
     } catch (e) {
       console.error('Multi-panel export failed', e)
+      alert('Export failed — see browser console for details.')
     } finally {
       if (parent) parent.style.overflow = prevOverflow
+      setExporting(false)
     }
   }
 
   useImperativeHandle(ref, () => ({ exportPNG: handleExport }))
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex-1 flex flex-col min-h-0 relative">
+      {/* Export loading overlay */}
+      {exporting && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 50,
+          background: 'rgba(255,255,255,0.85)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 12,
+        }}>
+          <div style={{
+            width: 36, height: 36, border: '3px solid #e2e8f0',
+            borderTop: '3px solid #2563eb', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#475569', fontFamily: 'Arial, sans-serif' }}>
+            Generating PNG…
+          </span>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
       {/* Workspace — text-align:center so inline-block artboard centers when it fits,
            and overflows to the RIGHT (not left) when wider than the viewport.
            flex justify-center caused left-side clipping on 1280–1440px screens. */}
@@ -142,8 +174,18 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
               rowGap: gapV,
             }}
           >
-            {panels.map((panel, i) => {
-              const effectiveStyle: StyleOverrides = { ...figureStyleOverrides, ...panel.styleOverrides }
+            {slots.map((slot, i) => {
+              // Resolve the figure from the store
+              const fig = slot.figureId
+                ? storeFigures.find(f => f.id === slot.figureId) ?? null
+                : null
+
+              // Merge data from separate storage if the store copy is empty
+              const figData = fig
+                ? (fig.data.length > 0 ? fig.data : loadDataForFigure(fig.id))
+                : []
+
+              const effectiveStyle: StyleOverrides = { ...figureStyleOverrides, ...(fig?.styleOverrides ?? {}) }
               const labelText = getLabelText(i, labelConfig)
               const labelFont = effectiveStyle.fontFamily ?? 'Arial, Helvetica, sans-serif'
               const isTop   = labelConfig.position.startsWith('top')
@@ -163,10 +205,12 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
                 </div>
               ) : null
 
+              const hasFigure = fig && figData.length > 0 && fig.yCols.length > 0
+
               return (
                 <div
-                  key={panel.id}
-                  onClick={() => onPanelClick(i)}
+                  key={slot.id}
+                  onClick={() => onPanelClick(i, slot.figureId)}
                   onMouseEnter={() => setHoveredPanel(i)}
                   onMouseLeave={() => setHoveredPanel(null)}
                   style={{
@@ -176,7 +220,7 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
                     width: panelW,
                     cursor: 'pointer',
                     borderRadius: 8,
-                    outline: i === activePanel
+                    outline: exporting ? 'none' : i === activePanel
                       ? '1.5px solid #3b82f6'
                       : (i === hoveredPanel ? '1px solid rgba(0,0,0,0.12)' : 'none'),
                     outlineOffset: 3,
@@ -185,34 +229,70 @@ const MultiPanelPreview = forwardRef<MultiPanelPreviewHandle, Props>(function Mu
                 >
                   {isTop && labelEl}
 
-                  {panel.data.length > 0 && panel.yCols.length > 0 ? (
+                  {hasFigure ? (
                     <ChartPreview
-                      data={panel.data}
-                      xCol={panel.xCol}
-                      yCols={panel.yCols}
-                      seriesNames={panel.seriesNames}
-                      errorCols={panel.errorCols}
-                      xAxisLabel={panel.xAxisLabel}
-                      yAxisLabel={panel.yAxisLabel}
-                      chartType={panel.chartType}
+                      data={figData}
+                      xCol={fig.xCol}
+                      yCols={fig.yCols}
+                      seriesNames={fig.seriesNames}
+                      errorCols={fig.errorCols}
+                      xAxisLabel={fig.xAxisLabel}
+                      yAxisLabel={fig.yAxisLabel}
+                      chartType={fig.chartType}
                       styleName={styleName}
                       styleOverrides={effectiveStyle}
-                      annotations={panel.annotations}
-                      onAnnotationsChange={(anns) => onAnnotationsChange(i, anns)}
-                      onStyleChange={(patch) => onStyleChange(i, patch)}
+                      annotations={fig.annotations}
+                      onAnnotationsChange={(anns) =>
+                        updateFigure(fig.id, { annotations: anns })
+                      }
+                      onStyleChange={(patch) =>
+                        updateFigure(fig.id, {
+                          styleOverrides: { ...fig.styleOverrides, ...patch },
+                        })
+                      }
                       compact
                       panelWidth={panelW}
-                      panelHeight={PANEL_H}
+                      panelHeight={panelH}
                     />
-                  ) : (
+                  ) : slot.figureId ? (
+                    // Figure assigned but no data yet
                     <div style={{
-                      width: panelW, height: PANEL_H,
+                      width: panelW, height: panelH,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: '#f9fafb', borderRadius: 8,
                     }}>
                       <span style={{ fontSize: 13, color: '#94a3b8', fontFamily: 'Arial, sans-serif' }}>
-                        + Add panel
+                        No data yet — open the Data panel
                       </span>
+                    </div>
+                  ) : (
+                    // Empty slot — invite user to click
+                    <div style={{
+                      width: panelW, height: panelH,
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      gap: 10,
+                      background: i === hoveredPanel ? '#eff6ff' : '#f8fafc',
+                      borderRadius: 8,
+                      border: `2px dashed ${i === hoveredPanel ? '#3b82f6' : '#cbd5e1'}`,
+                      transition: 'background 0.15s, border-color 0.15s',
+                      cursor: 'pointer',
+                    }}>
+                      <div style={{
+                        width: 40, height: 40, borderRadius: '50%',
+                        background: i === hoveredPanel ? '#dbeafe' : '#f1f5f9',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 22, color: i === hoveredPanel ? '#3b82f6' : '#94a3b8',
+                        fontWeight: 300, lineHeight: 1,
+                        transition: 'background 0.15s, color 0.15s',
+                      }}>+</div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: i === hoveredPanel ? '#3b82f6' : '#64748b', fontFamily: 'Arial, sans-serif' }}>
+                          Add a figure
+                        </div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2, fontFamily: 'Arial, sans-serif' }}>
+                          Click to upload Excel or use demo data
+                        </div>
+                      </div>
                     </div>
                   )}
 

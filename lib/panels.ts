@@ -73,6 +73,24 @@ export function getLabelText(index: number, config: PanelLabelConfig): string {
 // Kept for panel ID assignment (not display labels — use getLabelText for that).
 export const PANEL_LABELS = ['A', 'B', 'C', 'D'] as const
 
+// ── Free canvas item ──────────────────────────────────────────────────────────
+
+export interface CanvasItem {
+  id: string
+  type: 'figure' | 'text'
+  x: number
+  y: number
+  width: number
+  height: number
+  // text-specific
+  text?: string
+  fontSize?: number
+  fontFamily?: string
+  color?: string
+  bold?: boolean
+  italic?: boolean
+}
+
 // Presentation-only keys safe to harmonize across panels.
 // NEVER includes scientific/data properties: ranges, scales, stacking, fit, colors, series visibility.
 export const HARMONIZABLE_KEYS: ReadonlyArray<keyof StyleOverrides> = [

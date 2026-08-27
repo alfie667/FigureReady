@@ -6,6 +6,7 @@ import { saveDefaultStyle } from '@/lib/styleStorage'
 import { ColorSwatchPicker, LineThicknessPicker, MarkerShapePicker, MarkerSizePicker, ToggleSwitch, type NumericPreset } from '@/components/StyleControls'
 import type { MarkerShape } from '@/lib/markerShapes'
 import type { Fit4PLResult } from '@/lib/curveFit4PL'
+import { COLOR_PALETTES, type ColorPalette, type PaletteId } from '@/lib/colorPalettes'
 
 type ChartType = 'line' | 'lineOnly' | 'scatter' | 'bar' | 'doseResponse'
 
@@ -34,6 +35,9 @@ interface Props {
   onSeriesStrokeWidthsChange: (widths: Record<string, number>) => void
   onSeriesMarkerSizesChange: (sizes: Record<string, number>) => void
   onSeriesMarkerShapesChange: (shapes: Record<string, MarkerShape>) => void
+  // Color palette
+  paletteId?: PaletteId
+  onPaletteChange: (id: PaletteId | undefined) => void
   // Direct-manipulation selection
   selectedElement: SelectedChartElement | null
   onElementSelect: (el: SelectedChartElement | null) => void
@@ -108,16 +112,66 @@ function CompactSizeRow({ label, value, sm, md, lg, min = 6, max = 36, onChange 
   )
 }
 
+// ── Palette row ──────────────────────────────────────────────────────────────
+
+function PaletteRow({ palette, selected, onSelect }: {
+  palette: ColorPalette
+  selected: boolean
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg border transition-colors ${
+        selected
+          ? 'border-[#2563eb] bg-[#eff6ff]'
+          : 'border-transparent hover:bg-slate-50'
+      }`}
+    >
+      <div className="flex gap-0.5 shrink-0">
+        {palette.colors.slice(0, 6).map((c, i) => (
+          <span
+            key={i}
+            className="w-3.5 h-3.5 rounded-sm shrink-0"
+            style={{ backgroundColor: c, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.12)' }}
+          />
+        ))}
+      </div>
+      <span className={`text-[11px] font-medium leading-none ${selected ? 'text-[#2563eb]' : 'text-slate-600'}`}>
+        {palette.name}
+      </span>
+      {selected && (
+        <svg className="w-3 h-3 text-[#2563eb] ml-auto shrink-0" viewBox="0 0 12 12" fill="currentColor">
+          <path d="M1 6l3.5 3.5L11 2" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      )}
+    </button>
+  )
+}
+
+// ── Palettes by category ─────────────────────────────────────────────────────
+
+const PALETTES_SCIENTIFIC  = COLOR_PALETTES.filter(p => p.category === 'scientific')
+const PALETTES_COLORBLIND  = COLOR_PALETTES.filter(p => p.category === 'colorblind')
+const PALETTES_SEQUENTIAL  = COLOR_PALETTES.filter(p => p.category === 'sequential')
+const PALETTES_DIVERGING   = COLOR_PALETTES.filter(p => p.category === 'diverging')
+const PALETTES_MONOCHROME  = COLOR_PALETTES.filter(p => p.category === 'monochrome')
+
+// ── Main component ────────────────────────────────────────────────────────────
+
 export default function RefinePanel({
   yCols, seriesNames, seriesColors, seriesStrokeWidths, seriesMarkerSizes, seriesMarkerShapes,
   chartType, defaultColors, defaultStrokeWidth, defaultMarkerSize,
   onSeriesColorsChange, onSeriesStrokeWidthsChange, onSeriesMarkerSizesChange, onSeriesMarkerShapesChange,
+  paletteId, onPaletteChange,
   selectedElement, onElementSelect,
   baseStyle, overrides, onChange,
   doseResponseFits,
 }: Props) {
-  const [openSection, setOpenSection] = useState<string>('series')
+  const [openSection, setOpenSection] = useState<string>('palette')
   const [saved, setSaved] = useState(false)
+  const [showMorePalettes, setShowMorePalettes] = useState(false)
 
   const selectedSeries = selectedElement?.type === 'series' ? (selectedElement.seriesKey ?? null) : null
 
@@ -188,6 +242,79 @@ export default function RefinePanel({
           >Reset</button>
         </div>
       </div>
+
+      {/* ── Color Palette ──────────────────────────────────────────── */}
+      <SectionHeader title="Color Palette" open={openSection === 'palette'} onToggle={() => toggle('palette')} />
+      {openSection === 'palette' && (
+        <div className="pb-3">
+          {/* Scientific */}
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5">Scientific</p>
+          <div className="mb-2">
+            {PALETTES_SCIENTIFIC.map(p => (
+              <PaletteRow key={p.id} palette={p} selected={paletteId === p.id}
+                onSelect={() => onPaletteChange(paletteId === p.id ? undefined : p.id as PaletteId)} />
+            ))}
+          </div>
+
+          {/* Colorblind Safe */}
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5 mt-2">Colorblind Safe</p>
+          <div className="mb-2">
+            {PALETTES_COLORBLIND.map(p => (
+              <PaletteRow key={p.id} palette={p} selected={paletteId === p.id}
+                onSelect={() => onPaletteChange(paletteId === p.id ? undefined : p.id as PaletteId)} />
+            ))}
+          </div>
+
+          {/* More palettes toggle */}
+          <button
+            type="button"
+            onClick={() => setShowMorePalettes(v => !v)}
+            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 transition-colors mt-1 mb-1"
+          >
+            <svg className={`w-3 h-3 transition-transform ${showMorePalettes ? 'rotate-90' : ''}`} viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M4 2l4 4-4 4"/>
+            </svg>
+            {showMorePalettes ? 'Hide' : 'Sequential · Diverging · Print'}
+          </button>
+
+          {showMorePalettes && (
+            <div className="mt-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5">Sequential</p>
+              <div className="mb-2">
+                {PALETTES_SEQUENTIAL.map(p => (
+                  <PaletteRow key={p.id} palette={p} selected={paletteId === p.id}
+                    onSelect={() => onPaletteChange(paletteId === p.id ? undefined : p.id as PaletteId)} />
+                ))}
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5 mt-2">Diverging</p>
+              <div className="mb-2">
+                {PALETTES_DIVERGING.map(p => (
+                  <PaletteRow key={p.id} palette={p} selected={paletteId === p.id}
+                    onSelect={() => onPaletteChange(paletteId === p.id ? undefined : p.id as PaletteId)} />
+                ))}
+              </div>
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-1.5 mt-2">Print / Monochrome</p>
+              <div className="mb-2">
+                {PALETTES_MONOCHROME.map(p => (
+                  <PaletteRow key={p.id} palette={p} selected={paletteId === p.id}
+                    onSelect={() => onPaletteChange(paletteId === p.id ? undefined : p.id as PaletteId)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reset series colors */}
+          {Object.keys(seriesColors).length > 0 && (
+            <button
+              type="button"
+              onClick={() => onSeriesColorsChange({})}
+              className="mt-2 text-[11px] text-slate-400 hover:text-slate-700 transition-colors underline underline-offset-2"
+            >
+              Reset series color overrides
+            </button>
+          )}
+        </div>
+      )}
 
       {/* ── Series ─────────────────────────────────────────────────── */}
       <SectionHeader title="Series" open={openSection === 'series'} onToggle={() => toggle('series')} />

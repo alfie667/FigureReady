@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FileSpreadsheet, LayoutTemplate, LineChart, PenLine } from 'lucide-react'
 import FileUploader from '@/components/FileUploader'
 import ColumnSelector from '@/components/ColumnSelector'
@@ -17,6 +17,7 @@ import type { ChartAnnotation } from '@/lib/annotations'
 import { isErrorColumn, matchErrorColumn } from '@/lib/detectColumns'
 import { loadDefaultStyle } from '@/lib/styleStorage'
 import { saveUserTemplate, FTIR_DEV_TEMPLATE, PL_DEV_TEMPLATE_OVERLAY, UVVIS_DEV_TEMPLATE_OVERLAY, DOSE_RESPONSE_DEV_TEMPLATE, XRD_DEV_TEMPLATE, type ChartTemplate, type ChartType } from '@/lib/templateStorage'
+import { checkTemplateCompatibility, computeXRange, type CompatibilityContext } from '@/lib/templateCompatibility'
 import type { MarkerShape } from '@/lib/markerShapes'
 import {
   trackAppOpen,
@@ -63,6 +64,9 @@ import CanvasWorkspace from '@/components/editor/CanvasWorkspace'
 import RightInspector from '@/components/editor/RightInspector'
 import RefinePanel from '@/components/editor/RefinePanel'
 import SmartTemplateGallery, { type SmartWorkflowResult } from '@/components/editor/SmartTemplateGallery'
+import FigureTabBar from '@/components/editor/FigureTabBar'
+import { useProjectStore, saveDataForFigure, loadDataForFigure } from '@/lib/projectStore'
+import { createFigure, type FigureDocument } from '@/lib/figureDocument'
 
 const inputCls = "w-full min-w-0 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-700 text-center focus:outline-none focus:ring-1 focus:ring-[#2563eb]"
 const insetLinePresets: NumericPreset[] = [
@@ -131,6 +135,7 @@ export default function AppPage() {
   const [yAxisLabel, setYAxisLabel] = useState('')
   const [styleOverrides, setStyleOverrides] = useState<StyleOverrides>({})
   const [logScaleWarning, setLogScaleWarning] = useState<string | null>(null)
+  const [templateGuardBanner, setTemplateGuardBanner] = useState<{ templateName: string; message: string } | null>(null)
 
   // Fit results for dose–response — computed once here, passed to RefinePanel.
   // ChartPreview runs the same computation internally (memoized), so this is zero extra work.
@@ -142,6 +147,12 @@ export default function AppPage() {
       yCols.map(col => [col, fit4PL(rawX, data.map(row => Number(row[col])))])
     )
   }, [chartType, data, xCol, yCols.join(',')]) // eslint-disable-line react-hooks/exhaustive-deps
+  const xRange = useMemo(() => computeXRange(data, xCol), [data, xCol])
+  const compatibilityContext = useMemo<CompatibilityContext>(
+    () => ({ currentChartType: chartType, xCol, yCols, xRange }),
+    [chartType, xCol, yCols, xRange] // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
   const [annotations, setAnnotations] = useState<ChartAnnotation[]>([])
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false)
   const [drawInsetMode, setDrawInsetMode] = useState(false)
@@ -159,8 +170,7 @@ export default function AppPage() {
   const handleExportPDF = () => chartPreviewRef.current?.triggerExport('pdf')
   const handleExportPNG = () => {
     if (isMultiPanel) {
-      if (getCachedEntitlement().isPro) multiPanelRef.current?.exportPNG()
-      else setMultiPanelPaywallOpen(true)
+      multiPanelRef.current?.exportPNG()
     } else {
       chartPreviewRef.current?.triggerExport('png')
     }
@@ -186,9 +196,25 @@ export default function AppPage() {
   // ── New shell state ────────────────────────────────────────────────────────
   const [activeTool, setActiveTool] = useState<AnnotationTool>('select')
   const [inspectorTab, setInspectorTab] = useState<'style' | 'settings'>('style')
-  const [docName] = useState('Untitled figure')
   const [rightInspectorOpen, setRightInspectorOpen] = useState(true)
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null)
+  const [replaceOpen, setReplaceOpen] = useState(false)
+
+  // ── Project store ─────────────────────────────────────────────────────────
+  const storeUpdateFigure       = useProjectStore(s => s.updateFigure)
+  const storeCreateFigure       = useProjectStore(s => s.createFigure)
+  const storeSetActive          = useProjectStore(s => s.setActiveFigure)
+  const storeFigures            = useProjectStore(s => s.figures)
+  const storeFiguresRef         = useRef(storeFigures)
+  useEffect(() => { storeFiguresRef.current = storeFigures }, [storeFigures])
+  const storeActiveId           = useProjectStore(s => s.activeFigureId)
+  const storeEnableMP           = useProjectStore(s => s.enableMultiPanel)
+  const storeDisableMP          = useProjectStore(s => s.disableMultiPanel)
+  const storeMultiPanel         = useProjectStore(s => s.multiPanel)
+  const storeAssignFigureToSlot = useProjectStore(s => s.assignFigureToSlot)
+  const storeUpdateMPComposer   = useProjectStore(s => s.updateMultiPanelComposer)
+// Derived: name of the active figure (drives the docName display in TopBar)
+  const activeFigureName  = storeFigures.find(f => f.id === storeActiveId)?.name ?? 'Untitled figure'
 
   // ── Progressive disclosure state ──────────────────────────────────────────
   // true once user has applied a template, demo, or explicitly changed chart type
@@ -210,6 +236,178 @@ export default function AppPage() {
     setSelectedAnnotationId(null)
   }
 
+  // ── Figure persistence helpers ────────────────────────────────────────────
+
+  // Load a FigureDocument into the editor's local useState.
+  // Called on mount (load active figure from store) and on figure switch.
+  const loadFigureIntoEditor = useCallback((fig: FigureDocument) => {
+    setColumns(fig.columns)
+    setData(fig.data.length > 0 ? fig.data : loadDataForFigure(fig.id))
+    setXCol(fig.xCol)
+    setYCols(fig.yCols)
+    setErrorCols(fig.errorCols)
+    setChartType(fig.chartType)
+    setSeriesNames(fig.seriesNames)
+    setXAxisLabel(fig.xAxisLabel)
+    setYAxisLabel(fig.yAxisLabel)
+    setStyleOverrides(fig.styleOverrides)
+    setAnnotations(fig.annotations)
+    setFigureConfigured(fig.figureConfigured)
+    setSelectedAnnotationId(null)
+    setSelectedElement(null)
+    setLogScaleWarning(null)
+    setShowTemplateUndo(false)
+    preTemplateSnapRef.current = fig.preTemplateSnap ?? null
+    appliedTemplateNameRef.current = fig.appliedTemplateName ?? ''
+    // Reset undo history for this figure
+    historyRef.current = []
+    historyIndexRef.current = -1
+    figureCreatedFiredRef.current = true  // already tracked when figure was created
+    figureEditedFiredRef.current = false
+    currentSampleTypeRef.current = (fig.sampleType ?? null) as typeof currentSampleTypeRef.current
+    figureWorkflowRef.current = fig.workflow ?? 'user_upload'
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Flush current editor state into the store for the given figure id.
+  // Uses refs for values that change frequently to avoid stale closures.
+  const saveFigureToStore = useCallback((id: string) => {
+    // Preserve seriesLabelPositions saved by compact-panel onStyleChange:
+    // the page's styleOverrides React state is set once when a figure is loaded and doesn't
+    // include positions written later by MultiPanelPreview's onStyleChange callback.
+    // Without this merge, every autosave would wipe the stored label positions.
+    const storedPositions = storeFiguresRef.current.find(f => f.id === id)?.styleOverrides?.seriesLabelPositions
+    const mergedStyleOverrides = storedPositions !== undefined
+      ? { ...styleOverridesRef.current, seriesLabelPositions: storedPositions }
+      : styleOverridesRef.current
+    storeUpdateFigure(id, {
+      columns:         columnsRef.current,
+      xCol:            xColRef.current,
+      yCols:           yColsRef.current,
+      errorCols:       errorColsRef.current,
+      chartType:       chartTypeRef.current,
+      seriesNames:     seriesNamesRef.current,
+      xAxisLabel:      xAxisLabelRef.current,
+      yAxisLabel:      yAxisLabelRef.current,
+      styleOverrides:  mergedStyleOverrides,
+      annotations:     annotationsRef.current,
+      figureConfigured: figureConfiguredRef.current,
+      preTemplateSnap: preTemplateSnapRef.current ?? undefined,
+      appliedTemplateName: appliedTemplateNameRef.current || undefined,
+      dataSource:      (dataSourceRef.current ?? undefined) as FigureDocument['dataSource'],
+      sampleType:      (currentSampleTypeRef.current ?? undefined) as FigureDocument['sampleType'],
+      workflow:        figureWorkflowRef.current || undefined,
+    })
+    saveDataForFigure(id, dataRef.current)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeUpdateFigure])
+
+  // Refs for current editor state — allow saveFigureToStore to read latest values
+  // without needing them as useCallback dependencies.
+  const columnsRef         = useRef(columns)
+  const dataRef            = useRef(data)
+  const xColRef            = useRef(xCol)
+  const yColsRef           = useRef(yCols)
+  const errorColsRef       = useRef(errorCols)
+  const chartTypeRef       = useRef(chartType)
+  const seriesNamesRef     = useRef(seriesNames)
+  const xAxisLabelRef      = useRef(xAxisLabel)
+  const yAxisLabelRef      = useRef(yAxisLabel)
+  const styleOverridesRef  = useRef(styleOverrides)
+  const annotationsRef     = useRef(annotations)
+  const figureConfiguredRef = useRef(figureConfigured)
+  const dataSourceRef      = useRef(dataSource)
+
+  useEffect(() => { columnsRef.current         = columns },         [columns])
+  useEffect(() => { dataRef.current            = data },            [data])
+  useEffect(() => { xColRef.current            = xCol },            [xCol])
+  useEffect(() => { yColsRef.current           = yCols },           [yCols])
+  useEffect(() => { errorColsRef.current       = errorCols },       [errorCols])
+  useEffect(() => { chartTypeRef.current       = chartType },       [chartType])
+  useEffect(() => { seriesNamesRef.current     = seriesNames },     [seriesNames])
+  useEffect(() => { xAxisLabelRef.current      = xAxisLabel },      [xAxisLabel])
+  useEffect(() => { yAxisLabelRef.current      = yAxisLabel },      [yAxisLabel])
+  useEffect(() => { styleOverridesRef.current  = styleOverrides },  [styleOverrides])
+  useEffect(() => { annotationsRef.current     = annotations },     [annotations])
+  useEffect(() => { figureConfiguredRef.current = figureConfigured }, [figureConfigured])
+  useEffect(() => { dataSourceRef.current      = dataSource },      [dataSource])
+
+  // Reset slot-picker dropdown when the selected slot or mode changes
+  useEffect(() => { setReplaceOpen(false) }, [activePanel, isMultiPanel])
+
+  // Autosave — debounced 600 ms after any editor state change
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (!storeActiveId) return
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
+    autosaveTimerRef.current = setTimeout(() => {
+      saveFigureToStore(storeActiveId)
+    }, 600)
+    return () => { if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current) }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, data, xCol, yCols, errorCols, chartType, seriesNames,
+      xAxisLabel, yAxisLabel, styleOverrides, annotations, figureConfigured])
+
+  // ── Figure switching ──────────────────────────────────────────────────────
+
+  const handleSwitchFigure = useCallback((targetId: string) => {
+    if (targetId === storeActiveId) return
+    // Flush current state immediately before switching
+    if (storeActiveId) saveFigureToStore(storeActiveId)
+    storeSetActive(targetId)
+    const fig = storeFigures.find(f => f.id === targetId)
+    if (fig) loadFigureIntoEditor(fig)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeActiveId, storeFigures])
+
+  const handleCreateFigure = useCallback(() => {
+    // Flush current state
+    if (storeActiveId) saveFigureToStore(storeActiveId)
+    const newId = storeCreateFigure({ name: 'Untitled figure' })
+    storeSetActive(newId)
+    // Reset editor to blank state
+    setColumns([])
+    setData([])
+    setXCol('')
+    setYCols([])
+    setErrorCols({})
+    setChartType('line')
+    setSeriesNames({})
+    setXAxisLabel('')
+    setYAxisLabel('')
+    setStyleOverrides({})
+    setAnnotations([])
+    setFigureConfigured(false)
+    setSelectedAnnotationId(null)
+    setSelectedElement(null)
+    setIsDemoMode(false)
+    setSampleBanner(false)
+    historyRef.current = []
+    historyIndexRef.current = -1
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeActiveId, storeCreateFigure, storeSetActive])
+
+  // ── Multi-panel toggle (now backed by store) ──────────────────────────────
+  const handleToggleMultiPanel = useCallback(() => {
+    if (isMultiPanel) {
+      // Currently viewing artboard → fully disable multi-panel
+      storeDisableMP()
+      setIsMultiPanel(false)
+    } else if (storeMultiPanel) {
+      // Was editing a single figure after "Edit figure" → restore artboard
+      // Flush any pending edits before switching back
+      if (storeActiveId) saveFigureToStore(storeActiveId)
+      setIsMultiPanel(true)
+    } else {
+      // No multi-panel exists yet → enable new one
+      storeEnableMP()
+      setIsMultiPanel(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMultiPanel, storeMultiPanel, storeActiveId, storeEnableMP, storeDisableMP])
+
   useEffect(() => {
     const initParams = new URLSearchParams(window.location.search)
     const initDemo = initParams.get('demo')
@@ -224,6 +422,18 @@ export default function AppPage() {
     refreshEntitlement().then(e => {
       if (!e.isPro && hasLegacyProFlag()) setShowRestorePrompt(true)
     })
+
+    // Restore active figure from project store (survives page refresh)
+    const { figures, activeFigureId } = useProjectStore.getState()
+    const activeFig = figures.find(f => f.id === activeFigureId)
+    if (activeFig && activeFig.figureConfigured) {
+      loadFigureIntoEditor(activeFig)
+    }
+    // Restore multi-panel state from store
+    if (useProjectStore.getState().multiPanel) {
+      setIsMultiPanel(true)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // ── Template apply (from /templates gallery flow) ─────────────────────────────
@@ -246,8 +456,6 @@ export default function AppPage() {
     setXAxisLabel(pending.xAxisLabel)
     setYAxisLabel(pending.yAxisLabel)
     setAnnotations([])
-    setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setChartType(pending.chartType)
 
@@ -463,17 +671,64 @@ export default function AppPage() {
     if (idx >= panels.length - 1) setActivePanel(panels.length - 2)
   }
 
-  // Copy the current single-figure state into the next empty panel slot, then open the composer.
+  // Add the active figure to the next empty slot in the multi-panel composer.
+  const addFigureToSlot = useProjectStore(s => s.addFigureToNextEmptySlot)
   const handleAddCurrentFigureToNextPanel = () => {
-    const emptyIdx = panels.findIndex(p => p.columns.length === 0)
-    if (emptyIdx === -1) return
-    updatePanel(emptyIdx, {
-      data, columns, xCol, yCols, chartType,
-      styleOverrides, seriesNames, errorCols,
-      xAxisLabel, yAxisLabel, annotations,
-    })
-    setIsMultiPanel(true)
-    setActivePanel(emptyIdx)
+    if (!storeActiveId) return
+    // Flush current state first so the slot resolves the latest data
+    saveFigureToStore(storeActiveId)
+    if (!storeMultiPanel) {
+      // First add: enable multi-panel, current figure lands in slot 0 (A)
+      storeEnableMP()
+      setIsMultiPanel(true)
+      setActivePanel(0)
+      // Keep ContextPanel open — user still needs to switch figure and add a second panel
+    } else {
+      // Subsequent add: find where the figure will land, activate that slot
+      const emptyIdx = storeMultiPanel.slots.findIndex(s => s.figureId === null)
+      addFigureToSlot(storeActiveId)
+      if (emptyIdx >= 0) setActivePanel(emptyIdx)
+      // Check if this was the last empty slot — if so, collapse ContextPanel to show full artboard
+      const remainingEmpty = storeMultiPanel.slots.filter(s => s.figureId === null).length
+      if (remainingEmpty <= 1) setActiveSidePanel(null)
+    }
+  }
+
+  // Click on an empty slot in the artboard — creates a new figure, assigns it to the slot,
+  // and opens the Data ContextPanel so the user can upload or pick demo data immediately.
+  const handleClickEmptySlot = (slotIdx: number) => {
+    if (!storeMultiPanel) return
+    const slot = storeMultiPanel.slots[slotIdx]
+    if (!slot || slot.figureId !== null) return
+
+    if (storeActiveId) saveFigureToStore(storeActiveId)
+    const newId = storeCreateFigure({ name: 'Untitled figure' })
+    storeSetActive(newId)
+    storeAssignFigureToSlot(slot.id, newId)
+
+    setColumns([])
+    setData([])
+    setXCol('')
+    setYCols([])
+    setErrorCols({})
+    setChartType('line')
+    setSeriesNames({})
+    setXAxisLabel('')
+    setYAxisLabel('')
+    setStyleOverrides({})
+    setAnnotations([])
+    setFigureConfigured(false)
+    setSelectedAnnotationId(null)
+    setSelectedElement(null)
+    setIsDemoMode(false)
+    setSampleBanner(false)
+    historyRef.current = []
+    historyIndexRef.current = -1
+    figureCreatedFiredRef.current = false
+    figureEditedFiredRef.current = false
+
+    setActivePanel(slotIdx)
+    setActiveSidePanel('data')
   }
 
   const handleHarmonize = () => {
@@ -528,9 +783,10 @@ export default function AppPage() {
   // ── Derived current values (routes to active panel or global state) ──────────
 
   const currentPanel = isMultiPanel ? panels[activePanel] : null
-  const currentColumns = currentPanel?.columns ?? columns
-  const currentXCol = currentPanel?.xCol ?? xCol
-  const currentYCols = currentPanel?.yCols ?? yCols
+  // In multi-panel mode, loadFigureIntoEditor already syncs the active figure into React state
+  const currentColumns = columns
+  const currentXCol = xCol
+  const currentYCols = yCols
   const currentChartType = currentPanel?.chartType ?? chartType
   const currentSeriesNames = currentPanel?.seriesNames ?? seriesNames
   const currentErrorCols = currentPanel?.errorCols ?? errorCols
@@ -563,13 +819,13 @@ export default function AppPage() {
     else setYAxisLabel(v)
   }
   const setCurrentXYCols = (x: string, y: string[]) => {
-    if (isMultiPanel) updatePanel(activePanel, { xCol: x, yCols: y })
-    else { setXCol(x); setYCols(y) }
+    setXCol(x); setYCols(y)
   }
 
   // ── Data handlers ─────────────────────────────────────────────────────────────
 
   const handleData = (cols: string[], rows: Record<string, unknown>[]) => {
+    setTemplateGuardBanner(null)
     setColumns(cols)
     setData(rows)
     const x = cols[0] ?? ''
@@ -606,6 +862,7 @@ export default function AppPage() {
   }
 
   const reset = () => {
+    setTemplateGuardBanner(null)
     setColumns([])
     setData([])
     setXCol('')
@@ -616,8 +873,6 @@ export default function AppPage() {
     setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
-    setIsMultiPanel(false)
-    setPanels([])
     setIsDemoMode(false)
     setFigureConfigured(false)
     setSelectedAnnotationId(null)
@@ -642,7 +897,6 @@ export default function AppPage() {
     setYAxisLabel('')
     setStyleOverrides({})
     setAnnotations([])
-    setIsMultiPanel(false)
     setSelectedAnnotationId(null)
     setIsDemoMode(true)
     setFigureConfigured(true)
@@ -666,7 +920,6 @@ export default function AppPage() {
     setChartType('lineOnly')
     setStyleOverrides(buildTemplateOverrides(FTIR_DEV_TEMPLATE, FTIR_Y_COLS))
     setAnnotations([])
-    setIsMultiPanel(false)
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -691,7 +944,6 @@ export default function AppPage() {
     setChartType('lineOnly')
     setStyleOverrides(buildTemplateOverrides(PL_DEV_TEMPLATE_OVERLAY, PL_Y_COLS))
     setAnnotations([])
-    setIsMultiPanel(false)
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -716,7 +968,6 @@ export default function AppPage() {
     setChartType('lineOnly')
     setStyleOverrides(buildTemplateOverrides(UVVIS_DEV_TEMPLATE_OVERLAY, UVVIS_Y_COLS))
     setAnnotations([])
-    setIsMultiPanel(false)
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -766,7 +1017,6 @@ export default function AppPage() {
     setChartType('doseResponse')
     setStyleOverrides(buildTemplateOverrides(DOSE_RESPONSE_DEV_TEMPLATE, DR_Y_COLS))
     setAnnotations([])
-    setIsMultiPanel(false)
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -791,7 +1041,6 @@ export default function AppPage() {
     setChartType('lineOnly')
     setStyleOverrides(buildTemplateOverrides(XRD_DEV_TEMPLATE, XRD_Y_COLS))
     setAnnotations([])
-    setIsMultiPanel(false)
     setIsDemoMode(false)
     setFigureConfigured(true)
     setSelectedAnnotationId(null)
@@ -941,6 +1190,17 @@ export default function AppPage() {
   }
 
   const handleApplyTemplate = (template: ChartTemplate) => {
+    // ── Compatibility guard ───────────────────────────────────────────────────
+    const compat = checkTemplateCompatibility(
+      { chartType: template.chartType, overrides: template.overrides },
+      compatibilityContext,
+    )
+    if (!compat.compatible) {
+      setTemplateGuardBanner({ templateName: template.name, message: compat.message ?? 'This template is not compatible with your current data.' })
+      return  // DO NOT mutate any state — figure stays exactly as-is
+    }
+    setTemplateGuardBanner(null)
+
     setFigureConfigured(true)
     setChartType(template.chartType)
     setLogScaleWarning(null)
@@ -1007,14 +1267,56 @@ export default function AppPage() {
 
   const ready = xCol && yCols.length > 0 && data.length > 0
 
+  // Derived: selected slot + its figure in the multi-panel composer
+  const activeSlot = (isMultiPanel && storeMultiPanel)
+    ? storeMultiPanel.slots[activePanel] ?? null
+    : null
+  const slotFigure = activeSlot?.figureId
+    ? storeFigures.find(f => f.id === activeSlot.figureId) ?? null
+    : null
+
   // ── Secondary panel content ───────────────────────────────────────────────────
 
   const renderPanelContent = () => {
     switch (activeSidePanel) {
 
       case 'data': {
-        // ── State 1: no data — canvas is the primary upload surface ──────────
+        // ── State 1: no data ─────────────────────────────────────────────────
         if (columns.length === 0) {
+          // In multi-panel mode the canvas is occupied by the artboard,
+          // so show a full uploader + demo shortcuts directly in the panel.
+          if (isMultiPanel && storeMultiPanel) {
+            return (
+              <div className="space-y-3 pt-1">
+                <FileUploader
+                  onData={(cols, rows) => {
+                    figureWorkflowRef.current = 'upload'
+                    handleData(cols, rows)
+                  }}
+                  compact
+                />
+                <p className="text-[11px] text-slate-400 font-medium text-center">or try sample data</p>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {([
+                    { label: 'FTIR', fn: handleFTIRSampleData },
+                    { label: 'UV-Vis', fn: handleUVVisSampleData },
+                    { label: 'Dose-Response', fn: handleDoseResponseSampleData },
+                    { label: 'PL Spectra', fn: handlePLSampleData },
+                    { label: 'XRD', fn: handleXRDSampleData },
+                    { label: 'Generic', fn: handleSampleData },
+                  ] as { label: string; fn: () => void }[]).map(({ label, fn }) => (
+                    <button
+                      key={label}
+                      onClick={fn}
+                      className="px-2 py-2 rounded-lg text-[11px] font-medium text-slate-600 bg-white border border-slate-200 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-700 transition-colors text-center"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          }
           return (
             <div className="space-y-2 pt-1">
               <button
@@ -1045,21 +1347,9 @@ export default function AppPage() {
             <div>
               <FileUploader
                 onData={(cols, rows) => {
-                  const x = cols[0] ?? ''
-                  const yCands = cols.filter(c => c !== x && !isErrorColumn(c))
-                  const initialY = yCands[0] ? [yCands[0]] : cols[1] ? [cols[1]] : []
-                  trackUploadCompleted({ source: 'compact', file_type: 'xlsx', row_count: rows.length, column_count: cols.length, series_count: initialY.length })
-                  if (isMultiPanel) {
-                    const initialErrCols: Record<string, string> = {}
-                    initialY.forEach(y => { const match = matchErrorColumn(y, cols); if (match) initialErrCols[y] = match })
-                    updatePanel(activePanel, {
-                      data: rows, columns: cols, xCol: x, yCols: initialY,
-                      seriesNames: {}, errorCols: initialErrCols,
-                      xAxisLabel: x, yAxisLabel: initialY[0] ?? '', styleOverrides: {},
-                    })
-                  } else {
-                    handleData(cols, rows)
-                  }
+                  trackUploadCompleted({ source: 'compact', file_type: 'xlsx', row_count: rows.length, column_count: cols.length, series_count: cols.length - 1 })
+                  figureWorkflowRef.current = 'upload'
+                  handleData(cols, rows)
                 }}
                 compact
               />
@@ -1071,7 +1361,7 @@ export default function AppPage() {
                   <p className="text-[11px] text-slate-400">Combine charts in one figure</p>
                 </div>
                 <button
-                  onClick={toggleMultiPanel}
+                  onClick={handleToggleMultiPanel}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#2563eb]' : 'bg-slate-200'}`}
                 >
                   <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -1079,7 +1369,12 @@ export default function AppPage() {
               </div>
 
               {/* Add current figure to the next empty panel slot */}
-              {!isMultiPanel && panels.length > 0 && columns.length > 0 && panels.some(p => p.columns.length === 0) && (
+              {columns.length > 0 && storeActiveId && (
+                !storeMultiPanel || (
+                  storeMultiPanel.slots.some(s => s.figureId === null) &&
+                  !storeMultiPanel.slots.some(s => s.figureId === storeActiveId)
+                )
+              ) && (
                 <button
                   onClick={handleAddCurrentFigureToNextPanel}
                   className="mb-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#2563eb] bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors"
@@ -1131,32 +1426,32 @@ export default function AppPage() {
                       <label className="flex items-center gap-1.5">
                         <span className="text-[11px] text-slate-400 w-12">Gap H</span>
                         <input type="number" min={0} max={120} step={4}
-                          value={composerConfig.gapH}
-                          onChange={e => setComposerConfig(c => ({ ...c, gapH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          value={storeMultiPanel?.composerConfig?.gapH ?? composerConfig.gapH}
+                          onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), gapH: v } }) }}
                           className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                         />
                       </label>
                       <label className="flex items-center gap-1.5">
                         <span className="text-[11px] text-slate-400 w-12">Gap V</span>
                         <input type="number" min={0} max={120} step={4}
-                          value={composerConfig.gapV}
-                          onChange={e => setComposerConfig(c => ({ ...c, gapV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          value={storeMultiPanel?.composerConfig?.gapV ?? composerConfig.gapV}
+                          onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), gapV: v } }) }}
                           className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                         />
                       </label>
                       <label className="flex items-center gap-1.5">
                         <span className="text-[11px] text-slate-400 w-12">Margin H</span>
                         <input type="number" min={0} max={120} step={4}
-                          value={composerConfig.paddingH}
-                          onChange={e => setComposerConfig(c => ({ ...c, paddingH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          value={storeMultiPanel?.composerConfig?.paddingH ?? composerConfig.paddingH}
+                          onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), paddingH: v } }) }}
                           className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                         />
                       </label>
                       <label className="flex items-center gap-1.5">
                         <span className="text-[11px] text-slate-400 w-12">Margin V</span>
                         <input type="number" min={0} max={120} step={4}
-                          value={composerConfig.paddingV}
-                          onChange={e => setComposerConfig(c => ({ ...c, paddingV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                          value={storeMultiPanel?.composerConfig?.paddingV ?? composerConfig.paddingV}
+                          onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), paddingV: v } }) }}
                           className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                         />
                       </label>
@@ -1166,8 +1461,8 @@ export default function AppPage() {
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Labels</p>
                     <div className="flex gap-1.5">
                       <select
-                        value={labelConfig.format}
-                        onChange={e => setLabelConfig(c => ({ ...c, format: e.target.value as PanelLabelConfig['format'] }))}
+                        value={storeMultiPanel?.labelConfig?.format ?? labelConfig.format}
+                        onChange={e => storeUpdateMPComposer({ labelConfig: { ...(storeMultiPanel?.labelConfig ?? labelConfig), format: e.target.value as PanelLabelConfig['format'] } })}
                         className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
                       >
                         <option value="paren-lower">(a)</option>
@@ -1176,10 +1471,10 @@ export default function AppPage() {
                         <option value="uppercase">A</option>
                         <option value="none">None</option>
                       </select>
-                      {labelConfig.format !== 'none' && (
+                      {(storeMultiPanel?.labelConfig?.format ?? labelConfig.format) !== 'none' && (
                         <select
-                          value={labelConfig.position}
-                          onChange={e => setLabelConfig(c => ({ ...c, position: e.target.value as PanelLabelConfig['position'] }))}
+                          value={storeMultiPanel?.labelConfig?.position ?? labelConfig.position}
+                          onChange={e => storeUpdateMPComposer({ labelConfig: { ...(storeMultiPanel?.labelConfig ?? labelConfig), position: e.target.value as PanelLabelConfig['position'] } })}
                           className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
                         >
                           <option value="top-left">↖ Top-left</option>
@@ -1189,6 +1484,22 @@ export default function AppPage() {
                         </select>
                       )}
                     </div>
+                    {(storeMultiPanel?.labelConfig?.format ?? labelConfig.format) !== 'none' && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className="text-[10px] text-slate-400 shrink-0">Taille</span>
+                        <input
+                          type="number" min={8} max={32}
+                          value={storeMultiPanel?.labelConfig?.fontSize ?? labelConfig.fontSize}
+                          onChange={e => {
+                            const v = Math.max(8, Math.min(32, Number(e.target.value)))
+                            storeUpdateMPComposer({ labelConfig: { ...(storeMultiPanel?.labelConfig ?? labelConfig), fontSize: v } })
+                          }}
+                          className={inputCls}
+                          style={{ width: 52 }}
+                        />
+                        <span className="text-[10px] text-slate-400">pt</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
@@ -1289,7 +1600,7 @@ export default function AppPage() {
                 <p className="text-[11px] text-slate-400">Combine charts in one figure</p>
               </div>
               <button
-                onClick={toggleMultiPanel}
+                onClick={handleToggleMultiPanel}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${isMultiPanel ? 'bg-[#2563eb]' : 'bg-slate-200'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200 ${isMultiPanel ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -1297,7 +1608,12 @@ export default function AppPage() {
             </div>
 
             {/* Add current figure to the next empty panel slot */}
-            {!isMultiPanel && panels.length > 0 && columns.length > 0 && panels.some(p => p.columns.length === 0) && (
+            {columns.length > 0 && storeActiveId && (
+              !storeMultiPanel || (
+                storeMultiPanel.slots.some(s => s.figureId === null) &&
+                !storeMultiPanel.slots.some(s => s.figureId === storeActiveId)
+              )
+            ) && (
               <button
                 onClick={handleAddCurrentFigureToNextPanel}
                 className="mb-3 w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-[#2563eb] bg-blue-50 hover:bg-blue-100 border border-blue-100 transition-colors"
@@ -1349,32 +1665,32 @@ export default function AppPage() {
                     <label className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400 w-12">Gap H</span>
                       <input type="number" min={0} max={120} step={4}
-                        value={composerConfig.gapH}
-                        onChange={e => setComposerConfig(c => ({ ...c, gapH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        value={storeMultiPanel?.composerConfig?.gapH ?? composerConfig.gapH}
+                        onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), gapH: v } }) }}
                         className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                       />
                     </label>
                     <label className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400 w-12">Gap V</span>
                       <input type="number" min={0} max={120} step={4}
-                        value={composerConfig.gapV}
-                        onChange={e => setComposerConfig(c => ({ ...c, gapV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        value={storeMultiPanel?.composerConfig?.gapV ?? composerConfig.gapV}
+                        onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), gapV: v } }) }}
                         className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                       />
                     </label>
                     <label className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400 w-12">Margin H</span>
                       <input type="number" min={0} max={120} step={4}
-                        value={composerConfig.paddingH}
-                        onChange={e => setComposerConfig(c => ({ ...c, paddingH: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        value={storeMultiPanel?.composerConfig?.paddingH ?? composerConfig.paddingH}
+                        onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), paddingH: v } }) }}
                         className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                       />
                     </label>
                     <label className="flex items-center gap-1.5">
                       <span className="text-[11px] text-slate-400 w-12">Margin V</span>
                       <input type="number" min={0} max={120} step={4}
-                        value={composerConfig.paddingV}
-                        onChange={e => setComposerConfig(c => ({ ...c, paddingV: Math.max(0, Math.min(120, Number(e.target.value))) }))}
+                        value={storeMultiPanel?.composerConfig?.paddingV ?? composerConfig.paddingV}
+                        onChange={e => { const v = Math.max(0, Math.min(120, Number(e.target.value))); storeUpdateMPComposer({ composerConfig: { ...(storeMultiPanel?.composerConfig ?? composerConfig), paddingV: v } }) }}
                         className="w-12 px-1 py-0.5 text-xs text-center bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-300"
                       />
                     </label>
@@ -1384,8 +1700,8 @@ export default function AppPage() {
                   <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-2">Labels</p>
                   <div className="flex gap-1.5">
                     <select
-                      value={labelConfig.format}
-                      onChange={e => setLabelConfig(c => ({ ...c, format: e.target.value as PanelLabelConfig['format'] }))}
+                      value={storeMultiPanel?.labelConfig?.format ?? labelConfig.format}
+                      onChange={e => storeUpdateMPComposer({ labelConfig: { ...(storeMultiPanel?.labelConfig ?? labelConfig), format: e.target.value as PanelLabelConfig['format'] } })}
                       className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
                     >
                       <option value="paren-lower">(a)</option>
@@ -1394,10 +1710,10 @@ export default function AppPage() {
                       <option value="uppercase">A</option>
                       <option value="none">None</option>
                     </select>
-                    {labelConfig.format !== 'none' && (
+                    {(storeMultiPanel?.labelConfig?.format ?? labelConfig.format) !== 'none' && (
                       <select
-                        value={labelConfig.position}
-                        onChange={e => setLabelConfig(c => ({ ...c, position: e.target.value as PanelLabelConfig['position'] }))}
+                        value={storeMultiPanel?.labelConfig?.position ?? labelConfig.position}
+                        onChange={e => storeUpdateMPComposer({ labelConfig: { ...(storeMultiPanel?.labelConfig ?? labelConfig), position: e.target.value as PanelLabelConfig['position'] } })}
                         className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-300 text-slate-700"
                       >
                         <option value="top-left">↖ Top-left</option>
@@ -1407,6 +1723,22 @@ export default function AppPage() {
                       </select>
                     )}
                   </div>
+                  {(storeMultiPanel?.labelConfig?.format ?? labelConfig.format) !== 'none' && (
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="text-[10px] text-slate-400 shrink-0">Taille</span>
+                      <input
+                        type="number" min={8} max={32}
+                        value={storeMultiPanel?.labelConfig?.fontSize ?? labelConfig.fontSize}
+                        onChange={e => {
+                          const v = Math.max(8, Math.min(32, Number(e.target.value)))
+                          storeUpdateMPComposer({ labelConfig: { ...(storeMultiPanel?.labelConfig ?? labelConfig), fontSize: v } })
+                        }}
+                        className={inputCls}
+                        style={{ width: 52 }}
+                      />
+                      <span className="text-[10px] text-slate-400">pt</span>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
@@ -1674,7 +2006,30 @@ export default function AppPage() {
       case 'templates':
         return (
           <div className="space-y-4">
-            <TemplateSelector onApply={handleApplyTemplate} />
+            {/* ── Incompatibility banner ──────────────────────────────── */}
+            {templateGuardBanner && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 relative">
+                <button
+                  onClick={() => setTemplateGuardBanner(null)}
+                  className="absolute top-2 right-2 text-amber-400 hover:text-amber-700 transition-colors"
+                  aria-label="Dismiss"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <p className="text-[11px] font-semibold text-amber-800 mb-1 pr-5">
+                  &ldquo;{templateGuardBanner.templateName}&rdquo; is not compatible
+                </p>
+                <p className="text-[11px] text-amber-700 leading-relaxed">
+                  {templateGuardBanner.message}
+                </p>
+                <p className="text-[10px] text-amber-600 mt-1.5 font-medium">
+                  Your figure has not been changed.
+                </p>
+              </div>
+            )}
+            <TemplateSelector onApply={handleApplyTemplate} compatibilityContext={compatibilityContext} />
             <button
               onClick={() => setSaveTemplateOpen(true)}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-medium bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 transition-colors"
@@ -1702,7 +2057,7 @@ export default function AppPage() {
       )}
 
       <TopBar
-        docName={docName}
+        docName={activeFigureName}
         activeTool={activeTool}
         onToolChange={(t) => { setActiveTool(t); chartPreviewRef.current?.setActiveTool(t) }}
         drawInsetActive={drawInsetMode}
@@ -1714,6 +2069,14 @@ export default function AppPage() {
         onExportSVG={handleExportSVG}
         onExportPDF={handleExportPDF}
         onShareLink={handleShareLink}
+      />
+
+      {/* ── Figure tab bar ──────────────────────────────────────────────── */}
+      <FigureTabBar
+        onSwitch={handleSwitchFigure}
+        onCreate={handleCreateFigure}
+        onToggleMultiPanel={handleToggleMultiPanel}
+        isMultiPanel={isMultiPanel}
       />
 
       {showRestorePrompt && (
@@ -1853,21 +2216,24 @@ export default function AppPage() {
           )}
           {/* Figure zone */}
           <div className="flex-1 overflow-hidden flex flex-col min-h-[200px] md:min-h-0">
-            {isMultiPanel && panels.length > 0 ? (
+            {isMultiPanel && storeMultiPanel !== null ? (
               <MultiPanelPreview
                 ref={multiPanelRef}
-                panels={panels}
-                layout={panelLayout}
+                slots={storeMultiPanel.slots}
+                layout={storeMultiPanel.layout}
                 activePanel={activePanel}
                 styleName={styleName}
-                figureStyleOverrides={figureStyleOverrides}
-                labelConfig={labelConfig}
-                composerConfig={composerConfig}
-                onAnnotationsChange={(idx, anns) => updatePanel(idx, { annotations: anns })}
-                onStyleChange={(idx, patch) =>
-                  updatePanel(idx, { styleOverrides: { ...panels[idx].styleOverrides, ...patch } })
-                }
-                onPanelClick={setActivePanel}
+                figureStyleOverrides={storeMultiPanel.figureStyleOverrides}
+                labelConfig={storeMultiPanel.labelConfig}
+                composerConfig={storeMultiPanel.composerConfig}
+                onPanelClick={(idx, figureId) => {
+                  setActivePanel(idx)
+                  if (figureId) {
+                    handleSwitchFigure(figureId)
+                  } else {
+                    handleClickEmptySlot(idx)
+                  }
+                }}
                 onSaveTemplate={() => setSaveTemplateOpen(true)}
               />
             ) : ready ? (
@@ -1981,7 +2347,122 @@ export default function AppPage() {
           onUpdateAnnotation={handleUpdateAnnotation}
           onDeleteAnnotation={handleDeleteAnnotation}
           styleContent={
-            !ready || isMultiPanel ? (
+            isMultiPanel && storeMultiPanel ? (
+              // ── Composer slot inspector ──────────────────────────────────────
+              <div className="space-y-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                  Panel {activeSlot?.id ?? String.fromCharCode(65 + activePanel)}
+                </p>
+
+                {slotFigure ? (
+                  <>
+                    {/* Current figure name */}
+                    <div className="flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                      <svg className="w-3.5 h-3.5 shrink-0 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      </svg>
+                      <span className="text-xs font-medium text-slate-700 truncate">{slotFigure.name}</span>
+                    </div>
+
+                    {/* Edit figure — exits multi-panel VIEW but keeps store intact so the user can restore */}
+                    <button
+                      onClick={() => { handleSwitchFigure(slotFigure.id); setIsMultiPanel(false) }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-[#2563eb] bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                      </svg>
+                      Edit figure
+                    </button>
+
+                    {/* Replace figure */}
+                    <button
+                      onClick={() => setReplaceOpen(v => !v)}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 3M21 7.5H7.5" />
+                        </svg>
+                        Replace figure
+                      </span>
+                      <svg className={`w-3 h-3 text-slate-400 transition-transform ${replaceOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {replaceOpen && (
+                      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                        {storeFigures.filter(f => f.id !== slotFigure.id).length === 0 ? (
+                          <p className="text-[11px] text-slate-400 text-center px-3 py-3">No other figures available.</p>
+                        ) : (
+                          storeFigures.filter(f => f.id !== slotFigure.id).map(fig => (
+                            <button
+                              key={fig.id}
+                              onClick={() => { activeSlot && storeAssignFigureToSlot(activeSlot.id, fig.id); handleSwitchFigure(fig.id); setReplaceOpen(false) }}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-left text-slate-700 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5 shrink-0 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                              {fig.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+
+                    {/* Remove from panel */}
+                    <button
+                      onClick={() => { activeSlot && storeAssignFigureToSlot(activeSlot.id, null) }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-red-500 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Remove from panel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {/* Empty slot */}
+                    <div className="rounded-xl border border-dashed border-slate-200 px-3 py-4 flex flex-col items-center gap-2.5 text-center">
+                      <svg className="w-6 h-6 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-xs text-slate-400">Empty panel</p>
+                      <button
+                        onClick={() => setReplaceOpen(v => !v)}
+                        className="text-xs font-medium text-[#2563eb] hover:underline"
+                      >
+                        Assign a figure
+                      </button>
+                    </div>
+
+                    {replaceOpen && (
+                      <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                        {storeFigures.length === 0 ? (
+                          <p className="text-[11px] text-slate-400 text-center px-3 py-3">No figures yet.</p>
+                        ) : (
+                          storeFigures.map(fig => (
+                            <button
+                              key={fig.id}
+                              onClick={() => { activeSlot && storeAssignFigureToSlot(activeSlot.id, fig.id); handleSwitchFigure(fig.id); setReplaceOpen(false) }}
+                              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-left text-slate-700 hover:bg-blue-50 border-b border-slate-100 last:border-0 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5 shrink-0 text-[#94A3B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                              </svg>
+                              {fig.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : !ready ? (
               <p className="text-xs text-slate-400">
                 {columns.length === 0
                   ? 'Upload data to see style controls.'
@@ -2003,6 +2484,8 @@ export default function AppPage() {
                 onSeriesStrokeWidthsChange={(widths) => handleUserStyleChange({ ...styleOverrides, seriesStrokeWidths: widths })}
                 onSeriesMarkerSizesChange={(sizes) => handleUserStyleChange({ ...styleOverrides, seriesMarkerSizes: sizes })}
                 onSeriesMarkerShapesChange={(shapes) => handleUserStyleChange({ ...styleOverrides, seriesMarkerShapes: shapes })}
+                paletteId={styleOverrides.paletteId}
+                onPaletteChange={(id) => handleUserStyleChange({ ...styleOverrides, paletteId: id })}
                 baseStyle={chartStyles[styleName]}
                 overrides={styleOverrides}
                 onChange={handleUserStyleChange}
@@ -2013,50 +2496,162 @@ export default function AppPage() {
             )
           }
           settingsContent={
-            <div className="space-y-5">
-              <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
-                <p className="text-xs font-semibold text-[#1d4ed8]">ACS style active</p>
-                <p className="text-[11px] text-blue-500 mt-0.5">American Chemical Society format</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-slate-600">Figure width</p>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number" min={300} max={1600} step={50}
-                    value={styleOverrides.figureWidth ?? 700}
-                    onChange={e => {
-                      const v = Number(e.target.value)
-                      if (v >= 300 && v <= 1600) handleUserStyleChange({ ...currentStyleOverrides, figureWidth: v }, 'figure_size')
-                    }}
-                    className={inputCls}
-                  />
-                  <span className="text-[10px] text-slate-400 shrink-0">px</span>
-                </div>
-              </div>
-              {ready && !isMultiPanel && (
+            isMultiPanel && storeMultiPanel ? (
+              // ── Composer-level settings ──────────────────────────────────────
+              <div className="space-y-5">
+                {/* Panel labels */}
                 <div className="space-y-3">
-                  <p className="text-xs font-medium text-slate-600">Inset figure</p>
-                  <button
-                    onClick={() => setDrawInsetMode(v => !v)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
-                      drawInsetMode
-                        ? 'bg-[#2563eb] text-white border-[#2563eb]'
-                        : styleOverrides.insetDefined
-                          ? 'bg-blue-50 text-[#2563eb] border-blue-200'
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
-                    </svg>
-                    {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
-                  </button>
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Panel labels</p>
+
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 mb-1.5">Format</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([
+                        { value: 'none',        label: 'None' },
+                        { value: 'lowercase',   label: 'a, b' },
+                        { value: 'uppercase',   label: 'A, B' },
+                        { value: 'paren-lower', label: '(a)' },
+                        { value: 'paren-upper', label: '(A)' },
+                      ] as const).map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => storeUpdateMPComposer({ labelConfig: { ...storeMultiPanel.labelConfig, format: opt.value } })}
+                          className={`px-2.5 py-1 text-xs rounded-full transition-colors ${
+                            storeMultiPanel.labelConfig.format === opt.value
+                              ? 'bg-[#2563eb] text-white'
+                              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 mb-1.5">Position</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {([
+                        { value: 'top-left',     label: '↖ Top left' },
+                        { value: 'top-right',    label: '↗ Top right' },
+                        { value: 'bottom-left',  label: '↙ Bottom left' },
+                        { value: 'bottom-right', label: '↘ Bottom right' },
+                      ] as const).map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => storeUpdateMPComposer({ labelConfig: { ...storeMultiPanel.labelConfig, position: opt.value } })}
+                          className={`px-2 py-1.5 text-[11px] rounded-lg transition-colors text-left ${
+                            storeMultiPanel.labelConfig.position === opt.value
+                              ? 'bg-[#2563eb] text-white'
+                              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-medium text-slate-600 mb-1">Font size</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number" min={8} max={20}
+                        value={storeMultiPanel.labelConfig.fontSize}
+                        onChange={e => {
+                          const v = Number(e.target.value)
+                          if (v >= 8 && v <= 20) storeUpdateMPComposer({ labelConfig: { ...storeMultiPanel.labelConfig, fontSize: v } })
+                        }}
+                        className={inputCls}
+                      />
+                      <span className="text-[10px] text-slate-400 shrink-0">pt</span>
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
-                <p className="text-[11px] text-slate-400">More journal presets coming soon — Nature, Cell, JACS</p>
+
+                {/* Spacing */}
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Spacing</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1">Gap H</p>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number" min={0} max={80}
+                          value={storeMultiPanel.composerConfig.gapH}
+                          onChange={e => {
+                            const v = Number(e.target.value)
+                            if (v >= 0 && v <= 80) storeUpdateMPComposer({ composerConfig: { ...storeMultiPanel.composerConfig, gapH: v } })
+                          }}
+                          className={inputCls}
+                        />
+                        <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-slate-600 mb-1">Gap V</p>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number" min={0} max={80}
+                          value={storeMultiPanel.composerConfig.gapV}
+                          onChange={e => {
+                            const v = Number(e.target.value)
+                            if (v >= 0 && v <= 80) storeUpdateMPComposer({ composerConfig: { ...storeMultiPanel.composerConfig, gapV: v } })
+                          }}
+                          className={inputCls}
+                        />
+                        <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-5">
+                <div className="rounded-xl bg-blue-50 border border-blue-100 px-3 py-2.5">
+                  <p className="text-xs font-semibold text-[#1d4ed8]">ACS style active</p>
+                  <p className="text-[11px] text-blue-500 mt-0.5">American Chemical Society format</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-slate-600">Figure width</p>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number" min={300} max={1600} step={50}
+                      value={styleOverrides.figureWidth ?? 700}
+                      onChange={e => {
+                        const v = Number(e.target.value)
+                        if (v >= 300 && v <= 1600) handleUserStyleChange({ ...currentStyleOverrides, figureWidth: v }, 'figure_size')
+                      }}
+                      className={inputCls}
+                    />
+                    <span className="text-[10px] text-slate-400 shrink-0">px</span>
+                  </div>
+                </div>
+                {ready && !isMultiPanel && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium text-slate-600">Inset figure</p>
+                    <button
+                      onClick={() => setDrawInsetMode(v => !v)}
+                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-colors border ${
+                        drawInsetMode
+                          ? 'bg-[#2563eb] text-white border-[#2563eb]'
+                          : styleOverrides.insetDefined
+                            ? 'bg-blue-50 text-[#2563eb] border-blue-200'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/>
+                      </svg>
+                      {drawInsetMode ? 'Click & drag on chart…' : styleOverrides.insetDefined ? 'Redefine inset zone' : 'Add inset figure'}
+                    </button>
+                  </div>
+                )}
+                <div className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+                  <p className="text-[11px] text-slate-400">More journal presets coming soon — Nature, Cell, JACS</p>
+                </div>
+              </div>
+            )
           }
         />
 

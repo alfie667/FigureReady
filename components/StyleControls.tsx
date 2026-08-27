@@ -4,6 +4,11 @@ import { useRef, useEffect, useState } from 'react'
 import { renderMarker, markerShapeOptions, type MarkerShape } from '@/lib/markerShapes'
 import { COLOR_PALETTES } from '@/lib/colorPalettes'
 
+// Only categorical palettes make sense for picking a single series/axis color.
+const PICKER_PALETTES = COLOR_PALETTES.filter(
+  p => p.category === 'scientific' || p.category === 'colorblind' || p.category === 'monochrome'
+)
+
 export function PickerGroup({ label, children }: { label?: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
@@ -178,7 +183,7 @@ export function ScientificColorPicker({ label, value, onChange }: { label?: stri
       {/* Expanded palette */}
       {open && (
         <div className="mt-2 p-3 rounded-xl border border-[#E2E8F0] bg-white shadow-sm space-y-3">
-          {COLOR_PALETTES.map(palette => (
+          {PICKER_PALETTES.map(palette => (
             <div key={palette.id}>
               <p className="text-[10px] font-semibold text-[#94A3B8] uppercase tracking-wide mb-1.5">{palette.name}</p>
               <div className="flex flex-wrap gap-1.5">

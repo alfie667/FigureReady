@@ -14,7 +14,7 @@ import {
 } from 'recharts'
 import { chartStyles } from '@/lib/chartStyles'
 import type { StyleName, StyleOverrides } from '@/lib/chartStyles'
-import { getPaletteColor } from '@/lib/colorPalettes'
+import { getPaletteById, resolveSeriesColors } from '@/lib/colorPalettes'
 import type { ChartAnnotation, TextAnnotation, ArrowAnnotation, LineAnnotation, RectAnnotation, EllipseAnnotation, PeakLabelAnnotation } from '@/lib/annotations'
 import AnnotationToolbar from '@/components/AnnotationToolbar'
 import AnnotationContextBar from '@/components/AnnotationContextBar'
@@ -603,6 +603,20 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
 
   const plotAreaRef = useRef({ left: 0, top: 0, width: 1, height: 1 })
 
+  // In compact mode, plotAreaRef is populated by Recharts DURING the first render,
+  // but the inline-label IIFE reads it BEFORE Recharts has a chance to update it.
+  // One extra render (triggered by useEffect) ensures the IIFE sees the real values.
+  const [compactMeasured, setCompactMeasured] = useState(!compact)
+  useEffect(() => { if (compact && !compactMeasured) setCompactMeasured(true) }, [compact]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Cache computed default inline-label positions for compact mode.
+  // Without this, defaultXPct is re-derived from plotAreaRef on every re-render;
+  // any Zustand update (e.g. panel 2 autosave) can cause a render where plotAreaRef
+  // reports stale/zero dimensions, pushing labels to −15 % (off-screen).
+  const compactLabelDefaultsRef = useRef<Record<string, { xPct: number; yPct: number }>>({})
+  const yColsKey = yCols.join('\0')
+  useEffect(() => { compactLabelDefaultsRef.current = {} }, [yColsKey]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Track card width to detect mobile (card narrower than design width)
   const [cardWidth, setCardWidth] = useState(0)
   useEffect(() => {
@@ -711,9 +725,12 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const xTickSize = styleOverrides.xTickSize ?? s.tickFontSize
   const yTickSize = styleOverrides.yTickSize ?? s.tickFontSize
   const seriesLabel = (col: string) => seriesNames[col]?.trim() || formatAxisLabel(col)
+  const _paletteColors = styleOverrides.paletteId
+    ? resolveSeriesColors(getPaletteById(styleOverrides.paletteId)!, yCols.length)
+    : null
   const seriesColor = (col: string, i: number) => {
     if (styleOverrides.seriesColors?.[col]) return styleOverrides.seriesColors[col]
-    if (styleOverrides.paletteId) return getPaletteColor(styleOverrides.paletteId, i)
+    if (_paletteColors) return _paletteColors[i] ?? s.colors[i % s.colors.length]
     return s.colors[i % s.colors.length]
   }
   const seriesStrokeWidth = (col: string) => styleOverrides.seriesStrokeWidths?.[col] ?? s.strokeWidth
@@ -989,7 +1006,7 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     : (legendDefaultPos[legendPosition] ?? legendDefaultPos['top-right'])
   const resolvedColors = yCols.map((col, i) =>
     (styleOverrides.seriesColors ?? {})[col]
-      ?? (styleOverrides.paletteId ? getPaletteColor(styleOverrides.paletteId, i) : null)
+      ?? (_paletteColors?.[i] ?? null)
       ?? s.colors[i % s.colors.length]
   )
   const resolvedStrokeWidths = yCols.map(col =>
@@ -1021,12 +1038,21 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
   const yTickStyle  = { fontSize: effectiveYTickSize,  fontFamily, fill: axisColor, fontWeight: tickFontWeight }
   const showYTickLabels = styleOverrides.showYTickLabels !== false
   const yAxisTickProp = showYTickLabels ? yTickStyle : (false as const)
-  const yAxisWidth = showYTickLabels ? 80 : 24
+  // Compact: fixed 56 px so every panel reserves the same space for Y-axis ticks/title,
+  // making all panel plot areas identical regardless of per-figure showYTickLabels.
+  const yAxisWidth = compact ? 56 : (showYTickLabels ? 80 : 24)
   const axisLine    = { stroke: axisColor, strokeWidth: axisWidth }
   const margin      = s.margin
-  // Mobile preview-only: widen the bottom margin so the X-axis title clears the SVG boundary.
-  // isExporting restores the original margin — exports always use full desktop margins.
-  const effectiveMargin = previewOnly ? { ...margin, bottom: Math.max(margin.bottom, 30) } : margin
+  // Compact: left=50 ensures the rotated Y-axis title (dx≈−12, fontSize≈14) clears the
+  // SVG left edge (centre at 50/2−12=13 px > fontSize/2≈7 px → 6 px clearance).
+  // isExporting restores the original margin so exports use full desktop margins.
+  const effectiveMargin = isExporting
+    ? margin
+    : compact
+      ? { ...margin, left: Math.max(margin.left, 50), right: Math.max(margin.right, 16) }
+      : previewOnly
+        ? { ...margin, bottom: Math.max(margin.bottom, 30) }
+        : margin
 
   // Inline series labels: measure each label's pixel width for default right-edge placement.
   const inlineLabelWidths = useMemo(() => {
@@ -1042,6 +1068,31 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     }
     return widths
   }, [legendMode, legendEnabled, yCols, seriesNames, legendFontSize, fontFamily])
+
+  // Persist computed default inline-label positions to the store the first time they render
+  // in compact mode. Without this, the IIFE re-derives defaultXPct from plotAreaRef on every
+  // re-render; any store update from another panel triggers a re-render where plotAreaRef may
+  // Save initial inline-label positions to the store the first time they're needed.
+  // Uses the SAME cached values that the IIFE renders with (compactLabelDefaultsRef),
+  // so stored?.xPct always equals the IIFE's computedXPct — preventing any jump when
+  // the store's copy is temporarily absent (e.g. after an autosave overwrites it).
+  useEffect(() => {
+    if (!compact || !compactMeasured || !onStyleChange) return
+    if (!legendEnabled || legendMode !== 'inline') return
+    const positions = styleOverrides.seriesLabelPositions ?? {}
+    const missing = yCols.filter(col => positions[col] === undefined)
+    if (missing.length === 0) return
+    // Use the cache built by the IIFE; if cache is empty the IIFE hasn't run yet → wait.
+    const newPositions: Record<string, { xPct: number; yPct: number }> = { ...positions }
+    for (const col of missing) {
+      const cached = compactLabelDefaultsRef.current[col]
+      if (!cached) return // cache not ready yet — effect will re-fire on next re-render
+      newPositions[col] = cached
+    }
+    onStyleChange({ seriesLabelPositions: newPositions })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compact, compactMeasured, legendEnabled, legendMode, yColsKey, panelWidth, panelHeight, onStyleChange])
+
   const xLabelStyle = { fontFamily, fontSize: effectiveXTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const yLabelStyle = { fontFamily, fontSize: effectiveYTitleSize, fontWeight: titleFontWeight, fill: axisColor }
   const xLabelText = xAxisLabel.trim() || formatAxisLabel(xCol)
@@ -1769,11 +1820,90 @@ const ChartPreview = forwardRef<ChartPreviewHandle, Props>(function ChartPreview
     return (
       <div
         ref={chartRef}
-        style={{ fontFamily, width: compactW, position: 'relative', userSelect: 'none' }}
+        style={{ fontFamily, width: compactW, position: 'relative', userSelect: 'none', overflow: 'hidden' }}
       >
         <ResponsiveContainer width="100%" height={compactH}>
           {renderChart() as React.ReactElement}
         </ResponsiveContainer>
+        {legendEnabled && legendMode === 'box' && (
+          <DraggableLegend
+            yCols={yCols}
+            seriesNames={seriesNames}
+            colors={resolvedColors}
+            strokeWidths={resolvedStrokeWidths}
+            chartType={chartType}
+            xPct={legendPos.x}
+            yPct={legendPos.y}
+            orientation={styleOverrides.legendOrientation ?? 'v'}
+            bg={styleOverrides.legendBg ?? true}
+            fontFamily={fontFamily}
+            fontSize={legendFontSize}
+            textColor={axisColor}
+            containerRef={chartRef}
+            onUpdate={(patch) => onStyleChange?.(patch)}
+          />
+        )}
+        {legendEnabled && legendMode === 'inline' && compactMeasured && (() => {
+          const containerW = panelWidth ?? chartRef.current?.offsetWidth ?? (figureWidth ?? 700)
+          const containerH = (panelHeight ?? figureHeight) ?? 520
+          const { left, top, width, height } = plotAreaRef.current
+          const yRange = paddedAutoYMax - paddedAutoYMin
+          return yCols.map((col, i) => {
+            const stored = styleOverrides.seriesLabelPositions?.[col]
+            if (stored?.hidden) return null
+
+            // Resolve default position: use cached value for stability across re-renders.
+            // If plotAreaRef has valid dimensions (width > 1) and no cache yet, compute
+            // and cache so subsequent store-triggered re-renders don't shift the label.
+            let computedXPct: number, computedYPct: number
+            const cached = compactLabelDefaultsRef.current[col]
+            if (cached) {
+              computedXPct = cached.xPct
+              computedYPct = cached.yPct
+            } else if (width > 1) {
+              const labelW = inlineLabelWidths[col] ?? 60
+              if (stackingMode === 'auto' && yRange > 0 && height > 0) {
+                const yOffset = effectiveSeriesYOffsets[col] ?? 0
+                const yFrac = Math.max(0.02, Math.min(0.97, 1 - (yOffset - paddedAutoYMin) / yRange))
+                computedYPct = ((top + yFrac * height) / containerH) * 100
+              } else {
+                computedYPct = ((i + 0.5) / yCols.length) * 100
+              }
+              computedXPct = Math.max(0, Math.min(95, ((left + width - labelW - 14) / containerW) * 100))
+              compactLabelDefaultsRef.current[col] = { xPct: computedXPct, yPct: computedYPct }
+            } else {
+              const labelW = inlineLabelWidths[col] ?? 60
+              computedXPct = Math.max(0, 80 - (labelW / containerW) * 100)
+              computedYPct = ((i + 0.5) / yCols.length) * 100
+            }
+
+            const displayLabel = stored?.text || seriesNames[col] || col
+            return (
+              <DraggableInlineLabel
+                key={col}
+                label={displayLabel}
+                color={resolvedColors[i]}
+                fontFamily={fontFamily}
+                fontSize={legendFontSize}
+                xPct={stored?.xPct ?? computedXPct}
+                yPct={stored?.yPct ?? computedYPct}
+                containerRef={chartRef}
+                onUpdate={(patch) => onStyleChange?.({
+                  seriesLabelPositions: {
+                    ...styleOverrides.seriesLabelPositions,
+                    [col]: { xPct: patch.xPct, yPct: patch.yPct, text: patch.text ?? stored?.text },
+                  },
+                })}
+                onDelete={() => onStyleChange?.({
+                  seriesLabelPositions: {
+                    ...styleOverrides.seriesLabelPositions,
+                    [col]: { ...(stored ?? { xPct: computedXPct, yPct: computedYPct }), hidden: true },
+                  },
+                })}
+              />
+            )
+          })
+        })()}
       </div>
     )
   }
