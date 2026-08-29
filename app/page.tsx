@@ -31,22 +31,21 @@ export const metadata: Metadata = {
 }
 
 const LOGO_STYLE: React.CSSProperties = {
-  height: '36px',
+  height: '58px',
   width: 'auto',
-  maxWidth: '240px',
-  objectFit: 'contain' as const,
-  filter: 'brightness(0) saturate(0) invert(44%) sepia(18%) saturate(600%) hue-rotate(185deg) opacity(0.85)',
+  maxWidth: '200px',
+  objectFit: 'contain',
+  mixBlendMode: 'multiply',
 }
 
 const LOGOS = [
-  { name: 'MIT',               src: '/logos/mit.svg' },
-  { name: 'Stanford',         src: '/logos/stanford-wm.svg' },
-  { name: 'ETH Zürich',       src: '/logos/eth.svg' },
-  { name: 'Harvard',          src: '/logos/harvard-wm.svg' },
-  { name: 'Max Planck',       src: '/logos/maxplanck.svg' },
-  { name: 'Yale University',  src: '/logos/yale-wm.svg' },
-  { name: 'Imperial College', src: '/logos/imperial-wm.svg' },
-  { name: 'UC Berkeley',      src: '/logos/berkeley-wm.svg' },
+  { name: 'MIT',                       src: '/logos/mit.png' },
+  { name: 'Harvard University',        src: '/logos/harvard.png' },
+  { name: 'ETH Zürich',               src: '/logos/eth.png' },
+  { name: 'University of Cambridge',  src: '/logos/cambridge.png' },
+  { name: 'Max Planck Society',        src: '/logos/maxplanck.png' },
+  { name: 'Yale University',           src: '/logos/yale.png' },
+  { name: 'Imperial College London',   src: '/logos/imperial.png' },
 ]
 
 function ArrowRight() {
@@ -158,16 +157,19 @@ export default function HomePage() {
       </section>
 
       {/* ── UNIVERSITY LOGOS MARQUEE ─────────────────────────────────── */}
-      <section className="py-14 bg-[#f9fafb] border-t border-slate-100">
+      <section className="py-14 bg-white border-t border-slate-100">
         <FadeIn>
         <p className="text-center text-sm text-slate-400 mb-10 tracking-wide">
           Trusted by researchers from leading institutions
         </p>
         </FadeIn>
-        <div className="overflow-hidden">
+        <div
+          className="overflow-hidden"
+          style={{ maskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 8%, black 92%, transparent)' }}
+        >
           <div className="animate-marquee flex items-center">
             {[...LOGOS, ...LOGOS].map((logo, i) => (
-              <span key={i} className="flex items-center justify-center shrink-0 px-12">
+              <span key={i} className="flex items-center justify-center shrink-0 px-10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={logo.src} alt={logo.name} style={LOGO_STYLE} />
               </span>
