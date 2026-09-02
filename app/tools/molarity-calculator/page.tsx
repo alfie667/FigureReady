@@ -116,6 +116,16 @@ export default function MolarityCalculatorPage() {
               to compute M<sub>w</sub> from a chemical formula.
             </dd>
           </div>
+          <div>
+            <dt className="font-semibold text-slate-900 mb-0.5">Need to dilute this solution?</dt>
+            <dd className="text-slate-700">
+              Use the{' '}
+              <Link href="/tools/dilution-calculator" className="text-blue-600 hover:text-blue-700 underline">
+                Dilution Calculator
+              </Link>{' '}
+              to solve C₁V₁ = C₂V₂ for any unknown.
+            </dd>
+          </div>
         </dl>
 
       </main>

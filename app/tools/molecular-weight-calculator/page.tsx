@@ -130,6 +130,16 @@ export default function MolecularWeightCalculatorPage() {
             <dt className="font-semibold text-slate-900 mb-0.5">Ionic charges, isotopes, fractions</dt>
             <dd className="text-slate-700">Not supported in V1. Ca²⁺, ¹⁴C, C3.5H5 will return an explicit error.</dd>
           </div>
+          <div>
+            <dt className="font-semibold text-slate-900 mb-0.5">Next step: calculate molarity</dt>
+            <dd className="text-slate-700">
+              Once you have the molar mass, use the{' '}
+              <Link href="/tools/molarity-calculator" className="text-blue-600 hover:text-blue-700 underline">
+                Molarity Calculator
+              </Link>{' '}
+              to compute the concentration of your solution.
+            </dd>
+          </div>
         </dl>
 
       </main>

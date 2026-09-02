@@ -10,7 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/figure-size-scientific-publication`,          priority: 0.8, changeFrequency: 'monthly' },
     { url: `${BASE}/publication-figure-templates`,                priority: 0.8, changeFrequency: 'monthly' },
     { url: `${BASE}/excel-to-scientific-graph`,                   priority: 0.8, changeFrequency: 'monthly' },
-    { url: `${BASE}/tools`,                                       priority: 0.7, changeFrequency: 'monthly' },
+    { url: `${BASE}/tools`,                                       priority: 0.8, changeFrequency: 'monthly' },
     { url: `${BASE}/tools/molecular-weight-calculator`,          priority: 0.8, changeFrequency: 'monthly' },
     { url: `${BASE}/tools/molarity-calculator`,                  priority: 0.8, changeFrequency: 'monthly' },
     { url: `${BASE}/tools/dilution-calculator`,                  priority: 0.8, changeFrequency: 'monthly' },
