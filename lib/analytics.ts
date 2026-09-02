@@ -113,6 +113,21 @@ export function deviceParams(): Record<string, unknown> {
   }
 }
 
+// ── Research tools events ─────────────────────────────────────────────────────
+
+export function trackResearchToolViewed(tool: string) {
+  trackEvent('research_tool_viewed', { ...deviceParams(), tool })
+}
+
+// Fire only on a successful valid calculation — not on keystrokes or errors.
+export function trackResearchToolUsed(tool: string) {
+  trackEvent('research_tool_used', { ...deviceParams(), tool })
+}
+
+export function trackResearchToolToEditor(tool: string) {
+  trackEvent('research_tool_to_editor_clicked', { ...deviceParams(), tool })
+}
+
 // ── Free / paywall events ─────────────────────────────────────────────────────
 
 export function trackFirstFreeExport() {

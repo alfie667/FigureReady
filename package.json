@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:fit": "npx tsx --test lib/__tests__/curveFit4PL.test.ts"
+    "test:fit": "npx tsx --test lib/__tests__/curveFit4PL.test.ts",
+    "test:mw": "npx tsx --test lib/__tests__/molecularParser.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

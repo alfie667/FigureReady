@@ -70,6 +70,9 @@ export default function HomePage() {
             <Link href="/templates" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Templates
             </Link>
+            <Link href="/tools" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              Free Tools
+            </Link>
             <a href="#pricing" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
               Pricing
             </a>
@@ -466,6 +469,7 @@ export default function HomePage() {
           <LogoFull size={22} textSize={13} />
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
             <Link href="/templates" className="hover:text-slate-700 transition-colors">Templates</Link>
+            <Link href="/tools" className="hover:text-slate-700 transition-colors">Free Tools</Link>
             <Link href="/pricing" className="hover:text-slate-700 transition-colors">Pricing</Link>
             <Link href="/roadmap" className="hover:text-slate-700 transition-colors">Roadmap</Link>
             <a href="mailto:hello@figureready.com" className="hover:text-slate-700 transition-colors">Contact</a>
