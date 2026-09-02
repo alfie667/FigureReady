@@ -87,6 +87,37 @@ export default function ToolsPage() {
           </Link>
 
           <Link
+            href="/tools/dilution-calculator"
+            className="group rounded-2xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50/40
+                       p-6 transition-all shadow-sm hover:shadow-md"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                {/* Dilution / split icon */}
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8M8 12h8M8 17h8" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4l4 4m8-4l-4 4" />
+                  <circle cx="12" cy="17" r="2" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors mb-1">
+                  Dilution Calculator
+                </h2>
+                <p className="text-sm text-slate-600 leading-snug">
+                  Solve C₁V₁ = C₂V₂ for any variable. Supports M, mM, µM, nM, mg/mL and all common lab volume units.
+                </p>
+                <p className="mt-3 text-xs font-semibold text-blue-600 group-hover:text-blue-700 flex items-center gap-1">
+                  Use tool
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </p>
+              </div>
+            </div>
+          </Link>
+
+          <Link
             href="/tools/molarity-calculator"
             className="group rounded-2xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50/40
                        p-6 transition-all shadow-sm hover:shadow-md"

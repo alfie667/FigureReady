@@ -180,6 +180,12 @@ export default function MolarityCalculator() {
 
       {/* ── CTA ── */}
       <div className="mt-10 pt-8 border-t border-slate-100">
+        <p className="text-xs text-slate-600 mb-5">
+          Need to dilute this solution?{' '}
+          <Link href="/tools/dilution-calculator" className="text-blue-600 hover:text-blue-700 underline">
+            Dilution Calculator →
+          </Link>
+        </p>
         <p className="text-sm font-semibold text-slate-800 mb-1">Working with experimental data?</p>
         <p className="text-sm text-slate-700 mb-3">
           Create publication-ready scientific figures from Excel or CSV with FigureReady.

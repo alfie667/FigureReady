@@ -8,7 +8,8 @@
     "start": "next start",
     "test:fit": "npx tsx --test lib/__tests__/curveFit4PL.test.ts",
     "test:mw": "npx tsx --test lib/__tests__/molecularParser.test.ts",
-    "test:molarity": "npx tsx --test lib/__tests__/molarityCalc.test.ts"
+    "test:molarity": "npx tsx --test lib/__tests__/molarityCalc.test.ts",
+    "test:dilution": "npx tsx --test lib/__tests__/dilutionCalc.test.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
