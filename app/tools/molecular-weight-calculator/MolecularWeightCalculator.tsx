@@ -159,8 +159,16 @@ export default function MolecularWeightCalculator() {
         </div>
       )}
 
+      {/* ── See also ── */}
+      <p className="mt-8 text-xs text-slate-500">
+        Need to calculate solution concentration?{' '}
+        <a href="/tools/molarity-calculator" className="text-blue-600 hover:text-blue-700 underline">
+          Molarity Calculator →
+        </a>
+      </p>
+
       {/* ── CTA to FigureReady ── */}
-      <div className="mt-10 pt-8 border-t border-slate-100">
+      <div className="mt-6 pt-8 border-t border-slate-100">
         <p className="text-sm font-semibold text-slate-800 mb-1">Working with experimental data?</p>
         <p className="text-sm text-slate-700 mb-3">
           Create publication-ready scientific figures from Excel or CSV with FigureReady.

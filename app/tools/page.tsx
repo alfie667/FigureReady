@@ -86,6 +86,36 @@ export default function ToolsPage() {
             </div>
           </Link>
 
+          <Link
+            href="/tools/molarity-calculator"
+            className="group rounded-2xl border border-slate-200 hover:border-blue-300 bg-white hover:bg-blue-50/40
+                       p-6 transition-all shadow-sm hover:shadow-md"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                {/* Beaker icon */}
+                <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 3h6M9 3v7.5L4.5 18A2 2 0 006.4 21h11.2a2 2 0 001.9-3L15 10.5V3" />
+                  <path strokeLinecap="round" d="M6.5 16h11" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="text-base font-bold text-slate-900 group-hover:text-blue-700 transition-colors mb-1">
+                  Molarity Calculator
+                </h2>
+                <p className="text-sm text-slate-600 leading-snug">
+                  Calculate solution concentration from moles or mass, molar mass, and volume. Supports mol, mmol, g, mg, L, mL.
+                </p>
+                <p className="mt-3 text-xs font-semibold text-blue-600 group-hover:text-blue-700 flex items-center gap-1">
+                  Use tool
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </p>
+              </div>
+            </div>
+          </Link>
+
         </div>
 
       </main>
